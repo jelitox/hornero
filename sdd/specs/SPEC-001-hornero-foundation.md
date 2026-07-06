@@ -1,7 +1,7 @@
 ---
 spec: SPEC-001
 title: Hornero — foundational contracts and MVP scope
-status: proposed
+status: approved
 kind: new_feature
 created: 2026-07-06
 owner: javier@javierleon.dev
@@ -356,3 +356,5 @@ evidence-grounded spec base even if you never dispatch anything).
   while still `status: proposed` — flagged during `/sdd-task`; approve the spec
   before starting implementation. OQ5 added (multicoders not pinned; TASK-014
   takes the feature-detect + MockBackend interpretation).
+- 2026-07-06 — Approved by owner (via "continúa, prueba el spec-001"); implementation
+  of F1 begins.
