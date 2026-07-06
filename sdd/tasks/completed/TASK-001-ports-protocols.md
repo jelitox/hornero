@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: S (< 2h)
 **Depends-on**: none
@@ -147,10 +147,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/ports.py created verbatim from SPEC-001 §7; all three protocols runtime-checkable. 5 structural tests; ruff + mypy clean.
 
 **Deviations from spec**: none
