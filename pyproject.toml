@@ -1,0 +1,16 @@
+[project]
+name = "hornero"
+version = "0.0.1"
+description = "Repo-native product loop: signals -> living memory -> SDD specs -> dispatched builds -> reports. The ovenbird builds its own house."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff", "mypy"]
+
+[project.scripts]
+hornero = "hornero.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
