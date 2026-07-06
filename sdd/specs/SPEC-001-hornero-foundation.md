@@ -341,7 +341,18 @@ evidence-grounded spec base even if you never dispatch anything).
   Deferred — per-repo keeps the mental model trivial.
 - OQ4. ~~Name~~ **Resolved 2026-07-06:** `hornero` (Loom discarded — registered
   trademark of a funded software company; `telar` kept as fallback).
+- OQ5. `multicoders` is not pinned in `pyproject.toml` and not installed in the
+  dev venv (verified 2026-07-06), yet §7 names `multicoders.backends` as the
+  `DispatchPort` MVP adapter. Conservative interpretation taken for TASK-014:
+  ship a built-in deterministic `MockBackend` as the first-class default and
+  feature-detect `multicoders.backends` (same pattern as §8 uses for parrot);
+  absent backends yield `needs_human`, never a substitute. Pinning multicoders
+  (and how) remains open.
 
 ## Log
 
 - 2026-07-06 — Spec drafted (status: proposed).
+- 2026-07-06 — Decomposed into 19 tasks (`sdd/tasks/index/hornero-foundation.json`)
+  while still `status: proposed` — flagged during `/sdd-task`; approve the spec
+  before starting implementation. OQ5 added (multicoders not pinned; TASK-014
+  takes the feature-detect + MockBackend interpretation).
