@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: M (2-4h)
 **Depends-on**: TASK-007, TASK-009, TASK-010, TASK-011
@@ -161,10 +161,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/reconciler/run.py wires poll->draft->HITL->apply with ledger records; cli reconcile real. F2 GATE GREEN: 3 fixture notes + FakeLLM => expected set (1 new, 1 changed, 1 duplicate), fabricated draft dropped+logged evidence_mismatch, --dry-run leaves git status --porcelain empty, no-TTY run fail-closed, approved path creates SPEC-002 + patches SPEC-001 + acks 2 signals. Also fixed gitignore pattern to ledger.db* (SQLite WAL siblings would dirty the tree). Full suite 96 passed.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: model resolution MVP: only fake:<script.json> is supported; unset/unsupported models refuse before polling (exit 3). Real providers arrive behind the same LLMPort seam post-MVP; delta ids namespaced per signal (dlt-<run>.<i>-<n>) to keep them unique across signals.

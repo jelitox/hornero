@@ -2,6 +2,6 @@
 .uv-cache/
 __pycache__/
 *.egg-info/
-.hornero/ledger.db
+.hornero/ledger.db*
 .hornero/cache/
 env/

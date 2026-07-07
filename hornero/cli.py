@@ -31,7 +31,7 @@ models: {}
 
 _HORNERO_DIRS = ("inbox", "processed", "knowledge")
 _PRODUCT_DIRS = ("specs", "decisions", "reports")
-_GITIGNORE_LINE = ".hornero/ledger.db"
+_GITIGNORE_LINE = ".hornero/ledger.db*"  # includes SQLite -wal/-shm siblings
 
 
 def _cmd_init(root: Path) -> int:
@@ -116,7 +116,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "status":
         return _cmd_status(root)
     if args.command == "reconcile":
-        return _stub("F2")
+        from hornero.reconciler.run import run_reconcile
+
+        return run_reconcile(root, dry_run=args.dry_run)
     if args.command == "build":
         return _stub("F3")
     if args.command == "reindex":
