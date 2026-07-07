@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-002, TASK-003, TASK-005, TASK-006
@@ -163,10 +163,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/reconciler/apply.py: exact-context unified diff applier (fail-hard), NEW (id allocation, spec/status/sources rewrite, parse-validate-or-unlink, born proposed then approved with Log entries), CHANGED (diff + source merge + comment), OBSOLETE (transition + comment), ADR writer with mention heuristic, ack only after clean apply of all decided deltas. 10 tests green.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: ack policy refined: a signal whose deltas were all human-REJECTED is acked too (decision made, ledger keeps the audit); pure-SKIPPED signals stay in the inbox (fail-closed).
