@@ -91,6 +91,6 @@ def test_default_config_never_includes_api(repo):
 
 def test_stub_commands_exit_nonzero(repo, capsys):
     main(["init"])
-    for argv in (["build"], ["reindex"], ["report"]):
+    for argv in (["reindex"], ["report"]):
         assert main(argv) == 2
         assert "not implemented" in capsys.readouterr().err

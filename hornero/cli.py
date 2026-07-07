@@ -120,7 +120,9 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_reconcile(root, dry_run=args.dry_run)
     if args.command == "build":
-        return _stub("F3")
+        from hornero.build import run_build
+
+        return run_build(root, args.spec_ids, backend=args.backend)
     if args.command == "reindex":
         return _stub("F4")
     if args.command == "report":

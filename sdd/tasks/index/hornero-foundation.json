@@ -311,7 +311,7 @@
       "feature": "hornero-foundation",
       "spec": "sdd/specs/SPEC-001-hornero-foundation.md",
       "phase": "F3",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "effort": "M",
       "depends_on": [
@@ -322,10 +322,10 @@
       ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F3; modifies cli.py.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-015-build-cli-e2e.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-07T00:00:00-03:00",
+      "completed_at": "2026-07-07T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-015-build-cli-e2e.md"
     },
     {
       "id": "TASK-016",

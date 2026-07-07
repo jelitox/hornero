@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: medium
 **Estimated effort**: M (2-4h)
 **Depends-on**: TASK-004, TASK-006, TASK-007, TASK-014
@@ -151,10 +151,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/build.py: all-or-nothing id validation before any transition, approved->building->review/needs_human via RepoTracker with Log comments, ledger dispatch rows, --backend {cli,mock} flag (api deliberately config-only), post_build_hooks seam for F5, NG3 quiet no-op. F3 GATE GREEN: approved fixture spec + mock backend => status history approved->building->review with fake PR URL in ledger. Full suite 116 passed.
 
 **Deviations from spec**: none
