@@ -16,7 +16,7 @@
       "feature": "hornero-foundation",
       "spec": "sdd/specs/SPEC-001-hornero-foundation.md",
       "phase": "F1",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "S",
       "depends_on": [],
@@ -35,16 +35,16 @@
       "feature": "hornero-foundation",
       "spec": "sdd/specs/SPEC-001-hornero-foundation.md",
       "phase": "F1",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "M",
       "depends_on": [],
       "parallel": true,
       "parallelism_notes": "Creates hornero/models.py only; no imports from sibling tasks.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-002-requirement-delta-model.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-06T13:22:27-03:00",
+      "completed_at": "2026-07-06T13:22:27-03:00",
+      "file": "sdd/tasks/completed/TASK-002-requirement-delta-model.md"
     },
     {
       "id": "TASK-003",
@@ -95,7 +95,9 @@
       "status": "pending",
       "priority": "high",
       "effort": "M",
-      "depends_on": ["TASK-001"],
+      "depends_on": [
+        "TASK-001"
+      ],
       "parallel": false,
       "parallelism_notes": "Imports hornero.ports (TASK-001).",
       "assigned_to": null,
@@ -114,7 +116,10 @@
       "status": "pending",
       "priority": "high",
       "effort": "M",
-      "depends_on": ["TASK-001", "TASK-003"],
+      "depends_on": [
+        "TASK-001",
+        "TASK-003"
+      ],
       "parallel": false,
       "parallelism_notes": "Imports ports + lifecycle.",
       "assigned_to": null,
@@ -133,7 +138,11 @@
       "status": "pending",
       "priority": "high",
       "effort": "L",
-      "depends_on": ["TASK-003", "TASK-004", "TASK-005"],
+      "depends_on": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F1; integrates lifecycle, ledger, inbox.",
       "assigned_to": null,
@@ -171,7 +180,11 @@
       "status": "pending",
       "priority": "high",
       "effort": "L",
-      "depends_on": ["TASK-002", "TASK-004", "TASK-008"],
+      "depends_on": [
+        "TASK-002",
+        "TASK-004",
+        "TASK-008"
+      ],
       "parallel": false,
       "parallelism_notes": "Imports models, ledger, knowledge.",
       "assigned_to": null,
@@ -190,7 +203,9 @@
       "status": "pending",
       "priority": "high",
       "effort": "M",
-      "depends_on": ["TASK-002"],
+      "depends_on": [
+        "TASK-002"
+      ],
       "parallel": false,
       "parallelism_notes": "Only needs models; can run alongside TASK-009/011 in separate worktrees (disjoint files within hornero/reconciler/).",
       "assigned_to": null,
@@ -209,7 +224,12 @@
       "status": "pending",
       "priority": "high",
       "effort": "L",
-      "depends_on": ["TASK-002", "TASK-003", "TASK-005", "TASK-006"],
+      "depends_on": [
+        "TASK-002",
+        "TASK-003",
+        "TASK-005",
+        "TASK-006"
+      ],
       "parallel": false,
       "parallelism_notes": "Consumes ReviewedDelta shape from TASK-010; disjoint files, soft coupling noted in the task.",
       "assigned_to": null,
@@ -228,7 +248,12 @@
       "status": "pending",
       "priority": "high",
       "effort": "M",
-      "depends_on": ["TASK-007", "TASK-009", "TASK-010", "TASK-011"],
+      "depends_on": [
+        "TASK-007",
+        "TASK-009",
+        "TASK-010",
+        "TASK-011"
+      ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F2; modifies cli.py.",
       "assigned_to": null,
@@ -266,7 +291,11 @@
       "status": "pending",
       "priority": "medium",
       "effort": "L",
-      "depends_on": ["TASK-001", "TASK-003", "TASK-013"],
+      "depends_on": [
+        "TASK-001",
+        "TASK-003",
+        "TASK-013"
+      ],
       "parallel": false,
       "parallelism_notes": "Carries OQ5: multicoders not pinned/installed — feature-detect + built-in MockBackend.",
       "assigned_to": null,
@@ -285,7 +314,12 @@
       "status": "pending",
       "priority": "medium",
       "effort": "M",
-      "depends_on": ["TASK-004", "TASK-006", "TASK-007", "TASK-014"],
+      "depends_on": [
+        "TASK-004",
+        "TASK-006",
+        "TASK-007",
+        "TASK-014"
+      ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F3; modifies cli.py.",
       "assigned_to": null,
@@ -304,7 +338,10 @@
       "status": "pending",
       "priority": "medium",
       "effort": "M",
-      "depends_on": ["TASK-007", "TASK-008"],
+      "depends_on": [
+        "TASK-007",
+        "TASK-008"
+      ],
       "parallel": false,
       "parallelism_notes": "Modifies knowledge.py (TASK-008) and cli.py (TASK-007).",
       "assigned_to": null,
@@ -323,7 +360,11 @@
       "status": "pending",
       "priority": "medium",
       "effort": "L",
-      "depends_on": ["TASK-012", "TASK-014", "TASK-016"],
+      "depends_on": [
+        "TASK-012",
+        "TASK-014",
+        "TASK-016"
+      ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F4; modifies run.py, dispatch.py, cli.py.",
       "assigned_to": null,
@@ -342,7 +383,10 @@
       "status": "pending",
       "priority": "low",
       "effort": "L",
-      "depends_on": ["TASK-003", "TASK-008"],
+      "depends_on": [
+        "TASK-003",
+        "TASK-008"
+      ],
       "parallel": false,
       "parallelism_notes": "Creates hornero/reports/; disjoint from F3/F4 files — may run in a parallel worktree once deps land.",
       "assigned_to": null,
@@ -361,7 +405,11 @@
       "status": "pending",
       "priority": "low",
       "effort": "L",
-      "depends_on": ["TASK-004", "TASK-015", "TASK-018"],
+      "depends_on": [
+        "TASK-004",
+        "TASK-015",
+        "TASK-018"
+      ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F5 and for SPEC-001 MVP; modifies cli.py and build.py.",
       "assigned_to": null,
