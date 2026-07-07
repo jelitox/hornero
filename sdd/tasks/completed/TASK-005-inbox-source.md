@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: M (2-4h)
 **Depends-on**: TASK-001
@@ -160,10 +160,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/adapters/inbox.py: poll() pure scan (name-sorted, kind by extension), stable ids sig-<mtime-date>-<sha256[:6]>, ack idempotent with deterministic collision suffixes. 8 tests green.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: signal-id date derives from file mtime (UTC) rather than an injected clock — content hash provides the stability the tests require; simpler and still deterministic within a fixture run.
