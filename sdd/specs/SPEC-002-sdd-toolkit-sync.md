@@ -1,7 +1,7 @@
 ---
 spec: SPEC-002
 title: Hornero SDD toolkit — install, memory bootstrap, and cross-repo sync
-status: proposed
+status: approved
 kind: new_feature
 created: 2026-07-06
 owner: javier@javierleon.dev
@@ -250,3 +250,10 @@ has zero LLM dependency.
 
 - 2026-07-06 — Spec drafted (status: proposed). Toolkit inventory captured
   from phenobarbital/ai-parrot @ main.
+- 2026-07-07 — Approved by owner (autonomous-mode directive after SPEC-001
+  MVP landed); decomposition + implementation begins. SPEC-001 F1–F5 gates
+  are green, so the §9 phases are unblocked.
+- 2026-07-07 — OQ8 recorded: §2 names reconciler-created specs
+  `sdd/specs/<slug>.spec.md`, but this repo's live convention is
+  `SPEC-NNN-<slug>.md`. Conservative choice: keep `SPEC-NNN-<slug>.md`
+  (monotonic ids stay primary; corpus loader accepts both globs).
