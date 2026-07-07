@@ -54,16 +54,16 @@
       "feature": "sdd-toolkit-sync",
       "spec": "sdd/specs/SPEC-002-sdd-toolkit-sync.md",
       "phase": "F2.5",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "S",
       "depends_on": [],
       "parallel": true,
       "parallelism_notes": "Creates lock.py only.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-022-lockfile-model.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-07T00:00:00-03:00",
+      "completed_at": "2026-07-07T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-022-lockfile-model.md"
     },
     {
       "id": "TASK-023",

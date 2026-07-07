@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-002 — SDD toolkit: install, memory bootstrap, and cross-repo sync
 **Spec**: `sdd/specs/SPEC-002-sdd-toolkit-sync.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: S (< 2h)
 **Depends-on**: none
@@ -67,10 +67,8 @@ def test_sha256_file(tmp_path): ...
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/sdd_toolkit/lock.py: FileEntry (policy-validated), SddLock, deterministic save/load round-trip, sha256_file, set_policy fail-closed. Lockfile intentionally NOT gitignored (sync identity, committed). 4 tests green.
 
 **Deviations from spec**: none
