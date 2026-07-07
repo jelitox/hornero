@@ -106,7 +106,51 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("reindex", help="rebuild .hornero/knowledge/")
     p = sub.add_parser("report", help="regenerate product/reports/*.html")
     p.add_argument("--only")
+
+    p_sdd = sub.add_parser("sdd", help="SDD toolkit management (SPEC-002)")
+    sdd_sub = p_sdd.add_subparsers(dest="sdd_command", required=True)
+    pi = sdd_sub.add_parser("install", help="install toolkit + scaffold + lockfile")
+    pi.add_argument("--from", dest="source", help="git URL or local path")
+    pi.add_argument("--ref", default=None)
+    pi.add_argument("--force", action="store_true",
+                    help="overwrite locally modified managed files")
     return parser
+
+
+def _cmd_sdd(args: argparse.Namespace, root: Path) -> int:
+    from datetime import datetime, timezone
+
+    from hornero.config import ConfigError, load_config
+    from hornero.sdd_toolkit.manifest import ManifestError
+    from hornero.sdd_toolkit.upstream import UpstreamError
+
+    try:
+        cfg = load_config(root)
+    except ConfigError as exc:
+        print(f"config error: {exc}", file=sys.stderr)
+        return 1
+    source = args.source or cfg.sdd_upstream
+    if not source:
+        print(
+            "no toolkit upstream configured: pass --from <git-url|path> or set "
+            "'sdd_upstream:' in .hornero/config.yaml",
+            file=sys.stderr,
+        )
+        return 2
+    ref = args.ref or cfg.sdd_ref
+
+    if args.sdd_command == "install":
+        from hornero.sdd_toolkit.install import install
+
+        try:
+            return install(
+                root, source, ref, force=args.force,
+                synced_at=datetime.now(timezone.utc).isoformat(),
+            )
+        except (UpstreamError, ManifestError) as exc:
+            print(f"sdd install failed: {exc}", file=sys.stderr)
+            return 1
+    raise AssertionError("unreachable")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -151,6 +195,8 @@ def main(argv: list[str] | None = None) -> int:
         from hornero.reports.run import run_report
 
         return run_report(root, only=args.only)
+    if args.command == "sdd":
+        return _cmd_sdd(args, root)
     raise AssertionError("unreachable")
 
 

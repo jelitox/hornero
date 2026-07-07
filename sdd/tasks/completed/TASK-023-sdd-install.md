@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-002 — SDD toolkit: install, memory bootstrap, and cross-repo sync
 **Spec**: `sdd/specs/SPEC-002-sdd-toolkit-sync.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-020, TASK-021, TASK-022
@@ -73,10 +73,8 @@ def test_no_upstream_configured_refuses(tmp_path): ...
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/sdd_toolkit/install.py + 'hornero sdd install' CLI group + config keys sdd_upstream/sdd_ref. Adoption semantics (identical=adopted, edited=kept-as-modified, --force clobbers), scaffold with .gitkeep, lock preserved verbatim when nothing moved (synced_at kept => idempotent). F2.5 GATE GREEN: fixture upstream => managed set + skeleton, lock hashes verify both ways, re-run leaves git status empty. Full suite 160 passed.
 
 **Deviations from spec**: none

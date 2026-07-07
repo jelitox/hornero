@@ -29,9 +29,14 @@ class HorneroConfig:
         default_factory=lambda: ["pytest", "ruff", "mypy", "python"]
     )
     models: dict[str, str] = field(default_factory=dict)
+    sdd_upstream: str = ""  # toolkit source (git URL or local path); "" = unset
+    sdd_ref: str = "main"
 
 
-_TOP_KEYS = {"signal_source", "tracker", "dispatch", "criterion_allowlist", "models"}
+_TOP_KEYS = {
+    "signal_source", "tracker", "dispatch", "criterion_allowlist", "models",
+    "sdd_upstream", "sdd_ref",
+}
 _DISPATCH_KEYS = {"backend_order"}
 
 
@@ -56,6 +61,10 @@ def load_config(root: Path) -> HorneroConfig:
         cfg.criterion_allowlist = [str(x) for x in data["criterion_allowlist"] or []]
     if "models" in data:
         cfg.models = {str(k): str(v) for k, v in (data["models"] or {}).items()}
+    if "sdd_upstream" in data:
+        cfg.sdd_upstream = str(data["sdd_upstream"] or "")
+    if "sdd_ref" in data:
+        cfg.sdd_ref = str(data["sdd_ref"] or "main")
     if "dispatch" in data:
         disp = data["dispatch"] or {}
         if not isinstance(disp, dict):
