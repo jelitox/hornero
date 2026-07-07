@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-002, TASK-004, TASK-008
@@ -166,10 +166,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/reconciler/draft.py (LLMPort protocol, strict-JSON prompt, per-item defensive parse, verify_evidence gating, all drop paths ledger-logged with evidence_mismatch/parse_error/invariant_violation) + testing.py (FakeLLM, loud on unexpected prompts, from_file for fake:<script> configs). 7 tests green.
 
 **Deviations from spec**: none
