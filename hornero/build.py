@@ -21,8 +21,16 @@ from hornero.memory.ledger import Ledger
 
 Echo = Callable[[str], None]
 
-# TASK-019 appends report regeneration here (explicit seam for F5).
-post_build_hooks: list[Callable[[Path, Echo], None]] = []
+def _regenerate_reports(root: Path, echo: Echo) -> None:
+    """Final step of a successful build (§11): the change-set ships code +
+    spec + refreshed reports atomically."""
+    from hornero.reports.run import run_report
+
+    run_report(root, echo=echo)
+
+
+# Extensible seam; report regeneration is the F5 default.
+post_build_hooks: list[Callable[[Path, Echo], None]] = [_regenerate_reports]
 
 
 def run_build(

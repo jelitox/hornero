@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: low
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-004, TASK-015, TASK-018
@@ -158,10 +158,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: workflows.html (business + technical views, structural edges: src/ mentions, ADR refs, supersedes) + traceability.html (ledger.trace chains, explicit gaps) + hornero report --only + post-build regeneration hook registered in build.py. F5 GATE GREEN: all three reports generated offline on fixture repo under blocked sockets (conftest block_network), every done spec present, deterministic bytes across runs. Full suite 140 passed.
 
 **Deviations from spec**: none

@@ -148,7 +148,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
     if args.command == "report":
-        return _stub("F5")
+        from hornero.reports.run import run_report
+
+        return run_report(root, only=args.only)
     raise AssertionError("unreachable")
 
 

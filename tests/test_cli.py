@@ -89,8 +89,10 @@ def test_default_config_never_includes_api(repo):
     assert load_config(repo).dispatch.backend_order == ["mock"]
 
 
-def test_stub_commands_exit_nonzero(repo, capsys):
-    main(["init"])
-    for argv in (["report"],):  # the last remaining stub (F5)
-        assert main(argv) == 2
-        assert "not implemented" in capsys.readouterr().err
+def test_all_subcommands_are_wired(repo):
+    # F5 closed the last stub: every §10 command now has a real handler.
+    from hornero.cli import _stub  # noqa: F401 — kept for future phases
+    import hornero.cli as cli
+    import inspect
+
+    assert "_stub(" not in inspect.getsource(cli.main)

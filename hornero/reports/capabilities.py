@@ -11,7 +11,7 @@ import re
 from hornero.lifecycle import SpecDoc, Status
 from hornero.reports.engine import ReportContext, esc, render_page, spec_href
 
-_SRC_SEG = re.compile(r"\bsrc/([A-Za-z0-9_.-]+)")
+_SRC_SEG = re.compile(r"\bsrc/([A-Za-z0-9_-]+)")
 
 _STATUS_ORDER = [
     Status.DONE, Status.REVIEW, Status.BUILDING, Status.APPROVED,

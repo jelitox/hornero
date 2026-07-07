@@ -5,7 +5,7 @@
   "type": "feature",
   "base_branch": "master",
   "created_at": "2026-07-06T13:22:27-03:00",
-  "completed_at": null,
+  "completed_at": "2026-07-07T00:00:00-03:00",
   "notes": "Repo uses SPEC-NNN ids (no FEAT-NNN namespace) and a single 'master' branch — header fields adapted accordingly. Spec was status:proposed at decomposition time (warned). Phase gates F1–F5 map to gate-closer tasks 007, 012, 015, 017, 019.",
   "tasks": [
     {
@@ -402,7 +402,7 @@
       "feature": "hornero-foundation",
       "spec": "sdd/specs/SPEC-001-hornero-foundation.md",
       "phase": "F5",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "effort": "L",
       "depends_on": [
@@ -412,10 +412,10 @@
       ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F5 and for SPEC-001 MVP; modifies cli.py and build.py.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-019-reports-cli-gate.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-07T00:00:00-03:00",
+      "completed_at": "2026-07-07T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-019-reports-cli-gate.md"
     }
   ]
 }
