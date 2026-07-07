@@ -64,34 +64,44 @@ def _kind_of(path: Path) -> str:
 
 class TokenOverlapKnowledge:
     """Deterministic Jaccard-overlap retrieval over ``product/**/*.md`` and
-    processed signals. Stable tie-break by path."""
+    processed signals. Stable tie-break by path. Constructible either from a
+    live directory scan or from the persisted index that ``hornero reindex``
+    writes (see :mod:`hornero.memory.reindex`)."""
 
     def __init__(self, roots: list[Path]) -> None:
-        self._docs: list[tuple[Path, str, set[str]]] = []
+        self._docs: list[tuple[str, str, set[str]]] = []  # (path, excerpt, tokens)
         for root in roots:
             if not root.is_dir():
                 continue
             for path in sorted(root.rglob("*")):
                 if path.is_file() and path.suffix.lower() in (".md", ".txt", ".vtt"):
                     text = path.read_text(encoding="utf-8", errors="replace")
-                    self._docs.append((path, text, _tokenize(text)))
+                    self._docs.append(
+                        (str(path), text[:_EXCERPT_LEN], _tokenize(text))
+                    )
+
+    @classmethod
+    def from_documents(
+        cls, docs: list[tuple[str, str, set[str]]]
+    ) -> "TokenOverlapKnowledge":
+        layer = cls([])
+        layer._docs = list(docs)
+        return layer
+
+    def documents(self) -> list[tuple[str, str, set[str]]]:
+        return list(self._docs)
 
     def retrieve(self, query: str, k: int = 5) -> list[Hit]:
         q = _tokenize(query)
         if not q or not self._docs:
             return []
         scored: list[Hit] = []
-        for path, text, tokens in self._docs:
+        for path, excerpt, tokens in self._docs:
             union = q | tokens
             score = len(q & tokens) / len(union) if union else 0.0
             if score > 0.0:
                 scored.append(
-                    Hit(
-                        path=str(path),
-                        score=score,
-                        excerpt=text[:_EXCERPT_LEN],
-                        kind=_kind_of(path),
-                    )
+                    Hit(path=path, score=score, excerpt=excerpt, kind=_kind_of(Path(path)))
                 )
         scored.sort(key=lambda h: (-h.score, h.path))
         return scored[:k]
@@ -136,4 +146,9 @@ def open_knowledge(root: Path, config: object = None) -> KnowledgeLayer:
             return PageIndexKnowledge(roots)
         except Exception:  # degrade gracefully, never hard-require
             pass
+    from hornero.memory.reindex import load_persisted  # lazy: avoids cycle
+
+    persisted = load_persisted(root)
+    if persisted is not None:
+        return persisted
     return TokenOverlapKnowledge(roots)

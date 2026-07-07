@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: medium
 **Estimated effort**: M (2-4h)
 **Depends-on**: TASK-007, TASK-008
@@ -154,10 +154,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/memory/reindex.py: deterministic rebuild (sorted inputs, sorted JSON, no wall-clock in artifacts), manifest with source sha256 + head_ref + layer snapshot + null model/prompt in fallback mode, load_persisted() equivalence with live scan, index_staleness absent/fresh/stale wired into hornero status; reindex CLI real. 7 tests; full suite 123 passed.
 
 **Deviations from spec**: none

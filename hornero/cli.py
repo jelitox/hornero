@@ -78,12 +78,9 @@ def _cmd_status(root: Path) -> int:
     pending = InboxSource(root / ".hornero").poll()
     print(f"inbox: {len(pending)} pending signal(s)")
 
-    knowledge = root / ".hornero" / "knowledge"
-    has_index = knowledge.is_dir() and any(
-        p.name != ".gitkeep" for p in knowledge.iterdir()
-    )
-    state = "present" if has_index else "absent"
-    print(f"knowledge index: {state} (staleness: unknown)")
+    from hornero.memory.reindex import index_staleness
+
+    print(f"knowledge index: {index_staleness(root)}")
     return 0
 
 
@@ -124,7 +121,14 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_build(root, args.spec_ids, backend=args.backend)
     if args.command == "reindex":
-        return _stub("F4")
+        from hornero.memory.reindex import reindex
+
+        manifest = reindex(root)
+        print(
+            f"reindexed: {len(manifest['sources'])} source file(s), "
+            f"head_ref {manifest['head_ref'] or '(not a git repo)'}"
+        )
+        return 0
     if args.command == "report":
         return _stub("F5")
     raise AssertionError("unreachable")
