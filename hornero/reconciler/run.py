@@ -133,6 +133,23 @@ def run_reconcile(
         root / "product" / "decisions", today,
     )
 
+    # OQ2 (resolved: yes, F4): DUPLICATE deltas leave signal-strength
+    # telemetry on the covering spec's Log. Best-effort — telemetry must
+    # never break reconciliation.
+    for item in reviewed:
+        d = item.delta
+        if d.kind.value != "duplicate":
+            continue
+        mention = ", ".join(ev.signal_id for ev in d.evidence)
+        for ref in d.affected_specs:
+            try:
+                tracker.comment(ref, f"mentioned again in {mention} ({d.delta_id}).")
+            except Exception as exc:
+                ledger.record_dropped_draft(
+                    run_id, "duplicate_comment_failed",
+                    {"delta_id": d.delta_id, "ref": ref, "error": str(exc)}, now,
+                )
+
     status_by_decision = {
         Decision.APPROVED: "approved",
         Decision.EDITED: "approved",

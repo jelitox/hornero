@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: medium
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-012, TASK-014, TASK-016
@@ -159,10 +159,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/hooks.py (opt-in idempotent post-merge hook with marker block, foreign hooks refused; CI snippet printed never written) + init --hooks/--print-ci-hook; write-back contract appended to briefs and simulated by MockBackend (pr-contents.md); OQ2 duplicate comments at apply stage, best-effort with ledger logging on failure. F4 GATE GREEN: NEW approved -> reindex (fresh) -> same signal re-reconciled => exactly one DUPLICATE, no new spec, ledger row, 'mentioned again in <sig>' on covering spec Log. Full suite 128 passed.
 
 **Deviations from spec**: none

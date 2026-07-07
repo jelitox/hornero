@@ -92,7 +92,11 @@ def _stub(phase: str) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="hornero")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("init", help="scaffold .hornero/ + product/")
+    p = sub.add_parser("init", help="scaffold .hornero/ + product/")
+    p.add_argument("--hooks", action="store_true",
+                   help="also install the post-merge reindex git hook (opt-in)")
+    p.add_argument("--print-ci-hook", action="store_true",
+                   help="print a CI reindex snippet and exit (writes nothing)")
     sub.add_parser("status", help="spec counts, inbox, index health")
     p = sub.add_parser("reconcile", help="poll -> deltas -> HITL -> apply")
     p.add_argument("--dry-run", action="store_true")
@@ -109,7 +113,21 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     root = Path.cwd()
     if args.command == "init":
-        return _cmd_init(root)
+        if args.print_ci_hook:
+            from hornero.hooks import CI_SNIPPET
+
+            print(CI_SNIPPET, end="")
+            return 0
+        rc = _cmd_init(root)
+        if rc == 0 and args.hooks:
+            from hornero.hooks import HookError, install_post_merge_hook
+
+            try:
+                print(install_post_merge_hook(root))
+            except HookError as exc:
+                print(f"hook install failed: {exc}", file=sys.stderr)
+                return 1
+        return rc
     if args.command == "status":
         return _cmd_status(root)
     if args.command == "reconcile":

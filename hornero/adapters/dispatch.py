@@ -52,6 +52,12 @@ def brief_from_spec(
             f"\n\n---\n### Linked decision {adr.stem}\n\n"
             + adr.read_text(encoding="utf-8").strip()
         )
+    description += (
+        "\n\n---\n### Write-back contract (SPEC-001 F4)\n\n"
+        "Ship in the SAME branch/PR as the code: this spec file with its "
+        "frontmatter transitioned to `review`, and regenerated "
+        "`product/reports/` so code + spec + reports land atomically."
+    )
     return BuildBrief(
         spec_id=doc.spec_id,
         kind=doc.kind,
@@ -88,6 +94,13 @@ class MockBackend:
             f"MOCK BUILD {brief['spec_id']} (#{n})\n"
             f"summary: {brief['summary']}\n"
             f"criteria: {brief['acceptance_criteria']}\n",
+            encoding="utf-8",
+        )
+        # Simulate the write-back contract: the "PR" carries the spec updated
+        # to review alongside the code (what a real backend must do).
+        (self._logs / f"{brief['spec_id']}.pr-contents.md").write_text(
+            f"<!-- simulated PR write-back: status -> review -->\n"
+            f"{brief['description']}\n",
             encoding="utf-8",
         )
         return BuildResult(
