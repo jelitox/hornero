@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-002 — SDD toolkit: install, memory bootstrap, and cross-repo sync
 **Spec**: `sdd/specs/SPEC-002-sdd-toolkit-sync.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: M (2-4h)
 **Depends-on**: none
@@ -72,10 +72,8 @@ def test_offline_without_cache_raises(tmp_path): ...
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/sdd_toolkit/upstream.py: local dirs in place (HEAD recorded when git), URLs blobless-shallow-cloned into .hornero/cache/sdd-upstream/ with fetch+detach refresh; warm-cache network failure degrades to refreshed=False; cold failure raises UpstreamError and leaves no half clone. 5 tests green (file:// fixtures).
 
 **Deviations from spec**: none
