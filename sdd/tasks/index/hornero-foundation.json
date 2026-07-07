@@ -380,7 +380,7 @@
       "feature": "hornero-foundation",
       "spec": "sdd/specs/SPEC-001-hornero-foundation.md",
       "phase": "F5",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "effort": "L",
       "depends_on": [
@@ -389,10 +389,10 @@
       ],
       "parallel": false,
       "parallelism_notes": "Creates hornero/reports/; disjoint from F3/F4 files — may run in a parallel worktree once deps land.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-018-report-engine-capabilities.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-07T00:00:00-03:00",
+      "completed_at": "2026-07-07T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-018-report-engine-capabilities.md"
     },
     {
       "id": "TASK-019",

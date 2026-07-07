@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: low
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-003, TASK-008
@@ -154,10 +154,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/reports/engine.py (ReportContext as the only data surface — no LLM port exists in report code; inline-CSS self-contained shell; esc() everywhere; provenance = manifest head_ref, no timestamps) + capabilities.py (src/<segment> component heuristic, status-ordered tables, relative links resolving from product/reports/). 6 tests green incl. XSS-escape and no-external-resource assertions.
 
 **Deviations from spec**: none
