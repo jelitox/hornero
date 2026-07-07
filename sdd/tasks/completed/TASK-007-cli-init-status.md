@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-003, TASK-004, TASK-005
@@ -170,10 +170,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/cli.py (argparse, main() per pyproject entry point) + hornero/config.py (fail-closed loader). init idempotent (dirs+.gitkeep, config.yaml preserved, gitignore line, ledger schema); status read-only. F1 GATE RUN LITERALLY: pytest tests/test_lifecycle.py tests/test_inbox.py -q => 21 passed; hornero init && hornero status => exit 0 on empty repo. Full suite 59 passed.
 
 **Deviations from spec**: none

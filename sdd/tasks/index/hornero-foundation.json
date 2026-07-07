@@ -135,7 +135,7 @@
       "feature": "hornero-foundation",
       "spec": "sdd/specs/SPEC-001-hornero-foundation.md",
       "phase": "F1",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "L",
       "depends_on": [
@@ -145,10 +145,10 @@
       ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F1; integrates lifecycle, ledger, inbox.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-007-cli-init-status.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-07T00:00:00-03:00",
+      "completed_at": "2026-07-07T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-007-cli-init-status.md"
     },
     {
       "id": "TASK-008",

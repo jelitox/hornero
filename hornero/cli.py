@@ -1,0 +1,130 @@
+"""hornero CLI (SPEC-001 §10). MVP surface:
+
+    hornero init                      scaffold .hornero/ + product/ in an existing repo
+    hornero status                    spec counts by state, pending inbox, index health
+    hornero reconcile [--dry-run]     (F2)
+    hornero build [SPEC-ID ...]       (F3)
+    hornero reindex                   (F4)
+    hornero report [--only <name>]    (F5)
+
+stdlib argparse only — no CLI framework dependency.
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+from hornero.adapters.inbox import InboxSource
+from hornero.config import ConfigError, load_config
+from hornero.lifecycle import SpecCorpus, Status
+from hornero.memory.ledger import Ledger
+
+DEFAULT_CONFIG = """\
+# hornero configuration (SPEC-001 §4)
+signal_source: inbox          # SignalSource adapter
+tracker: repo                 # TrackerPort adapter
+dispatch:
+  backend_order: [mock]       # never auto-includes 'api' (opt-in only)
+criterion_allowlist: [pytest, ruff, mypy, python]
+models: {}
+"""
+
+_HORNERO_DIRS = ("inbox", "processed", "knowledge")
+_PRODUCT_DIRS = ("specs", "decisions", "reports")
+_GITIGNORE_LINE = ".hornero/ledger.db"
+
+
+def _cmd_init(root: Path) -> int:
+    hornero_dir = root / ".hornero"
+    for name in _HORNERO_DIRS:
+        d = hornero_dir / name
+        d.mkdir(parents=True, exist_ok=True)
+        (d / ".gitkeep").touch()
+    for name in _PRODUCT_DIRS:
+        d = root / "product" / name
+        d.mkdir(parents=True, exist_ok=True)
+        (d / ".gitkeep").touch()
+
+    config = hornero_dir / "config.yaml"
+    if not config.exists():  # never overwrite an existing config
+        config.write_text(DEFAULT_CONFIG, encoding="utf-8")
+
+    gitignore = root / ".gitignore"
+    lines = gitignore.read_text(encoding="utf-8").splitlines() if gitignore.exists() else []
+    if _GITIGNORE_LINE not in lines:
+        content = "\n".join([*lines, _GITIGNORE_LINE]) + "\n"
+        gitignore.write_text(content, encoding="utf-8")
+
+    Ledger(hornero_dir / "ledger.db").close()  # idempotent schema init
+    print(f"initialized hornero in {root}")
+    return 0
+
+
+def _cmd_status(root: Path) -> int:
+    try:
+        load_config(root)
+    except ConfigError as exc:
+        print(f"config error: {exc}", file=sys.stderr)
+        return 1
+
+    corpus = SpecCorpus(root / "product" / "specs")
+    counts = corpus.counts_by_status()
+    print(f"specs: {len(corpus.docs)} total")
+    for status in Status:
+        n = counts[status]
+        if n:
+            print(f"  {status.value}: {n}")
+
+    pending = InboxSource(root / ".hornero").poll()
+    print(f"inbox: {len(pending)} pending signal(s)")
+
+    knowledge = root / ".hornero" / "knowledge"
+    has_index = knowledge.is_dir() and any(
+        p.name != ".gitkeep" for p in knowledge.iterdir()
+    )
+    state = "present" if has_index else "absent"
+    print(f"knowledge index: {state} (staleness: unknown)")
+    return 0
+
+
+def _stub(phase: str) -> int:
+    print(f"not implemented yet (arrives in phase {phase})", file=sys.stderr)
+    return 2
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="hornero")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("init", help="scaffold .hornero/ + product/")
+    sub.add_parser("status", help="spec counts, inbox, index health")
+    p = sub.add_parser("reconcile", help="poll -> deltas -> HITL -> apply")
+    p.add_argument("--dry-run", action="store_true")
+    p = sub.add_parser("build", help="approved specs -> briefs -> dispatch")
+    p.add_argument("spec_ids", nargs="*")
+    p.add_argument("--backend", choices=["cli", "mock"])
+    sub.add_parser("reindex", help="rebuild .hornero/knowledge/")
+    p = sub.add_parser("report", help="regenerate product/reports/*.html")
+    p.add_argument("--only")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    root = Path.cwd()
+    if args.command == "init":
+        return _cmd_init(root)
+    if args.command == "status":
+        return _cmd_status(root)
+    if args.command == "reconcile":
+        return _stub("F2")
+    if args.command == "build":
+        return _stub("F3")
+    if args.command == "reindex":
+        return _stub("F4")
+    if args.command == "report":
+        return _stub("F5")
+    raise AssertionError("unreachable")
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())
