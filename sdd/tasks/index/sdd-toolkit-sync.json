@@ -16,16 +16,16 @@
       "feature": "sdd-toolkit-sync",
       "spec": "sdd/specs/SPEC-002-sdd-toolkit-sync.md",
       "phase": "F2.5",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "S",
       "depends_on": [],
       "parallel": true,
       "parallelism_notes": "Creates hornero/sdd_toolkit/manifest.py; disjoint from 021/022.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-020-manifest-reader.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-07T00:00:00-03:00",
+      "completed_at": "2026-07-07T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-020-manifest-reader.md"
     },
     {
       "id": "TASK-021",
@@ -76,7 +76,11 @@
       "status": "pending",
       "priority": "high",
       "effort": "L",
-      "depends_on": ["TASK-020", "TASK-021", "TASK-022"],
+      "depends_on": [
+        "TASK-020",
+        "TASK-021",
+        "TASK-022"
+      ],
       "parallel": false,
       "parallelism_notes": "Gate closer; adds sdd subparser group to cli.py.",
       "assigned_to": null,
@@ -95,7 +99,9 @@
       "status": "pending",
       "priority": "high",
       "effort": "L",
-      "depends_on": ["TASK-023"],
+      "depends_on": [
+        "TASK-023"
+      ],
       "parallel": false,
       "parallelism_notes": "Cross-cutting path migration; touches cli, reconciler, build, reports, knowledge + their tests.",
       "assigned_to": null,
@@ -114,7 +120,11 @@
       "status": "pending",
       "priority": "high",
       "effort": "M",
-      "depends_on": ["TASK-020", "TASK-021", "TASK-022"],
+      "depends_on": [
+        "TASK-020",
+        "TASK-021",
+        "TASK-022"
+      ],
       "parallel": false,
       "parallelism_notes": "Creates drift.py; may run alongside TASK-024 (disjoint files).",
       "assigned_to": null,
@@ -133,7 +143,9 @@
       "status": "pending",
       "priority": "high",
       "effort": "M",
-      "depends_on": ["TASK-025"],
+      "depends_on": [
+        "TASK-025"
+      ],
       "parallel": false,
       "parallelism_notes": "Gate closer; extends the sdd CLI group.",
       "assigned_to": null,
@@ -152,7 +164,9 @@
       "status": "pending",
       "priority": "medium",
       "effort": "L",
-      "depends_on": ["TASK-026"],
+      "depends_on": [
+        "TASK-026"
+      ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F4.5 and SPEC-002.",
       "assigned_to": null,

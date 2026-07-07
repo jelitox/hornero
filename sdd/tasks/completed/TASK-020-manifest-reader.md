@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-002 — SDD toolkit: install, memory bootstrap, and cross-repo sync
 **Spec**: `sdd/specs/SPEC-002-sdd-toolkit-sync.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: S (< 2h)
 **Depends-on**: none
@@ -66,10 +66,8 @@ def test_resolve_managed_globs_sorted(tmp_path): ...
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/sdd_toolkit/manifest.py: Manifest dataclass, FALLBACK_MANIFEST verbatim from §1.1/§4, load_manifest with fallback flag + fail-closed ManifestError, resolve_managed with */** globs sorted. 6 tests green.
 
 **Deviations from spec**: none
