@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: medium
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-001, TASK-003, TASK-013
@@ -178,10 +178,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/adapters/dispatch.py: brief_from_spec (ADR inlining, criteria validated or brief aborts), deterministic MockBackend (counter-injected, log + fake PR url), MulticodersDispatch resolving backend_order with api-never-a-fallback rule (skipped unless explicit first entry), absent backends yield needs_human results with explanatory logs. 8 tests green with multicoders absent.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: per OQ5, even when multicoders IS importable the cli/api paths route to an honest needs_human 'integration pending' result rather than guessing an unverified API; wiring the real backends is follow-up work once the dependency is pinned.

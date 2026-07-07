@@ -288,7 +288,7 @@
       "feature": "hornero-foundation",
       "spec": "sdd/specs/SPEC-001-hornero-foundation.md",
       "phase": "F3",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "effort": "L",
       "depends_on": [
@@ -298,10 +298,10 @@
       ],
       "parallel": false,
       "parallelism_notes": "Carries OQ5: multicoders not pinned/installed — feature-detect + built-in MockBackend.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-014-dispatch-bridge.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-07T00:00:00-03:00",
+      "completed_at": "2026-07-07T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-014-dispatch-bridge.md"
     },
     {
       "id": "TASK-015",
