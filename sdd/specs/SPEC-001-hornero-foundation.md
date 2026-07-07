@@ -358,3 +358,7 @@ evidence-grounded spec base even if you never dispatch anything).
   takes the feature-detect + MockBackend interpretation).
 - 2026-07-06 — Approved by owner (via "continúa, prueba el spec-001"); implementation
   of F1 begins.
+- 2026-07-07 — All 19 tasks completed; phase gates F1–F5 verified green verbatim
+  (42 gate tests; full suite 140 passed, ruff + mypy clean). Live e2e on a scratch
+  repo: init → signal → dry-run (git clean) → approve → SPEC created → mock build
+  → review + fake PR + reports → reindex fresh. MVP scope of this spec is built.
