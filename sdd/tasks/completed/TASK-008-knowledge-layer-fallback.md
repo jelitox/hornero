@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L (4-8h)
 **Depends-on**: none
@@ -168,10 +168,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/memory/knowledge.py: available() with guarded find_spec (ModuleNotFoundError + ValueError), Hit/KnowledgeLayer protocol, TokenOverlapKnowledge (Jaccard, stable tie-break, kind by filename prefix), PageIndexKnowledge lazy wrapper, open_knowledge resolver degrading gracefully on broken/absent parrot. 8 tests green with parrot absent.
 
 **Deviations from spec**: none
