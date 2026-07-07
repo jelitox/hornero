@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L (4-8h)
 **Depends-on**: none
@@ -179,10 +179,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/lifecycle.py: Status, TRANSITIONS (§5 diagram), SpecDoc with raw-frontmatter preservation (byte-identical round-trip), transition() rewriting only the status line, SpecCorpus with monotonic ids. pyyaml + types-pyyaml added to pyproject. 13 tests green.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: done→obsolete allowed (task said non-terminal only): SPEC-001 §6 lets an approved OBSOLETE delta invalidate existing specs, which are typically done — the stricter reading would dead-end TASK-011.
