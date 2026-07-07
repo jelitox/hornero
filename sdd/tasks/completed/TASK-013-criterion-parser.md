@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: medium
 **Estimated effort**: S (< 2h)
 **Depends-on**: none
@@ -156,10 +156,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/criteria.py: ShellCriterion/ManualCriterion frozen dataclasses, parse_criterion with manual: prefix (case-insensitive), shlex head vs allowlist, conservative degradation to manual on unknown heads/unbalanced quotes, empty raises. 7 tests green.
 
 **Deviations from spec**: none
