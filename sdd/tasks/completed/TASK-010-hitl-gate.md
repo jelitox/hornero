@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: M (2-4h)
 **Depends-on**: TASK-002
@@ -157,10 +157,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/reconciler/hitl.py: Decision/ReviewResult/ReviewedDelta, ApprovalChannel protocol, TerminalChannel.open() returning None off-TTY, $EDITOR edit flow falling back to reject, gate() skipping DUPLICATEs and returning all-SKIPPED quietly when channel is None. 7 non-interactive tests green.
 
 **Deviations from spec**: none
