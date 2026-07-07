@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-001 — Hornero: foundational contracts and MVP scope
 **Spec**: `sdd/specs/SPEC-001-hornero-foundation.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: M (2-4h)
 **Depends-on**: TASK-001, TASK-003
@@ -158,10 +158,8 @@ When you pick up this task:
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5 (session 0d52d2f9)
+**Date**: 2026-07-06
+**Notes**: hornero/adapters/repo_tracker.py: upsert validates via parse_spec, transition delegates to lifecycle (only status line changes; IllegalTransition propagates), comment appends dated bullets to ## Log (creates section, respects following headings), injectable clock. 9 tests green.
 
 **Deviations from spec**: none
