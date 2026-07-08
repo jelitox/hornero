@@ -16,15 +16,15 @@
       "feature": "wiki-watermarks-gitsignal",
       "spec": "sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md",
       "phase": "F6",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "M",
       "depends_on": [],
       "parallel": false,
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-028-watermarks-noop.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-08T00:00:00-03:00",
+      "completed_at": "2026-07-08T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-028-watermarks-noop.md"
     },
     {
       "id": "TASK-029",

@@ -285,9 +285,32 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_build(root, args.spec_ids, backend=args.backend)
     if args.command == "reindex":
+        from datetime import datetime, timezone
+
+        from hornero import watermarks
         from hornero.memory.reindex import reindex
 
+        knowledge_dir = root / ".hornero" / "knowledge"
+        # The manifest embeds head_ref (reproducibility metadata) — its churn
+        # is not content, or every commit would defeat the no-op discipline.
+        exclude = frozenset({"manifest.json"})
+        manifest_path = knowledge_dir / "manifest.json"
+        old_manifest = (
+            manifest_path.read_bytes() if manifest_path.is_file() else None
+        )
+        before = watermarks.content_snapshot([knowledge_dir], exclude)
         manifest = reindex(root)
+        after = watermarks.content_snapshot([knowledge_dir], exclude)
+        if after == before and old_manifest is not None:
+            # SPEC-003 §5: no-op => no watermark write, no metadata churn.
+            manifest_path.write_bytes(old_manifest)
+            print("knowledge index already current")
+            return 0
+        watermarks.update(root, "reindex", {
+            "git_head": watermarks.git_head(root),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "manifest_hash": after,
+        })
         print(
             f"reindexed: {len(manifest['sources'])} source file(s), "
             f"head_ref {manifest['head_ref'] or '(not a git repo)'}"
