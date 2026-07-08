@@ -136,6 +136,31 @@ def build_parser() -> argparse.ArgumentParser:
     pi.add_argument("--ref", default=None)
     pi.add_argument("--force", action="store_true",
                     help="overwrite locally modified managed files")
+    ps = sdd_sub.add_parser("status", help="drift table, one line per managed file")
+    ps.add_argument("--from", dest="source", default=None)
+    ps.add_argument("--ref", default=None)
+    pd = sdd_sub.add_parser("diff", help="upstream vs local unified diff")
+    pd.add_argument("file", nargs="?", default=None)
+    pd.add_argument("--from", dest="source", default=None)
+    pd.add_argument("--ref", default=None)
+    py = sdd_sub.add_parser("sync", help="pull toolkit updates (pull is the default)")
+    py.add_argument("--pull", action="store_true",
+                    help="pull direction (the default; flag kept for symmetry)")
+    py.add_argument("--dry-run", action="store_true")
+    py.add_argument("--theirs", action="append", default=[], metavar="FILE",
+                    help="resolve a diverged file by copying upstream")
+    py.add_argument("--ours", action="append", default=[], metavar="FILE",
+                    help="resolve a diverged file by keeping local (re-baseline)")
+    py.add_argument("--force", action="store_true")
+    py.add_argument("--from", dest="source", default=None)
+    py.add_argument("--ref", default=None)
+    for name, help_text in (
+        ("hold", "set policy=local (never pulled)"),
+        ("unhold", "set policy=sync"),
+        ("pin", "set policy=pinned (frozen at current version)"),
+    ):
+        pp = sdd_sub.add_parser(name, help=help_text)
+        pp.add_argument("file")
     return parser
 
 
@@ -143,15 +168,27 @@ def _cmd_sdd(args: argparse.Namespace, root: Path) -> int:
     from datetime import datetime, timezone
 
     from hornero.config import ConfigError, load_config
+    from hornero.sdd_toolkit.cli_sync import SyncError, cmd_policy
     from hornero.sdd_toolkit.manifest import ManifestError
     from hornero.sdd_toolkit.upstream import UpstreamError
+
+    if args.sdd_command in ("hold", "unhold", "pin"):  # no upstream needed
+        try:
+            return cmd_policy(root, args.file, args.sdd_command)
+        except SyncError as exc:
+            print(f"sdd {args.sdd_command} failed: {exc}", file=sys.stderr)
+            return 2
 
     try:
         cfg = load_config(root)
     except ConfigError as exc:
         print(f"config error: {exc}", file=sys.stderr)
         return 1
-    source = args.source or cfg.sdd_upstream
+    from hornero.sdd_toolkit.lock import load_lock
+
+    lock = load_lock(root)
+    # --from wins; then the lock (the repo's sync identity); then config.
+    source = args.source or (lock.upstream if lock else "") or cfg.sdd_upstream
     if not source:
         print(
             "no toolkit upstream configured: pass --from <git-url|path> or set "
@@ -159,19 +196,33 @@ def _cmd_sdd(args: argparse.Namespace, root: Path) -> int:
             file=sys.stderr,
         )
         return 2
-    ref = args.ref or cfg.sdd_ref
+    ref = args.ref or (lock.upstream_ref if lock and not args.source else "") \
+        or cfg.sdd_ref
+    now = datetime.now(timezone.utc).isoformat()
 
-    if args.sdd_command == "install":
-        from hornero.sdd_toolkit.install import install
+    try:
+        if args.sdd_command == "install":
+            from hornero.sdd_toolkit.install import install
 
-        try:
-            return install(
-                root, source, ref, force=args.force,
-                synced_at=datetime.now(timezone.utc).isoformat(),
+            return install(root, source, ref, force=args.force, synced_at=now)
+
+        from hornero.sdd_toolkit import cli_sync
+
+        if args.sdd_command == "status":
+            return cli_sync.cmd_status(root, source, ref)
+        if args.sdd_command == "diff":
+            return cli_sync.cmd_diff(root, source, ref, args.file)
+        if args.sdd_command == "sync":
+            return cli_sync.cmd_sync(
+                root, source, ref, dry_run=args.dry_run, theirs=args.theirs,
+                ours=args.ours, force=args.force, synced_at=now,
             )
-        except (UpstreamError, ManifestError) as exc:
-            print(f"sdd install failed: {exc}", file=sys.stderr)
-            return 1
+    except SyncError as exc:
+        print(f"sdd {args.sdd_command} failed: {exc}", file=sys.stderr)
+        return 2
+    except (UpstreamError, ManifestError) as exc:
+        print(f"sdd {args.sdd_command} failed: {exc}", file=sys.stderr)
+        return 1
     raise AssertionError("unreachable")
 
 

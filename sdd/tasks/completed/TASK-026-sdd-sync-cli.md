@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-002 — SDD toolkit: install, memory bootstrap, and cross-repo sync
 **Spec**: `sdd/specs/SPEC-002-sdd-toolkit-sync.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: M (2-4h)
 **Depends-on**: TASK-025
@@ -68,10 +68,8 @@ def test_hold_pin_cli(tmp_path): ...
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5
+**Date**: 2026-07-08
+**Notes**: hornero/sdd_toolkit/cli_sync.py (thin: engine stays in drift.py) + sdd subparser wiring. status = drift table + summary, exit 0 always. diff = difflib unified, upstream/ vs local/ labels, one file or all non-current. sync: dry-run prints the action table and writes nothing (git-verified); diverged without explicit resolution exits 1 listing the files while the REST of the table still resolves per §6; --theirs copies upstream + fast-forwards the lock; --ours keeps local and re-baselines BOTH legs (installed=current, upstream=now) so the file reads modified (push candidate) and a further upstream move re-diverges. hold/unhold/pin need no upstream. Upstream resolution: --from > lock.upstream (sync identity) > config. Prerequisite fix shipped first (9156c24): classify() now uses both lock legs so install()-adopted files read MODIFIED, never BEHIND — pull no longer clobbers kept files. F3.5 GATE GREEN: six-state fixture matrix resolves per the §6 table, diverged blocks with exit != 0, dry-run leaves porcelain empty. Suite 180 passed, ruff + mypy clean.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: --ours re-baselines upstream_hash too (not only installed_hash) — required for the three-way model to read the resolution as modified instead of re-diverging; recorded with OQ9 in the spec Log.

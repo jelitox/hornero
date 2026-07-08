@@ -140,7 +140,7 @@
       "feature": "sdd-toolkit-sync",
       "spec": "sdd/specs/SPEC-002-sdd-toolkit-sync.md",
       "phase": "F3.5",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "M",
       "depends_on": [
@@ -148,10 +148,10 @@
       ],
       "parallel": false,
       "parallelism_notes": "Gate closer; extends the sdd CLI group.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-026-sdd-sync-cli.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-08T00:00:00-03:00",
+      "completed_at": "2026-07-08T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-026-sdd-sync-cli.md"
     },
     {
       "id": "TASK-027",

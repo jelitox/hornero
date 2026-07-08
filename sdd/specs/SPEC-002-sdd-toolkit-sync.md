@@ -265,3 +265,9 @@ has zero LLM dependency.
   refreshes the lock — no real conflict, no human block), and a local file
   at a NEW_UPSTREAM path is adopted-as-modified instead of clobbered
   (mirrors install's adoption rule).
+- 2026-07-08 — OQ9 refined (TASK-026 / fix 9156c24): classify uses BOTH lock
+  legs (upstream moved = U-live vs `upstream_hash`; local moved = C vs
+  `installed_hash`). Consequences: install-adopted files (dirty baseline)
+  read `modified`, never `behind`; upstream moving over a dirty baseline
+  reads `diverged`; `--ours` re-baselines both legs so the resolution reads
+  `modified` (push candidate) instead of re-diverging.
