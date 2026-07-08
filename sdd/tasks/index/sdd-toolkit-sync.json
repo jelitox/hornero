@@ -117,7 +117,7 @@
       "feature": "sdd-toolkit-sync",
       "spec": "sdd/specs/SPEC-002-sdd-toolkit-sync.md",
       "phase": "F3.5",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "M",
       "depends_on": [
@@ -127,10 +127,10 @@
       ],
       "parallel": false,
       "parallelism_notes": "Creates drift.py; may run alongside TASK-024 (disjoint files).",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-025-drift-engine.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-07T00:00:00-03:00",
+      "completed_at": "2026-07-07T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-025-drift-engine.md"
     },
     {
       "id": "TASK-026",

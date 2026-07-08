@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-002 — SDD toolkit: install, memory bootstrap, and cross-repo sync
 **Spec**: `sdd/specs/SPEC-002-sdd-toolkit-sync.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: M (2-4h)
 **Depends-on**: TASK-020, TASK-021, TASK-022
@@ -67,10 +67,8 @@ def test_policies_hold_and_pin(tmp_path): ...
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5
+**Date**: 2026-07-07
+**Notes**: hornero/sdd_toolkit/drift.py — DriftState (6 states + HELD/PINNED), FileDrift with all three hash legs, classify() over the union of resolved-managed + lock entries (sorted), apply_pull() saving the lock iff something changed. Policy local/pinned wins over the hash comparison and is immune even to --force. tests/test_sdd_drift.py: full §6 matrix + the 4 spec'd behaviors + 3 edge tests. Suite 171 passed, ruff + mypy clean.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: three documented refinements, recorded as OQ9 in the spec Log: (1) upstream-deleted files never delete locally (current/modified by C-vs-L); (2) U≠L ∧ C≠L but C=U classifies `behind`, not `diverged` (same bytes on both sides — fast-forward only refreshes the lock); (3) apply_pull adopts (locks as modified) a pre-existing local file at a NEW_UPSTREAM path instead of clobbering it, mirroring install(); PullReport.kept records these.

@@ -257,3 +257,11 @@ has zero LLM dependency.
   `sdd/specs/<slug>.spec.md`, but this repo's live convention is
   `SPEC-NNN-<slug>.md`. Conservative choice: keep `SPEC-NNN-<slug>.md`
   (monotonic ids stay primary; corpus loader accepts both globs).
+- 2026-07-07 — OQ9 recorded (TASK-025): a lock-tracked file DELETED upstream
+  is outside the §6 matrix. Conservative choice: never delete locally — an
+  unmodified copy classifies `current`, an edited one `modified`; pull
+  copies nothing. Two refinements to the literal table: U≠L ∧ C≠L but C=U
+  (both sides landed on the same bytes) reads `behind` (fast-forward only
+  refreshes the lock — no real conflict, no human block), and a local file
+  at a NEW_UPSTREAM path is adopted-as-modified instead of clobbered
+  (mirrors install's adoption rule).
