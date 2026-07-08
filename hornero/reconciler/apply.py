@@ -1,6 +1,6 @@
 """Apply step: approved deltas mutate the repo (SPEC-001 §9 step 5).
 
-The ONLY writer of ``product/specs/`` in the reconcile pipeline, and it
+The ONLY writer of ``sdd/specs/`` in the reconcile pipeline, and it
 re-checks the approval guard itself (defense in depth over the HITL gate):
 anything not APPROVED/EDITED contributes zero filesystem writes. Unified
 diffs apply with exact context or fail that delta cleanly — never fuzzy,

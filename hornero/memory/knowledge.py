@@ -63,7 +63,7 @@ def _kind_of(path: Path) -> str:
 
 
 class TokenOverlapKnowledge:
-    """Deterministic Jaccard-overlap retrieval over ``product/**/*.md`` and
+    """Deterministic Jaccard-overlap retrieval over ``sdd/**/*.md`` and
     processed signals. Stable tie-break by path. Constructible either from a
     live directory scan or from the persisted index that ``hornero reindex``
     writes (see :mod:`hornero.memory.reindex`)."""

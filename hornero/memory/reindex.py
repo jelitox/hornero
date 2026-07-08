@@ -1,6 +1,6 @@
 """``hornero reindex``: the ONLY writer of ``.hornero/knowledge/`` (SPEC-001 §8).
 
-Rebuilds deterministically from ``product/`` + ``.hornero/processed/``:
+Rebuilds deterministically from ``sdd/`` + ``.hornero/processed/``:
 same repo state => byte-identical artifacts (sorted inputs, sorted JSON
 keys, no wall-clock in outputs — provenance is the git ``head_ref``). The
 manifest records source content hashes (feeding ``hornero status``

@@ -1,6 +1,6 @@
 """hornero CLI (SPEC-001 §10). MVP surface:
 
-    hornero init                      scaffold .hornero/ + product/ in an existing repo
+    hornero init                      scaffold .hornero/ + the sdd/ layout in an existing repo
     hornero status                    spec counts by state, pending inbox, index health
     hornero reconcile [--dry-run]     (F2)
     hornero build [SPEC-ID ...]       (F3)
@@ -112,7 +112,7 @@ def _stub(phase: str) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="hornero")
     sub = parser.add_subparsers(dest="command", required=True)
-    p = sub.add_parser("init", help="scaffold .hornero/ + product/")
+    p = sub.add_parser("init", help="scaffold .hornero/ + the sdd/ layout")
     p.add_argument("--hooks", action="store_true",
                    help="also install the post-merge reindex git hook (opt-in)")
     p.add_argument("--print-ci-hook", action="store_true",
@@ -126,7 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("spec_ids", nargs="*")
     p.add_argument("--backend", choices=["cli", "mock"])
     sub.add_parser("reindex", help="rebuild .hornero/knowledge/")
-    p = sub.add_parser("report", help="regenerate product/reports/*.html")
+    p = sub.add_parser("report", help="regenerate sdd/reports/*.html")
     p.add_argument("--only")
 
     p_sdd = sub.add_parser("sdd", help="SDD toolkit management (SPEC-002)")

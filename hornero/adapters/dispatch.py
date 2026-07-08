@@ -56,7 +56,7 @@ def brief_from_spec(
         "\n\n---\n### Write-back contract (SPEC-001 F4)\n\n"
         "Ship in the SAME branch/PR as the code: this spec file with its "
         "frontmatter transitioned to `review`, and regenerated "
-        "`product/reports/` so code + spec + reports land atomically."
+        "`sdd/reports/` so code + spec + reports land atomically."
     )
     return BuildBrief(
         spec_id=doc.spec_id,

@@ -90,7 +90,7 @@ def render_page(title: str, body_html: str, head_ref: str | None) -> str:
 
 
 def spec_href(doc_path: Path) -> str:
-    """Relative link that resolves from ``product/reports/``."""
+    """Relative link that resolves from ``sdd/reports/``."""
     return f"../specs/{doc_path.name}"
 
 

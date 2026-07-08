@@ -1,6 +1,6 @@
 """Spec lifecycle: frontmatter contract + state machine + corpus (SPEC-001 §5).
 
-Spec files under ``product/specs/`` ARE the tracker. This module owns the
+Spec files under ``sdd/specs/`` ARE the tracker. This module owns the
 YAML-frontmatter parse/serialize round-trip (byte-identical for unmodified
 docs, so transitions produce minimal reviewable diffs), the legal status
 transitions, and monotonic id allocation (§4).
