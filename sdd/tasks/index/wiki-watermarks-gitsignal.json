@@ -1,0 +1,111 @@
+{
+  "feature": "wiki-watermarks-gitsignal",
+  "feature_id": "SPEC-003",
+  "spec": "sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-08T00:00:00-03:00",
+  "completed_at": null,
+  "notes": "Phases F6-F8 (SPEC-003: 028-032) / F9-F11 (SPEC-004: 033-035). Gate closers: 028 (F6), 030+031 (F7), 032 (F8), 033 (F9), 034 (F10), 035 (F11).",
+  "tasks": [
+    {
+      "id": "TASK-028",
+      "slug": "watermarks-noop",
+      "title": "Watermark store + content snapshots + no-op discipline (F6 gate closer)",
+      "feature_id": "SPEC-003",
+      "feature": "wiki-watermarks-gitsignal",
+      "spec": "sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md",
+      "phase": "F6",
+      "status": "pending",
+      "priority": "high",
+      "effort": "M",
+      "depends_on": [],
+      "parallel": false,
+      "assigned_to": null,
+      "started_at": null,
+      "completed_at": null,
+      "file": "sdd/tasks/active/TASK-028-watermarks-noop.md"
+    },
+    {
+      "id": "TASK-029",
+      "slug": "redaction-layer",
+      "title": "Shared redact() layer applied to generated surfaces (SPEC-003 §9)",
+      "feature_id": "SPEC-003",
+      "feature": "wiki-watermarks-gitsignal",
+      "spec": "sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md",
+      "phase": "F8",
+      "status": "pending",
+      "priority": "high",
+      "effort": "S",
+      "depends_on": [
+        "TASK-028"
+      ],
+      "parallel": false,
+      "assigned_to": null,
+      "started_at": null,
+      "completed_at": null,
+      "file": "sdd/tasks/active/TASK-029-redaction-layer.md"
+    },
+    {
+      "id": "TASK-030",
+      "slug": "wiki-engine",
+      "title": "hornero wiki init/update — agent-facing living wiki (F7)",
+      "feature_id": "SPEC-003",
+      "feature": "wiki-watermarks-gitsignal",
+      "spec": "sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md",
+      "phase": "F7",
+      "status": "pending",
+      "priority": "high",
+      "effort": "L",
+      "depends_on": [
+        "TASK-028",
+        "TASK-029"
+      ],
+      "parallel": false,
+      "assigned_to": null,
+      "started_at": null,
+      "completed_at": null,
+      "file": "sdd/tasks/active/TASK-030-wiki-engine.md"
+    },
+    {
+      "id": "TASK-031",
+      "slug": "instruction-injection",
+      "title": "CLAUDE.md/AGENTS.md standardized section injection (F7)",
+      "feature_id": "SPEC-003",
+      "feature": "wiki-watermarks-gitsignal",
+      "spec": "sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md",
+      "phase": "F7",
+      "status": "pending",
+      "priority": "medium",
+      "effort": "S",
+      "depends_on": [
+        "TASK-028"
+      ],
+      "parallel": false,
+      "assigned_to": null,
+      "started_at": null,
+      "completed_at": null,
+      "file": "sdd/tasks/active/TASK-031-instruction-injection.md"
+    },
+    {
+      "id": "TASK-032",
+      "slug": "gitsource-budget-ci",
+      "title": "GitSource + delta budget + CI examples (F8 gate closer)",
+      "feature_id": "SPEC-003",
+      "feature": "wiki-watermarks-gitsignal",
+      "spec": "sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md",
+      "phase": "F8",
+      "status": "pending",
+      "priority": "high",
+      "effort": "L",
+      "depends_on": [
+        "TASK-029"
+      ],
+      "parallel": false,
+      "assigned_to": null,
+      "started_at": null,
+      "completed_at": null,
+      "file": "sdd/tasks/active/TASK-032-gitsource-budget-ci.md"
+    }
+  ]
+}

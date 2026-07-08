@@ -1,0 +1,73 @@
+{
+  "feature": "flight-recorder-scribe",
+  "feature_id": "SPEC-004",
+  "spec": "sdd/specs/SPEC-004-flight-recorder-scribe.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-08T00:00:00-03:00",
+  "completed_at": null,
+  "notes": "Phases F6-F8 (SPEC-003: 028-032) / F9-F11 (SPEC-004: 033-035). Gate closers: 028 (F6), 030+031 (F7), 032 (F8), 033 (F9), 034 (F10), 035 (F11).",
+  "tasks": [
+    {
+      "id": "TASK-033",
+      "slug": "flight-recorder",
+      "title": "Trace envelope + recorder + runs CLI (F9 gate closer)",
+      "feature_id": "SPEC-004",
+      "feature": "flight-recorder-scribe",
+      "spec": "sdd/specs/SPEC-004-flight-recorder-scribe.md",
+      "phase": "F9",
+      "status": "pending",
+      "priority": "high",
+      "effort": "L",
+      "depends_on": [
+        "TASK-029"
+      ],
+      "parallel": false,
+      "assigned_to": null,
+      "started_at": null,
+      "completed_at": null,
+      "file": "sdd/tasks/active/TASK-033-flight-recorder.md"
+    },
+    {
+      "id": "TASK-034",
+      "slug": "scribe",
+      "title": "Scribe: trace -> Decision Record with verified citations (F10 gate closer)",
+      "feature_id": "SPEC-004",
+      "feature": "flight-recorder-scribe",
+      "spec": "sdd/specs/SPEC-004-flight-recorder-scribe.md",
+      "phase": "F10",
+      "status": "pending",
+      "priority": "high",
+      "effort": "L",
+      "depends_on": [
+        "TASK-033"
+      ],
+      "parallel": false,
+      "assigned_to": null,
+      "started_at": null,
+      "completed_at": null,
+      "file": "sdd/tasks/active/TASK-034-scribe.md"
+    },
+    {
+      "id": "TASK-035",
+      "slug": "dr-retrieval-synthesis",
+      "title": "DR retrieval surfacing + wiki decision links (F11 gate closer)",
+      "feature_id": "SPEC-004",
+      "feature": "flight-recorder-scribe",
+      "spec": "sdd/specs/SPEC-004-flight-recorder-scribe.md",
+      "phase": "F11",
+      "status": "pending",
+      "priority": "medium",
+      "effort": "M",
+      "depends_on": [
+        "TASK-030",
+        "TASK-034"
+      ],
+      "parallel": false,
+      "assigned_to": null,
+      "started_at": null,
+      "completed_at": null,
+      "file": "sdd/tasks/active/TASK-035-dr-retrieval-synthesis.md"
+    }
+  ]
+}
