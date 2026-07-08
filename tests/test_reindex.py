@@ -11,7 +11,7 @@ from hornero.memory.reindex import index_staleness, load_persisted, reindex
 def _repo(tmp_path, monkeypatch, git=False):
     monkeypatch.chdir(tmp_path)
     assert main(["init"]) == 0
-    specs = tmp_path / "product" / "specs"
+    specs = tmp_path / "sdd" / "specs"
     (specs / "SPEC-001-csv.md").write_text(
         "---\nspec: SPEC-001\ntitle: CSV export\nstatus: done\n---\n\n"
         "Export usage as CSV for finance.\n",
@@ -57,7 +57,7 @@ def test_manifest_contents(tmp_path, monkeypatch):
     assert manifest["layers"]["fallback"] is True
     paths = [s["path"] for s in manifest["sources"]]
     assert ".hornero/processed/note.md" in paths
-    assert "product/specs/SPEC-001-csv.md" in paths
+    assert "sdd/specs/SPEC-001-csv.md" in paths
     assert all(len(s["sha256"]) == 64 for s in manifest["sources"])
 
 
@@ -77,7 +77,7 @@ def test_status_staleness_lifecycle(tmp_path, monkeypatch, capsys):
     assert index_staleness(root) == "absent"
     assert main(["reindex"]) == 0
     assert index_staleness(root) == "fresh"
-    (root / "product" / "specs" / "SPEC-001-csv.md").write_text(
+    (root / "sdd" / "specs" / "SPEC-001-csv.md").write_text(
         "---\nspec: SPEC-001\ntitle: CSV export\nstatus: done\n---\n\nEdited.\n",
         encoding="utf-8",
     )

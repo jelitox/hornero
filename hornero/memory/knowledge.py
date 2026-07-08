@@ -134,7 +134,10 @@ class PageIndexKnowledge:
 
 
 def knowledge_roots(root: Path) -> list[Path]:
-    return [root / "product", root / ".hornero" / "processed"]
+    # SPEC-002 §2/§8: the FULL sdd/ corpus is first-class knowledge — specs,
+    # proposals, findings under sdd/state/*/findings/, templates, task logs —
+    # plus processed signals.
+    return [root / "sdd", root / ".hornero" / "processed"]
 
 
 def open_knowledge(root: Path, config: object = None) -> KnowledgeLayer:

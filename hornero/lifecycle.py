@@ -145,7 +145,11 @@ class SpecCorpus:
         self.specs_dir = specs_dir
         self.docs: list[SpecDoc] = []
         if specs_dir.is_dir():
-            for p in sorted(specs_dir.glob("SPEC-*.md")):
+            # OQ8: both naming conventions load — this repo's SPEC-NNN-<slug>.md
+            # and ai-parrot-style <slug>.spec.md.
+            paths = {p for p in specs_dir.glob("SPEC-*.md")}
+            paths |= {p for p in specs_dir.glob("*.spec.md")}
+            for p in sorted(paths):
                 self.docs.append(parse_spec(p))
         self.by_id: dict[str, SpecDoc] = {d.spec_id: d for d in self.docs}
 

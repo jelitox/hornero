@@ -23,7 +23,7 @@ def _fake_module(name: str) -> types.ModuleType:
 
 
 def _corpus(tmp_path):
-    specs = tmp_path / "product" / "specs"
+    specs = tmp_path / "sdd" / "specs"
     specs.mkdir(parents=True)
     (specs / "SPEC-001-csv-export.md").write_text(
         "Export monthly usage as CSV for finance reconciliation.", encoding="utf-8"
@@ -31,7 +31,7 @@ def _corpus(tmp_path):
     (specs / "SPEC-002-auth.md").write_text(
         "Single sign-on authentication with OIDC.", encoding="utf-8"
     )
-    decisions = tmp_path / "product" / "decisions"
+    decisions = tmp_path / "sdd" / "decisions"
     decisions.mkdir()
     (decisions / "ADR-001-sqlite.md").write_text(
         "We chose SQLite for the ledger.", encoding="utf-8"
@@ -48,7 +48,7 @@ def test_available_reports_fallback_true_and_no_crash():
 
 def test_token_overlap_ranks_relevant_doc_first(tmp_path):
     root = _corpus(tmp_path)
-    layer = TokenOverlapKnowledge([root / "product"])
+    layer = TokenOverlapKnowledge([root / "sdd"])
     hits = layer.retrieve("monthly CSV export for finance")
     assert hits and hits[0].path.endswith("SPEC-001-csv-export.md")
     assert hits[0].kind == "spec"
@@ -56,14 +56,14 @@ def test_token_overlap_ranks_relevant_doc_first(tmp_path):
 
 def test_kind_classification(tmp_path):
     root = _corpus(tmp_path)
-    layer = TokenOverlapKnowledge([root / "product"])
+    layer = TokenOverlapKnowledge([root / "sdd"])
     hits = layer.retrieve("sqlite ledger choice")
     assert hits[0].kind == "decision"
 
 
 def test_retrieval_deterministic(tmp_path):
     root = _corpus(tmp_path)
-    layer = TokenOverlapKnowledge([root / "product"])
+    layer = TokenOverlapKnowledge([root / "sdd"])
     a = layer.retrieve("usage export", k=3)
     b = layer.retrieve("usage export", k=3)
     assert a == b
@@ -73,7 +73,7 @@ def test_empty_corpus_and_empty_query(tmp_path):
     layer = TokenOverlapKnowledge([tmp_path / "nope"])
     assert layer.retrieve("anything") == []
     root = _corpus(tmp_path)
-    assert TokenOverlapKnowledge([root / "product"]).retrieve("") == []
+    assert TokenOverlapKnowledge([root / "sdd"]).retrieve("") == []
 
 
 def test_open_knowledge_falls_back_without_parrot(tmp_path):

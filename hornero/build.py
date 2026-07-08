@@ -50,7 +50,9 @@ def run_build(
     now = time.time() if now is None else now
     today = date.today().isoformat() if today is None else today
 
-    corpus = SpecCorpus(root / "product" / "specs")
+    from hornero import layout
+
+    corpus = SpecCorpus(layout.specs_dir(root))
     approved = [d.spec_id for d in corpus.docs if d.status is Status.APPROVED]
 
     if spec_ids:
@@ -77,7 +79,7 @@ def run_build(
 
     backend_order = [backend] if backend else cfg.dispatch.backend_order
     dispatcher = MulticodersDispatch(backend_order, root)
-    tracker = RepoTracker(root / "product" / "specs", clock=lambda: today)
+    tracker = RepoTracker(layout.specs_dir(root), clock=lambda: today)
     ledger = Ledger(root / ".hornero" / "ledger.db")
     run_id = ledger.next_run_id()
     ledger.record_run(run_id, "build", now)
@@ -89,7 +91,7 @@ def run_build(
         tracker.comment(spec_id, f"build started (run {run_id}, backend "
                                  f"{dispatcher.backend_name}).")
         brief = brief_from_spec(
-            doc, str(root), cfg.criterion_allowlist, root / "product" / "decisions"
+            doc, str(root), cfg.criterion_allowlist, layout.decisions_dir(root)
         )
         result = dispatcher.dispatch(brief)
         ledger.record_dispatch(

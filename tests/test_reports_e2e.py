@@ -44,10 +44,10 @@ Send a digest from src/digest.
 def repo(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     assert main(["init"]) == 0
-    specs = tmp_path / "product" / "specs"
+    specs = tmp_path / "sdd" / "specs"
     (specs / "SPEC-001-csv.md").write_text(DONE_SPEC, encoding="utf-8")
     (specs / "SPEC-002-digest.md").write_text(APPROVED_SPEC, encoding="utf-8")
-    (tmp_path / "product" / "decisions" / "ADR-001-format.md").write_text(
+    (tmp_path / "sdd" / "decisions" / "ADR-001-format.md").write_text(
         "# ADR-001 — CSV over XLSX for SPEC-001\n", encoding="utf-8"
     )
     (tmp_path / ".hornero" / "processed" / "note.md").write_text(
@@ -72,7 +72,7 @@ def repo(tmp_path, monkeypatch):
 
 def test_f5_gate_all_reports_offline(repo, block_network):
     assert main(["report"]) == 0
-    reports = repo / "product" / "reports"
+    reports = repo / "sdd" / "reports"
     names = sorted(p.name for p in reports.glob("*.html"))
     assert names == ["capabilities.html", "traceability.html", "workflows.html"]
     for name in names:  # every done spec appears in each report
@@ -81,7 +81,7 @@ def test_f5_gate_all_reports_offline(repo, block_network):
 
 def test_reports_content_specifics(repo, block_network):
     assert main(["report"]) == 0
-    reports = repo / "product" / "reports"
+    reports = repo / "sdd" / "reports"
     workflows = (reports / "workflows.html").read_text(encoding="utf-8")
     assert "Shipped" in workflows and "ADR-001" in workflows
     assert "<code>exporter</code>" in workflows
@@ -93,7 +93,7 @@ def test_reports_content_specifics(repo, block_network):
 
 def test_only_flag(repo, capsys):
     assert main(["report", "--only", "workflows"]) == 0
-    reports = repo / "product" / "reports"
+    reports = repo / "sdd" / "reports"
     assert [p.name for p in reports.glob("*.html")] == ["workflows.html"]
     assert main(["report", "--only", "nonsense"]) == 1
     assert "unknown report" in capsys.readouterr().out
@@ -101,7 +101,7 @@ def test_only_flag(repo, capsys):
 
 def test_traceability_gaps_rendered(repo, block_network):
     assert main(["report", "--only", "traceability"]) == 0
-    trace = (repo / "product" / "reports" / "traceability.html").read_text(
+    trace = (repo / "sdd" / "reports" / "traceability.html").read_text(
         encoding="utf-8"
     )
     # SPEC-002 has no deltas/PR/merge yet: its row must show explicit gaps
@@ -109,9 +109,36 @@ def test_traceability_gaps_rendered(repo, block_network):
     assert '<span class="gap">—</span>' in row
 
 
+def test_traceability_sdd_task_column(repo, block_network):
+    # SPEC-002 §8: task ids from sdd/tasks/index/*.json show up per spec —
+    # matched by feature_id (SPEC-001) or by spec-file reference (SPEC-002).
+    import json
+
+    index = repo / "sdd" / "tasks" / "index"
+    (index / "csv.json").write_text(json.dumps({
+        "feature_id": "SPEC-001",
+        "tasks": [
+            {"id": "TASK-002", "feature_id": "SPEC-001"},
+            {"id": "TASK-001", "feature_id": "SPEC-001"},
+        ],
+    }), encoding="utf-8")
+    (index / "digest.json").write_text(json.dumps({
+        "tasks": [{"id": "TASK-009", "spec": "sdd/specs/SPEC-002-digest.md"}],
+    }), encoding="utf-8")
+    (index / "broken.json").write_text("{not json", encoding="utf-8")
+    assert main(["report", "--only", "traceability"]) == 0
+    trace = (repo / "sdd" / "reports" / "traceability.html").read_text(
+        encoding="utf-8"
+    )
+    assert "<th>SDD tasks</th>" in trace
+    row1 = trace[trace.index("SPEC-001"):trace.index("SPEC-002")]
+    assert "TASK-001, TASK-002" in row1  # sorted, deduped
+    assert "TASK-009" in trace[trace.index("SPEC-002"):]
+
+
 def test_build_triggers_report_refresh(repo, block_network):
     assert main(["build", "--backend", "mock"]) == 0  # SPEC-002 is approved
-    reports = repo / "product" / "reports"
+    reports = repo / "sdd" / "reports"
     assert (reports / "capabilities.html").exists()
     # the refreshed report reflects the post-build state (review)
     caps = (reports / "capabilities.html").read_text(encoding="utf-8")
@@ -120,7 +147,7 @@ def test_build_triggers_report_refresh(repo, block_network):
 
 def test_deterministic_across_runs(repo, block_network):
     assert main(["report"]) == 0
-    reports = repo / "product" / "reports"
+    reports = repo / "sdd" / "reports"
     first = {p.name: p.read_bytes() for p in reports.glob("*.html")}
     assert main(["report"]) == 0
     second = {p.name: p.read_bytes() for p in reports.glob("*.html")}

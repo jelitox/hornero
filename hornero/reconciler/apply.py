@@ -32,6 +32,7 @@ class ApplyReport:
     created: list[str] = field(default_factory=list)
     patched: list[str] = field(default_factory=list)
     obsoleted: list[str] = field(default_factory=list)
+    proposals: list[str] = field(default_factory=list)  # SPEC-002 §2
     adrs: list[str] = field(default_factory=list)
     errors: list[tuple[str, str]] = field(default_factory=list)
     acked_signals: list[str] = field(default_factory=list)
@@ -168,12 +169,46 @@ def _write_adr(
     return adr_id
 
 
+def _write_proposal(
+    proposals_dir: Path,
+    templates_dir: Path,
+    delta: RequirementDelta,
+    today: str,
+) -> str:
+    """SPEC-002 §2: a NEW delta whose patch is not a valid spec becomes a
+    brainstorm proposal in ``sdd/proposals/`` instead of an error."""
+    proposals_dir.mkdir(parents=True, exist_ok=True)
+    name = f"{_slug(delta.title)}.brainstorm.md"
+    evidence = "\n".join(
+        f"- {ev.signal_id} @ {ev.locator}: {ev.excerpt!r}" for ev in delta.evidence
+    )
+    template = templates_dir / "brainstorm.md"
+    header = (
+        template.read_text(encoding="utf-8").strip() + "\n\n---\n\n"
+        if template.is_file()
+        else ""
+    )
+    (proposals_dir / name).write_text(
+        f"{header}# Brainstorm: {delta.title}\n\n"
+        f"- Date: {today}\n- Origin delta: {delta.delta_id} "
+        f"(confidence {delta.confidence:.2f})\n\n"
+        f"## Summary\n\n{delta.summary}\n\n"
+        f"## Evidence\n\n{evidence}\n\n"
+        f"## Raw proposal\n\n{delta.proposed_patch}\n",
+        encoding="utf-8",
+    )
+    return name
+
+
 def apply_deltas(
     reviewed: list[ReviewedDelta],
     corpus: SpecCorpus,
     tracker: TrackerPort,
     source: SignalSource,
+    *,
     decisions_dir: Path,
+    proposals_dir: Path,
+    templates_dir: Path,
     today: str,
 ) -> ApplyReport:
     report = ApplyReport()
@@ -199,15 +234,26 @@ def apply_deltas(
         )
         try:
             if delta.kind is DeltaKind.NEW:
-                spec_id = _next_spec_id()
-                text = _prepare_new_spec_text(patch, spec_id, _signal_ids(delta))
+                # §2 routing: a patch carrying valid spec frontmatter becomes
+                # a spec; anything else becomes a brainstorm proposal.
+                try:
+                    spec_id = _next_spec_id()
+                    text = _prepare_new_spec_text(patch, spec_id, _signal_ids(delta))
+                except SpecParseError:
+                    report.proposals.append(
+                        _write_proposal(proposals_dir, templates_dir, delta, today)
+                    )
+                    continue
                 path = corpus.specs_dir / f"{spec_id}-{_slug(delta.title)}.md"
                 path.write_text(text, encoding="utf-8")
                 try:
                     parse_spec(path)  # must be a valid spec or nothing lands
                 except SpecParseError:
                     path.unlink()
-                    raise
+                    report.proposals.append(
+                        _write_proposal(proposals_dir, templates_dir, delta, today)
+                    )
+                    continue
                 created_ids.append(spec_id)
                 tracker.transition(spec_id, "approved")
                 tracker.comment(

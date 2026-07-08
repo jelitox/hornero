@@ -76,9 +76,11 @@ def run_reconcile(
     now = time.time() if now is None else now
     today = date.today().isoformat() if today is None else today
 
+    from hornero import layout
+
     ledger = Ledger(root / ".hornero" / "ledger.db")
     source = InboxSource(root / ".hornero")
-    corpus = SpecCorpus(root / "product" / "specs")
+    corpus = SpecCorpus(layout.specs_dir(root))
     knowledge = open_knowledge(root)
 
     run_id = ledger.next_run_id()
@@ -127,10 +129,13 @@ def run_reconcile(
         return 0
 
     reviewed = gate(deltas, channel)
-    tracker = RepoTracker(root / "product" / "specs", clock=lambda: today)
+    tracker = RepoTracker(layout.specs_dir(root), clock=lambda: today)
     report = apply_deltas(
         reviewed, corpus, tracker, source,
-        root / "product" / "decisions", today,
+        decisions_dir=layout.decisions_dir(root),
+        proposals_dir=layout.proposals_dir(root),
+        templates_dir=layout.templates_dir(root),
+        today=today,
     )
 
     # OQ2 (resolved: yes, F4): DUPLICATE deltas leave signal-strength
@@ -166,8 +171,8 @@ def run_reconcile(
 
     echo(
         f"applied: {len(report.created)} created, {len(report.patched)} patched, "
-        f"{len(report.obsoleted)} obsoleted, {len(report.adrs)} ADR(s), "
-        f"{len(report.acked_signals)} signal(s) acked."
+        f"{len(report.obsoleted)} obsoleted, {len(report.proposals)} proposal(s), "
+        f"{len(report.adrs)} ADR(s), {len(report.acked_signals)} signal(s) acked."
     )
     for delta_id, msg in report.errors:
         echo(f"  ERROR {delta_id}: {msg}")

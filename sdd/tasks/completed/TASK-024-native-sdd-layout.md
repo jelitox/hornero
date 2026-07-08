@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-002 — SDD toolkit: install, memory bootstrap, and cross-repo sync
 **Spec**: `sdd/specs/SPEC-002-sdd-toolkit-sync.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L (4-8h)
 **Depends-on**: TASK-023
@@ -85,10 +85,8 @@ def test_traceability_sdd_task_column(...): ...
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5
+**Date**: 2026-07-07
+**Notes**: New hornero/layout.py is the single path resolver (sdd/specs, sdd/decisions, sdd/reports, sdd/proposals, sdd/templates, sdd/tasks/index). init scaffolds the full SDD skeleton via scaffold_dirs (no product/), runs sdd install last only when sdd_upstream is configured (offline-safe), --no-sdd skips with no hint. SpecCorpus loads both SPEC-*.md and *.spec.md (OQ8). knowledge_roots => sdd/ + .hornero/processed/. Invalid NEW patch now routes to sdd/proposals/<slug>.brainstorm.md (repo brainstorm template header when present), recorded in ApplyReport.proposals, signal still acked — no longer an error. Traceability gains an "SDD tasks" column matching by feature_id OR per-task spec-file reference; a broken index JSON never breaks the report. All suites migrated to the sdd/ layout. Gates: init+status exit 0, F2 reconcile e2e green, full suite 163 passed, ruff + mypy clean.
 
 **Deviations from spec**: none

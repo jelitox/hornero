@@ -59,7 +59,7 @@ def _build_repo(tmp_path, monkeypatch):
     evidence excerpts are verbatim quotes of those notes."""
     monkeypatch.chdir(tmp_path)
     assert main(["init"]) == 0
-    (tmp_path / "product" / "specs" / "SPEC-001-csv-export.md").write_text(
+    (tmp_path / "sdd" / "specs" / "SPEC-001-csv-export.md").write_text(
         FIXTURE_SPEC, encoding="utf-8"
     )
     for note in sorted(FIXTURES.glob("note-*.md")):
@@ -166,9 +166,9 @@ def test_approved_deltas_applied_and_acked(tmp_path, monkeypatch):
     ])
     rc = run_reconcile(root, channel=channel, now=100.0, today="2026-07-07")
     assert rc == 0
-    created = parse_spec(next((root / "product" / "specs").glob("SPEC-002-*.md")))
+    created = parse_spec(next((root / "sdd" / "specs").glob("SPEC-002-*.md")))
     assert created.status is Status.APPROVED
-    patched = parse_spec(root / "product" / "specs" / "SPEC-001-csv-export.md")
+    patched = parse_spec(root / "sdd" / "specs" / "SPEC-001-csv-export.md")
     assert "Include the customer id column." in patched.body
     remaining = [Path(s["path"]).name for s in InboxSource(root / ".hornero").poll()]
     assert remaining == ["note-c.md"]  # duplicate-only signal stays (skipped)

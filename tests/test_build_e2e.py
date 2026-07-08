@@ -33,7 +33,7 @@ def repo(tmp_path, monkeypatch):
 
 
 def _add_spec(repo, text=APPROVED_SPEC, name="SPEC-002-digest.md"):
-    (repo / "product" / "specs" / name).write_text(text, encoding="utf-8")
+    (repo / "sdd" / "specs" / name).write_text(text, encoding="utf-8")
 
 
 def test_f3_gate_approved_to_review_with_fake_pr(repo, capsys):
@@ -42,7 +42,7 @@ def test_f3_gate_approved_to_review_with_fake_pr(repo, capsys):
     out = capsys.readouterr().out
     assert "SPEC-002: completed -> review" in out
 
-    doc = parse_spec(repo / "product" / "specs" / "SPEC-002-digest.md")
+    doc = parse_spec(repo / "sdd" / "specs" / "SPEC-002-digest.md")
     assert doc.status is Status.REVIEW
     log = doc.body[doc.body.index("## Log"):]
     assert "build started" in log and "PR opened: https://example.invalid/pr/SPEC-002-1" in log
@@ -75,7 +75,7 @@ def test_explicit_unapproved_id_rejected_all_or_nothing(repo, capsys):
     out = capsys.readouterr().out
     assert "not approved: SPEC-003 (status: proposed)" in out
     # nothing transitioned — not even the approved one (all-or-nothing)
-    assert parse_spec(repo / "product" / "specs" / "SPEC-002-digest.md").status is Status.APPROVED
+    assert parse_spec(repo / "sdd" / "specs" / "SPEC-002-digest.md").status is Status.APPROVED
     with Ledger(repo / ".hornero" / "ledger.db") as led:
         assert led.dispatches() == []
 
@@ -89,7 +89,7 @@ def test_failed_dispatch_goes_needs_human(repo, capsys):
     _add_spec(repo)
     # 'cli' backend is unavailable in this venv => needs_human path
     assert main(["build", "--backend", "cli"]) == 1
-    doc = parse_spec(repo / "product" / "specs" / "SPEC-002-digest.md")
+    doc = parse_spec(repo / "sdd" / "specs" / "SPEC-002-digest.md")
     assert doc.status is Status.NEEDS_HUMAN
     assert "see log" in doc.body
     with Ledger(repo / ".hornero" / "ledger.db") as led:

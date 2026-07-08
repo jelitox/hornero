@@ -89,7 +89,7 @@ def test_f4_gate_reindex_then_duplicate(tmp_path, monkeypatch):
         now=100.0, today="2026-07-07",
     )
     assert rc == 0
-    spec2 = next((root / "product" / "specs").glob("SPEC-001-*.md"))
+    spec2 = next((root / "sdd" / "specs").glob("SPEC-001-*.md"))
     assert InboxSource(root / ".hornero").poll() == []  # acked
 
     # Merge trigger: reindex picks up the built state.
@@ -103,7 +103,7 @@ def test_f4_gate_reindex_then_duplicate(tmp_path, monkeypatch):
     assert rc == 0
 
     # Exactly one DUPLICATE, no new spec, ledger records it.
-    specs = sorted(p.name for p in (root / "product" / "specs").glob("SPEC-*.md"))
+    specs = sorted(p.name for p in (root / "sdd" / "specs").glob("SPEC-*.md"))
     assert len(specs) == 1 and specs[0].startswith("SPEC-001-")
     with Ledger(root / ".hornero" / "ledger.db") as led:
         dups = [d for d in led.deltas() if d["kind"] == "duplicate"]

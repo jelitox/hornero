@@ -23,7 +23,7 @@ acceptance_criteria: []
 
 
 def _repo(tmp_path):
-    specs = tmp_path / "product" / "specs"
+    specs = tmp_path / "sdd" / "specs"
     specs.mkdir(parents=True)
     (tmp_path / ".hornero").mkdir()
     (specs / "SPEC-001-csv.md").write_text(
@@ -74,7 +74,7 @@ def test_deterministic_output(tmp_path):
 
 
 def test_empty_corpus_renders(tmp_path):
-    (tmp_path / "product" / "specs").mkdir(parents=True)
+    (tmp_path / "sdd" / "specs").mkdir(parents=True)
     (tmp_path / ".hornero").mkdir()
     html = generate(build_context(tmp_path))
     assert "No specs yet" in html

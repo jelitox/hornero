@@ -30,20 +30,19 @@ models: {}
 """
 
 _HORNERO_DIRS = ("inbox", "processed", "knowledge")
-_PRODUCT_DIRS = ("specs", "decisions", "reports")
 _GITIGNORE_LINE = ".hornero/ledger.db*"  # includes SQLite -wal/-shm siblings
 
 
-def _cmd_init(root: Path) -> int:
+def _cmd_init(root: Path, *, no_sdd: bool = False) -> int:
+    from hornero.layout import SDD_STATE_DIRS
+    from hornero.sdd_toolkit.install import scaffold_dirs
+
     hornero_dir = root / ".hornero"
     for name in _HORNERO_DIRS:
         d = hornero_dir / name
         d.mkdir(parents=True, exist_ok=True)
         (d / ".gitkeep").touch()
-    for name in _PRODUCT_DIRS:
-        d = root / "product" / name
-        d.mkdir(parents=True, exist_ok=True)
-        (d / ".gitkeep").touch()
+    scaffold_dirs(root, SDD_STATE_DIRS)  # SPEC-002 §2: SDD layout is native
 
     config = hornero_dir / "config.yaml"
     if not config.exists():  # never overwrite an existing config
@@ -57,6 +56,25 @@ def _cmd_init(root: Path) -> int:
 
     Ledger(hornero_dir / "ledger.db").close()  # idempotent schema init
     print(f"initialized hornero in {root}")
+
+    # SPEC-002 §8: toolkit install is init's final step, skippable and
+    # offline-safe (runs only when an upstream is explicitly configured).
+    if no_sdd:
+        return 0
+    try:
+        upstream = load_config(root).sdd_upstream
+    except ConfigError:
+        upstream = ""
+    if upstream:
+        from datetime import datetime, timezone
+
+        from hornero.sdd_toolkit.install import install
+
+        return install(
+            root, upstream, load_config(root).sdd_ref,
+            synced_at=datetime.now(timezone.utc).isoformat(),
+        )
+    print("hint: run 'hornero sdd install --from <toolkit-repo>' to add the SDD toolkit")
     return 0
 
 
@@ -67,7 +85,9 @@ def _cmd_status(root: Path) -> int:
         print(f"config error: {exc}", file=sys.stderr)
         return 1
 
-    corpus = SpecCorpus(root / "product" / "specs")
+    from hornero.layout import specs_dir
+
+    corpus = SpecCorpus(specs_dir(root))
     counts = corpus.counts_by_status()
     print(f"specs: {len(corpus.docs)} total")
     for status in Status:
@@ -97,6 +117,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="also install the post-merge reindex git hook (opt-in)")
     p.add_argument("--print-ci-hook", action="store_true",
                    help="print a CI reindex snippet and exit (writes nothing)")
+    p.add_argument("--no-sdd", action="store_true",
+                   help="skip the SDD toolkit install step")
     sub.add_parser("status", help="spec counts, inbox, index health")
     p = sub.add_parser("reconcile", help="poll -> deltas -> HITL -> apply")
     p.add_argument("--dry-run", action="store_true")
@@ -162,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
 
             print(CI_SNIPPET, end="")
             return 0
-        rc = _cmd_init(root)
+        rc = _cmd_init(root, no_sdd=args.no_sdd)
         if rc == 0 and args.hooks:
             from hornero.hooks import HookError, install_post_merge_hook
 

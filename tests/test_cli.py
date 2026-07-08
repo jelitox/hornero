@@ -17,15 +17,25 @@ def _tree(root):
     )
 
 
-def test_init_scaffolds_layout(repo, capsys):
+def test_init_scaffolds_sdd_layout(repo, capsys):
+    from hornero.layout import SDD_STATE_DIRS
+
     assert main(["init"]) == 0
     for d in ("inbox", "processed", "knowledge"):
         assert (repo / ".hornero" / d / ".gitkeep").exists()
-    for d in ("specs", "decisions", "reports"):
-        assert (repo / "product" / d / ".gitkeep").exists()
+    for d in SDD_STATE_DIRS:
+        assert (repo / d).is_dir(), d
+    assert not (repo / "product").exists()  # SPEC-002 §2: product/ is gone
     assert (repo / ".hornero" / "config.yaml").exists()
     assert (repo / ".hornero" / "ledger.db").exists()
     assert ".hornero/ledger.db" in (repo / ".gitignore").read_text()
+    # offline-safe: no upstream configured -> install skipped with a hint
+    assert "hornero sdd install" in capsys.readouterr().out
+
+
+def test_init_no_sdd_flag_skips_hint(repo, capsys):
+    assert main(["init", "--no-sdd"]) == 0
+    assert "hornero sdd install" not in capsys.readouterr().out
 
 
 def test_init_idempotent(repo):
@@ -56,7 +66,7 @@ def test_f1_gate_init_then_status_exit_zero(repo, capsys):
 
 def test_status_counts_specs_and_inbox(repo, capsys):
     main(["init"])
-    (repo / "product" / "specs" / "SPEC-001-x.md").write_text(
+    (repo / "sdd" / "specs" / "SPEC-001-x.md").write_text(
         "---\nspec: SPEC-001\ntitle: X\nstatus: approved\n---\n\nBody.\n",
         encoding="utf-8",
     )

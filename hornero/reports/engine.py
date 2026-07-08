@@ -50,19 +50,23 @@ class ReportContext:
     knowledge: KnowledgeLayer
     ledger: Ledger
     decisions_dir: Path
+    tasks_index_dir: Path  # SPEC-002 §8: sdd/tasks/index/*.json
     head_ref: str | None
 
 
 def build_context(root: Path) -> ReportContext:
+    from hornero import layout
+
     head_ref = None
     manifest = root / ".hornero" / "knowledge" / "manifest.json"
     if manifest.is_file():
         head_ref = json.loads(manifest.read_text(encoding="utf-8")).get("head_ref")
     return ReportContext(
-        corpus=SpecCorpus(root / "product" / "specs"),
+        corpus=SpecCorpus(layout.specs_dir(root)),
         knowledge=open_knowledge(root),
         ledger=Ledger(root / ".hornero" / "ledger.db"),
-        decisions_dir=root / "product" / "decisions",
+        decisions_dir=layout.decisions_dir(root),
+        tasks_index_dir=layout.tasks_index_dir(root),
         head_ref=head_ref,
     )
 
@@ -91,7 +95,9 @@ def spec_href(doc_path: Path) -> str:
 
 
 def write_report(root: Path, name: str, html_text: str) -> Path:
-    reports_dir = root / "product" / "reports"
+    from hornero import layout
+
+    reports_dir = layout.reports_dir(root)
     reports_dir.mkdir(parents=True, exist_ok=True)
     out = reports_dir / name
     out.write_text(html_text, encoding="utf-8")
