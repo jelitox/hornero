@@ -60,7 +60,15 @@ def classify(
 ) -> list[FileDrift]:
     """The §6 matrix over the union of upstream managed files and lock
     entries, sorted by path. Policy ``local``/``pinned`` wins over the hash
-    comparison: those files are reported (HELD/PINNED) and never pulled."""
+    comparison: those files are reported (HELD/PINNED) and never pulled.
+
+    Both lock legs matter: "upstream moved" is U-live vs
+    ``entry.upstream_hash``, "local moved" is C vs ``entry.installed_hash``.
+    A file install() adopted as locally modified has a *dirty baseline*
+    (installed != upstream at sync time) — it must read MODIFIED (push
+    candidate), never BEHIND, or a pull would clobber the very file
+    adoption kept. When upstream later moves over a dirty baseline the
+    human decides: DIVERGED."""
     paths = sorted(set(resolve_managed(upstream_root, manifest)) | set(lock.files))
     drifts: list[FileDrift] = []
     for rel in paths:
@@ -76,20 +84,31 @@ def classify(
             state = DriftState.PINNED
         elif current is None:
             state = DriftState.DELETED_LOCALLY
-        elif current == entry.installed_hash:
-            # OQ9: upstream deletion is outside the §6 matrix — a missing
-            # upstream file never fast-forwards (nothing to copy), so an
-            # unmodified local copy stays `current`.
-            if upstream is None or upstream == entry.installed_hash:
-                state = DriftState.CURRENT
-            else:
-                state = DriftState.BEHIND
-        elif upstream is None or upstream == entry.installed_hash:
-            state = DriftState.MODIFIED
+        elif upstream is None:
+            # OQ9: upstream deletion is outside the §6 matrix — nothing to
+            # copy, never delete locally.
+            state = (
+                DriftState.CURRENT
+                if current == entry.installed_hash
+                else DriftState.MODIFIED
+            )
         elif current == upstream:
-            # Both moved but to the SAME bytes (e.g. hand-copied upstream):
-            # nothing conflicts — fast-forward just refreshes the lock.
-            state = DriftState.BEHIND
+            # Disk already matches upstream-now; stale lock legs are a
+            # fast-forward (copy is a no-op, the lock refreshes).
+            state = (
+                DriftState.CURRENT
+                if entry.installed_hash == upstream and entry.upstream_hash == upstream
+                else DriftState.BEHIND
+            )
+        elif upstream == entry.upstream_hash:
+            # Upstream unmoved since sync; disk differs from it — locally
+            # edited OR adopted-as-modified. Either way: push candidate.
+            state = DriftState.MODIFIED
+        elif (
+            current == entry.installed_hash
+            and entry.installed_hash == entry.upstream_hash
+        ):
+            state = DriftState.BEHIND  # clean baseline, only upstream moved
         else:
             state = DriftState.DIVERGED
 

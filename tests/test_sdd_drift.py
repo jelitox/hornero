@@ -123,6 +123,28 @@ def test_upstream_deletion_never_fast_forwards(tmp_path):
     assert report.pulled == [] and (repo / kept).read_text() == "K1"
 
 
+def test_adopted_as_modified_never_reads_behind(tmp_path):
+    # install() keeps a hand-modified file and locks it with a DIRTY baseline
+    # (installed_hash = local, upstream_hash = upstream). It must classify
+    # MODIFIED — a BEHIND reading would let the next pull clobber the very
+    # file adoption kept.
+    up, repo = tmp_path / "up", tmp_path / "repo"
+    rel = ".claude/commands/adopted.md"
+    _write(up, rel, "U0")
+    _write(repo, rel, "my local flavor")
+    lock = _lock({rel: FileEntry(
+        upstream_hash=_sha("U0"), installed_hash=_sha("my local flavor"),
+    )})
+    (drift,) = classify(up, repo, MANIFEST, lock)
+    assert drift.state is DriftState.MODIFIED
+    report = apply_pull([drift], up, repo, lock)
+    assert report.pulled == [] and (repo / rel).read_text() == "my local flavor"
+    # upstream then moves over the dirty baseline: the human decides
+    _write(up, rel, "U1")
+    (drift,) = classify(up, repo, MANIFEST, lock)
+    assert drift.state is DriftState.DIVERGED
+
+
 def test_pull_fast_forwards_behind_and_new(tmp_path):
     up, repo, lock = _matrix(tmp_path)
     d = ".claude/commands"
