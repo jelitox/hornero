@@ -34,17 +34,17 @@
       "feature": "wiki-watermarks-gitsignal",
       "spec": "sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md",
       "phase": "F8",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "effort": "S",
       "depends_on": [
         "TASK-028"
       ],
       "parallel": false,
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-029-redaction-layer.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-08T00:00:00-03:00",
+      "completed_at": "2026-07-08T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-029-redaction-layer.md"
     },
     {
       "id": "TASK-030",

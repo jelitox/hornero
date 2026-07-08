@@ -8,13 +8,15 @@ overrides for one run). All process execution goes through an injected
 spawn a real ``gh``.
 """
 
-import re
 import shutil
 import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+# Secret shapes live in the shared redaction layer (SPEC-003 §9); push keeps
+# refusal semantics (scan, don't rewrite) on top of the same pattern set.
+from hornero.redact import SECRET_PATTERNS, scan_secrets  # noqa: F401
 from hornero.sdd_toolkit.cli_sync import Echo, SyncError, cmd_sync
 from hornero.sdd_toolkit.drift import DriftState, classify
 from hornero.sdd_toolkit.lock import load_lock
@@ -33,16 +35,6 @@ Runner = Callable[[list[str], Path], RunResult]
 
 DEFAULT_BRANCHES = ("main", "master")
 
-SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("AWS access key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
-    ("GitHub token", re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}")),
-    ("GitHub fine-grained PAT", re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}")),
-    ("secret key (sk-...)", re.compile(r"\bsk-[A-Za-z0-9_-]{16,}")),
-    ("bearer token", re.compile(r"\bBearer\s+[A-Za-z0-9._-]{20,}")),
-    ("private key block", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
-    ("URL with userinfo", re.compile(r"[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@")),
-]
-
 
 def subprocess_runner(cmd: list[str], cwd: Path) -> RunResult:
     """Prod runner. A missing binary (e.g. ``gh`` not installed) is a clear
@@ -52,10 +44,6 @@ def subprocess_runner(cmd: list[str], cwd: Path) -> RunResult:
     except FileNotFoundError:
         return RunResult(127, "", f"{cmd[0]}: command not found — is it installed?")
     return RunResult(proc.returncode, proc.stdout, proc.stderr)
-
-
-def scan_secrets(text: str) -> list[str]:
-    return [name for name, pattern in SECRET_PATTERNS if pattern.search(text)]
 
 
 def push(

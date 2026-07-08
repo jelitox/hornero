@@ -96,9 +96,10 @@ def spec_href(doc_path: Path) -> str:
 
 def write_report(root: Path, name: str, html_text: str) -> Path:
     from hornero import layout
+    from hornero.redact import redact
 
     reports_dir = layout.reports_dir(root)
     reports_dir.mkdir(parents=True, exist_ok=True)
     out = reports_dir / name
-    out.write_text(html_text, encoding="utf-8")
+    out.write_text(redact(html_text), encoding="utf-8")
     return out
