@@ -271,3 +271,7 @@ has zero LLM dependency.
   read `modified`, never `behind`; upstream moving over a dirty baseline
   reads `diverged`; `--ours` re-baselines both legs so the resolution reads
   `modified` (push candidate) instead of re-diverging.
+- 2026-07-08 — All 8 tasks (020–027) completed; phase gates F2.5, F3.5 and
+  F4.5 verified green verbatim (install+adopt+idempotent lock; six-state
+  matrix per §6 with diverged blocking exit != 0; mock-gh push payloads +
+  lockfile-only workspace fanout). SPEC-002 scope is built.

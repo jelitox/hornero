@@ -5,7 +5,7 @@
   "type": "feature",
   "base_branch": "master",
   "created_at": "2026-07-07T00:00:00-03:00",
-  "completed_at": null,
+  "completed_at": "2026-07-08T00:00:00-03:00",
   "notes": "Phases F2.5 (020-023), amendment §2 (024), F3.5 (025-026), F4.5 (027). Gate closers: 023, 026, 027. Depends on SPEC-001 (all gates green as of decomposition).",
   "tasks": [
     {
@@ -161,7 +161,7 @@
       "feature": "sdd-toolkit-sync",
       "spec": "sdd/specs/SPEC-002-sdd-toolkit-sync.md",
       "phase": "F4.5",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "effort": "L",
       "depends_on": [
@@ -169,10 +169,10 @@
       ],
       "parallel": false,
       "parallelism_notes": "Gate closer for F4.5 and SPEC-002.",
-      "assigned_to": null,
-      "started_at": null,
-      "completed_at": null,
-      "file": "sdd/tasks/active/TASK-027-sdd-push-workspace.md"
+      "assigned_to": "claude-fable-5",
+      "started_at": "2026-07-08T00:00:00-03:00",
+      "completed_at": "2026-07-08T00:00:00-03:00",
+      "file": "sdd/tasks/completed/TASK-027-sdd-push-workspace.md"
     }
   ]
 }

@@ -146,12 +146,18 @@ def build_parser() -> argparse.ArgumentParser:
     py = sdd_sub.add_parser("sync", help="pull toolkit updates (pull is the default)")
     py.add_argument("--pull", action="store_true",
                     help="pull direction (the default; flag kept for symmetry)")
+    py.add_argument("--push", nargs="*", default=None, metavar="FILE",
+                    help="promote modified files upstream via a PR")
+    py.add_argument("--workspace", default=None, metavar="DIR",
+                    help="pull-sync every child repo carrying .hornero/sdd.lock")
     py.add_argument("--dry-run", action="store_true")
     py.add_argument("--theirs", action="append", default=[], metavar="FILE",
                     help="resolve a diverged file by copying upstream")
     py.add_argument("--ours", action="append", default=[], metavar="FILE",
                     help="resolve a diverged file by keeping local (re-baseline)")
     py.add_argument("--force", action="store_true")
+    py.add_argument("--allow-secrets", action="store_true",
+                    help="override the push secret scan for this run")
     py.add_argument("--from", dest="source", default=None)
     py.add_argument("--ref", default=None)
     for name, help_text in (
@@ -177,6 +183,21 @@ def _cmd_sdd(args: argparse.Namespace, root: Path) -> int:
             return cmd_policy(root, args.file, args.sdd_command)
         except SyncError as exc:
             print(f"sdd {args.sdd_command} failed: {exc}", file=sys.stderr)
+            return 2
+
+    if args.sdd_command == "sync" and args.workspace is not None:
+        # fanout: each child's lock is its own sync identity — no cwd
+        # upstream needed.
+        from hornero.sdd_toolkit.push import cmd_workspace
+
+        try:
+            return cmd_workspace(
+                Path(args.workspace),
+                synced_at=datetime.now(timezone.utc).isoformat(),
+                force=args.force,
+            )
+        except SyncError as exc:
+            print(f"sdd sync failed: {exc}", file=sys.stderr)
             return 2
 
     try:
@@ -213,6 +234,14 @@ def _cmd_sdd(args: argparse.Namespace, root: Path) -> int:
         if args.sdd_command == "diff":
             return cli_sync.cmd_diff(root, source, ref, args.file)
         if args.sdd_command == "sync":
+            if args.push is not None:
+                from hornero.sdd_toolkit import push as push_mod
+
+                return push_mod.push(
+                    root, args.push, source=source, ref=ref,
+                    runner=push_mod.subprocess_runner,
+                    allow_secrets=args.allow_secrets,
+                )
             return cli_sync.cmd_sync(
                 root, source, ref, dry_run=args.dry_run, theirs=args.theirs,
                 ours=args.ours, force=args.force, synced_at=now,
