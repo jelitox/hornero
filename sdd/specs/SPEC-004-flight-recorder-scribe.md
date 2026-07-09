@@ -238,3 +238,9 @@ after F3 (dispatch bridge) since it instruments the same seam.
   stream-json / hooks and the dev_loop FEAT-176 telemetry pattern.
 - 2026-07-08 — Approved by owner (autonomous-mode directive); decomposition
   + implementation begins. SPEC-001/002 complete, so phases F6+ are unblocked.
+- 2026-07-08 — All 3 tasks (033-035) completed; gates F9, F10, F11 verified
+  green verbatim (ordered mock trace + zero secret bytes + exact range
+  slices + transcript adoption; mechanically verified DR citations with
+  unanchored claims dropped; DR-rejected approach surfaced in the HITL
+  preview). OQ11/OQ12 deferred (approvals log, DR threading); OQ13 resolved
+  tolerantly (unknown transcript shapes degrade to message events).

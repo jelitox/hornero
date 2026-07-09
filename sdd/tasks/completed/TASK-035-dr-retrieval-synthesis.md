@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-004 — Flight recorder & scribe — capturing, distilling, and auditing agent decisions
 **Spec**: `sdd/specs/SPEC-004-flight-recorder-scribe.md`
-**Status**: pending
+**Status**: done
 **Priority**: medium
 **Estimated effort**: M
 **Depends-on**: TASK-030, TASK-034
@@ -29,10 +29,8 @@ DR-rejected approach -> the delta preview includes the DR reference.
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5
+**Date**: 2026-07-08
+**Notes**: knowledge._kind_of classifies DR-*.md as decisions; gate() gains optional per-delta annotations prepended to the HITL preview (channel protocol unchanged); run_reconcile retrieves per delta and surfaces up to 2 DR hits as '[memory] DR-NNN...' lines BEFORE the patch. Wiki: quickstart mechanically gains a Decision history section linking sdd/decisions/ when the model omits it; updater prompt instructs DR-linking + cite-not-restate. F11 GATE GREEN: a signal re-proposing a DR-rejected approach shows the DR in the preview. Suite 234 passed. SPEC-004 scope closes with this task.
 
 **Deviations from spec**: none

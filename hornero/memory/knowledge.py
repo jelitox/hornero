@@ -57,7 +57,7 @@ def _kind_of(path: Path) -> str:
     name = path.name
     if name.startswith("SPEC-"):
         return "spec"
-    if name.startswith("ADR-"):
+    if name.startswith(("ADR-", "DR-")):
         return "decision"
     return "signal"
 

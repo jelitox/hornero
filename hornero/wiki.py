@@ -54,7 +54,10 @@ produce STRICT JSON: {"impact_plan": [{"change": "...", "page": "...",
 "reason": "..."}.
 
 Contract (U1-U4): only edit what the impact plan traces to a change in the
-window. Small windows (<=5 changed files) touch at most 1-2 pages; touching
+window. Decision records (sdd/decisions/DR-*.md) are the decision history:
+link the relevant DRs from affected area pages and cite the DR when
+promoting one of its durable learnings into a "what to watch out for" note
+— never restate a DR's content as the wiki's own. Small windows (<=5 changed files) touch at most 1-2 pages; touching
 more than 3 pages requires a stated reason. NEVER reflow, reorder, or polish
 prose whose meaning is intact — formatting-only edits are reverted
 mechanically. Prefer replacing one stale sentence over adding paragraphs; a
@@ -198,6 +201,13 @@ def wiki_init(
         raise WikiError(
             f"W2 violated: small repo, at most {SMALL_REPO_MAX_PAGES} pages "
             f"(model proposed {len(pages)})"
+        )
+    # SPEC-004 §5: quickstart is the decision-history entrypoint.
+    if "sdd/decisions" not in pages["quickstart.md"]:
+        pages["quickstart.md"] += (
+            "\n## Decision history\n\n"
+            "Agent decision records (why the code looks the way it does) "
+            "live in [sdd/decisions/](../sdd/decisions/).\n"
         )
     broken = _check_links(root, pages)
     if broken:

@@ -110,15 +110,23 @@ def _edit_in_editor(text: str) -> str | None:
 
 
 def gate(
-    deltas: list[RequirementDelta], channel: ApprovalChannel | None
+    deltas: list[RequirementDelta],
+    channel: ApprovalChannel | None,
+    annotations: dict[str, str] | None = None,
 ) -> list[ReviewedDelta]:
     """Review every delta. ``channel is None`` => everything SKIPPED, no
     exception: fail-closed is a quiet outcome. DUPLICATEs never reach the
-    channel (§6) — they pass through as SKIPPED."""
+    channel (§6) — they pass through as SKIPPED. ``annotations`` (SPEC-004
+    §4.3: e.g. "this approach was rejected in DR-014") are prepended to the
+    preview so the human sees institutional memory before deciding."""
     reviewed: list[ReviewedDelta] = []
     for delta in deltas:
         if delta.kind is DeltaKind.DUPLICATE or channel is None:
             reviewed.append(ReviewedDelta(delta, ReviewResult(Decision.SKIPPED)))
             continue
-        reviewed.append(ReviewedDelta(delta, channel.review(delta, delta.proposed_patch)))
+        preview = delta.proposed_patch
+        note = (annotations or {}).get(delta.delta_id)
+        if note:
+            preview = f"{note}\n\n{preview}"
+        reviewed.append(ReviewedDelta(delta, channel.review(delta, preview)))
     return reviewed

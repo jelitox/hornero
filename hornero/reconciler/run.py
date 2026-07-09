@@ -203,7 +203,21 @@ def run_reconcile(
         )
         return 0
 
-    reviewed = gate(deltas, channel)
+    # SPEC-004 §4.3: surface past decision records before the human decides.
+    annotations: dict[str, str] = {}
+    for d in deltas:
+        hits = knowledge.retrieve(f"{d.title} {d.summary}", k=5)
+        dr_hits = [
+            h for h in hits
+            if h.kind == "decision" and Path(h.path).name.startswith("DR-")
+        ]
+        if dr_hits:
+            annotations[d.delta_id] = "\n".join(
+                f"[memory] {Path(h.path).name}: {h.excerpt[:200]}"
+                for h in dr_hits[:2]
+            )
+
+    reviewed = gate(deltas, channel, annotations)
     tracker = RepoTracker(layout.specs_dir(root), clock=lambda: today)
     report = apply_deltas(
         reviewed, corpus, tracker, source,
