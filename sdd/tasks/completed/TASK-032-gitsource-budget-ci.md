@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-003 — Hornero wiki — agent-facing living docs, git watermarks, and code-as-signal
 **Spec**: `sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L
 **Depends-on**: TASK-029
@@ -38,10 +38,8 @@ drafted) gates 5 + queues 2, re-presented next run; planted-secrets fixture
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5
+**Date**: 2026-07-08
+**Notes**: adapters/gitsource.py — one redacted digest signal per commit window (messages + per-commit stat, never diffs); hornero-authored commits excluded; poll deterministic (re-poll = identical bytes), ack advances the gitsource watermark to the window head recorded in a sidecar and moves the digest to processed/. config gains signal_sources (unknown source fails closed); reconciler polls multiple sources with an ack router. U2 delta budget: DELTA_BUDGET=5 fresh deltas per signal per run (confidence-ordered); excess ledger-queued (INSERT OR REPLACE lets decisions consume the queue) and re-presented next run before any drafting. CI examples: GitHub Actions + GitLab variants (cron + dispatch, scoped add-paths PR, reconcile only as --dry-run advisory). F8 GATE GREEN: bot-commit exclusion, budget queue/re-present, planted-secrets zero-leak (TASK-029). Suite 218 passed.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: first poll with no watermark digests the FULL history (spec §4 full-run semantics) rather than silently stamping HEAD; a bot-only window yields no signal and leaves the watermark untouched (poll never mutates sync state — ack does).

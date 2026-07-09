@@ -1,0 +1,23 @@
+# Hornero scheduled maintenance (SPEC-003 §10) — GitLab CI variant.
+# Schedule this pipeline daily (CI/CD > Schedules). Quiet days no-op.
+hornero-update:
+  image: python:3.12
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - pip install hornero
+    - hornero wiki update || true
+    - hornero report
+    - hornero reindex
+    - hornero reconcile --dry-run | tee delta-preview.txt || true
+    - |
+      if [ -n "$(git status --porcelain wiki sdd/reports .hornero/knowledge .hornero/watermarks.json)" ]; then
+        git checkout -B hornero/scheduled-update
+        git add wiki sdd/reports .hornero/knowledge .hornero/watermarks.json
+        git commit -m "hornero: scheduled wiki/report/index refresh"
+        git push -o merge_request.create -o merge_request.title="hornero: scheduled refresh" \
+          "https://oauth2:${HORNERO_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" \
+          hornero/scheduled-update
+      else
+        echo "already current — no MR"
+      fi

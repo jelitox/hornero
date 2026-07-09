@@ -184,6 +184,14 @@ class Ledger:
             args = (run_id,)
         return [dict(r) for r in self._conn.execute(q + " ORDER BY id", args)]
 
+    def queued_deltas(self) -> list[dict[str, Any]]:
+        """SPEC-003 §7 U2: deltas parked past the per-signal budget, waiting
+        for the next reconcile run."""
+        rows = self._conn.execute(
+            "SELECT * FROM deltas WHERE status='queued' ORDER BY delta_id"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
     def deltas(self, run_id: str | None = None) -> list[dict[str, Any]]:
         q = "SELECT * FROM deltas"
         args: tuple[Any, ...] = ()

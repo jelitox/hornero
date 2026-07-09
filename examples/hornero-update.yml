@@ -1,0 +1,41 @@
+# Hornero scheduled maintenance (SPEC-003 §10) — GitHub Actions.
+# The no-op discipline guarantees quiet days produce NO PR at all.
+name: hornero-update
+on:
+  schedule:
+    - cron: "17 5 * * *"   # daily
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install hornero
+      - name: Refresh wiki, reports and knowledge index
+        run: |
+          hornero wiki update || true      # exits 3 when no model is configured
+          hornero report
+          hornero reindex
+      - name: Advisory delta preview (HITL stays human — never in cron)
+        run: hornero reconcile --dry-run | tee /tmp/delta-preview.txt || true
+      - name: Open a PR (never a direct push to the default branch)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          add-paths: |
+            wiki
+            sdd/reports
+            .hornero/knowledge
+            .hornero/watermarks.json
+          branch: hornero/scheduled-update
+          title: "hornero: scheduled wiki/report/index refresh"
+          body-path: /tmp/delta-preview.txt

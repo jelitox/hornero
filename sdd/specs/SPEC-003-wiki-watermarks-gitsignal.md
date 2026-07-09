@@ -269,3 +269,9 @@ everything else sits on it.
   on every scheduled run. The wiki's own outputs (wiki/, .hornero/) are
   filtered from the change window, so landing a wiki update never triggers
   the next analysis. Empty window => zero LLM calls.
+- 2026-07-08 — All 5 tasks (028-032) completed; gates F6, F7, F8 verified
+  green verbatim (double-run no-op; quickstart + link-checker + idempotent
+  injection + scoped update; bot-excluded GitSource + budget queue +
+  zero-leak redaction). OQ9 (rebased watermark SHA) remains open for a real-
+  world sample; the missing-watermark path already covers vanished SHAs
+  conservatively (full-window digest).

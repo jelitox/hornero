@@ -23,6 +23,7 @@ class DispatchConfig:
 @dataclass
 class HorneroConfig:
     signal_source: str = "inbox"
+    signal_sources: list[str] = field(default_factory=list)  # [] => [signal_source]
     tracker: str = "repo"
     dispatch: DispatchConfig = field(default_factory=DispatchConfig)
     criterion_allowlist: list[str] = field(
@@ -34,8 +35,8 @@ class HorneroConfig:
 
 
 _TOP_KEYS = {
-    "signal_source", "tracker", "dispatch", "criterion_allowlist", "models",
-    "sdd_upstream", "sdd_ref",
+    "signal_source", "signal_sources", "tracker", "dispatch",
+    "criterion_allowlist", "models", "sdd_upstream", "sdd_ref",
 }
 _DISPATCH_KEYS = {"backend_order"}
 
@@ -55,6 +56,8 @@ def load_config(root: Path) -> HorneroConfig:
     cfg = HorneroConfig()
     if "signal_source" in data:
         cfg.signal_source = str(data["signal_source"])
+    if "signal_sources" in data:
+        cfg.signal_sources = [str(x) for x in data["signal_sources"] or []]
     if "tracker" in data:
         cfg.tracker = str(data["tracker"])
     if "criterion_allowlist" in data:

@@ -12,6 +12,7 @@ else (or nothing) refuses to run BEFORE polling. Real providers arrive
 post-MVP behind the same :class:`LLMPort` seam.
 """
 
+import json
 import time
 from collections.abc import Callable
 from dataclasses import asdict
@@ -24,15 +25,49 @@ from hornero.config import ConfigError, load_config
 from hornero.lifecycle import SpecCorpus
 from hornero.memory.knowledge import open_knowledge
 from hornero.memory.ledger import Ledger
-from hornero.models import RequirementDelta
+from hornero.models import DeltaKind, Evidence, RequirementDelta
 from hornero.reconciler.apply import apply_deltas
 from hornero.reconciler.draft import LLMPort, draft_deltas
+from hornero.ports import Signal, SignalSource
 from hornero.reconciler.hitl import ApprovalChannel, Decision, TerminalChannel, gate
 
 Echo = Callable[[str], None]
 
 
 
+
+
+DELTA_BUDGET = 5  # SPEC-003 §7 U2: max fresh deltas surfaced per signal/run
+
+
+class _AckRouter:
+    """Routes acks back to the producing source. A signal id with no origin
+    (revived queued delta from an earlier, already-acked run) is a no-op."""
+
+    def __init__(self, origin: dict[str, SignalSource]) -> None:
+        self._origin = origin
+
+    def poll(self) -> list[Signal]:
+        return []
+
+    def ack(self, signal_id: str) -> None:
+        src = self._origin.get(signal_id)
+        if src is not None:
+            src.ack(signal_id)
+
+
+def _revive(row: dict) -> RequirementDelta:
+    payload = json.loads(row["payload_json"])
+    return RequirementDelta(
+        delta_id=row["delta_id"],
+        kind=DeltaKind(row["kind"]),
+        title=row["title"],
+        summary=payload["summary"],
+        affected_specs=payload["affected_specs"],
+        evidence=[Evidence(**e) for e in payload["evidence"]],
+        confidence=row["confidence"],
+        proposed_patch=payload["proposed_patch"],
+    )
 
 
 def _payload(delta: RequirementDelta) -> dict:
@@ -73,21 +108,67 @@ def run_reconcile(
     from hornero import layout
 
     ledger = Ledger(root / ".hornero" / "ledger.db")
-    source = InboxSource(root / ".hornero")
     corpus = SpecCorpus(layout.specs_dir(root))
     knowledge = open_knowledge(root)
+
+    # SPEC-003 §6: signal sources are config-selected; git is opt-in.
+    source_names = cfg.signal_sources or [cfg.signal_source]
+    origin: dict[str, SignalSource] = {}
+    signals: list[Signal] = []
+    for name in source_names:
+        if name == "inbox":
+            src: SignalSource = InboxSource(root / ".hornero")
+        elif name == "git":
+            from hornero.adapters.gitsource import GitSource
+
+            src = GitSource(root)
+        else:  # fail-closed: an unknown source never silently no-ops
+            echo(f"unknown signal source {name!r}")
+            return 1
+        for sig in src.poll():
+            origin[sig["signal_id"]] = src
+            signals.append(sig)
+    source: SignalSource = _AckRouter(origin)
 
     run_id = ledger.next_run_id()
     ledger.record_run(run_id, "reconcile", now, dry_run=dry_run)
 
-    deltas: list[RequirementDelta] = []
-    for i, sig in enumerate(source.poll(), start=1):
+    # U2 queue: deltas parked past the budget on a previous run go first.
+    deltas: list[RequirementDelta] = [
+        _revive(row) for row in ledger.queued_deltas()
+    ]
+    if deltas:
+        echo(f"{len(deltas)} queued delta(s) from previous runs re-presented.")
+
+    fresh: list[RequirementDelta] = []
+    for i, sig in enumerate(signals, start=1):
         text = Path(sig["path"]).read_text(encoding="utf-8", errors="replace")
-        deltas.extend(
+        fresh.extend(
             draft_deltas(
                 sig, text, corpus, knowledge, llm, ledger, f"{run_id}.{i}", now
             )
         )
+
+    # SPEC-003 §7 U2 delta budget: at most DELTA_BUDGET fresh deltas per
+    # signal per run, highest confidence first; the excess is QUEUED in the
+    # ledger (never dropped) and re-presented next run.
+    by_signal: dict[str, list[RequirementDelta]] = {}
+    for d in fresh:
+        sid = d.evidence[0].signal_id if d.evidence else ""
+        by_signal.setdefault(sid, []).append(d)
+    for sid, group in sorted(by_signal.items()):
+        group.sort(key=lambda d: (-d.confidence, d.delta_id))
+        deltas.extend(group[:DELTA_BUDGET])
+        for d in group[DELTA_BUDGET:]:
+            ledger.record_delta(
+                d.delta_id, run_id, d.kind.value, d.title, "queued",
+                d.confidence, _payload(d),
+            )
+        if len(group) > DELTA_BUDGET:
+            echo(
+                f"delta budget: {len(group) - DELTA_BUDGET} excess delta(s) "
+                f"from {sid} queued for the next run."
+            )
 
     echo(f"{len(deltas)} delta(s) drafted (run {run_id}):")
     for d in deltas:
