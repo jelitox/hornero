@@ -81,6 +81,11 @@ def install(
 
     scaffold_dirs(repo_root, manifest.scaffold)
 
+    from hornero.instructions import inject  # SPEC-003 §8, idempotent
+
+    for name in inject(repo_root):
+        echo(f"instruction section written: {name}")
+
     old = load_lock(repo_root)
     new = SddLock(
         upstream=source,

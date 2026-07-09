@@ -57,6 +57,12 @@ def _cmd_init(root: Path, *, no_sdd: bool = False, no_wiki: bool = False) -> int
     Ledger(hornero_dir / "ledger.db").close()  # idempotent schema init
     print(f"initialized hornero in {root}")
 
+    # SPEC-003 §8: agents entering the repo must find hornero's map.
+    from hornero.instructions import inject
+
+    for name in inject(root):
+        print(f"instruction section written: {name}")
+
     # SPEC-003 §3: init offers the wiki (offline-safe: a hint, never an LLM
     # call); SPEC-002 §8: toolkit install is init's final step, skippable.
     if not no_wiki and not (root / "wiki").is_dir():
