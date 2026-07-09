@@ -1,0 +1,392 @@
+<title>hornero — starter guide</title>
+<style>
+  :root {
+    --ink: #14181f;
+    --panel: #1c222c;
+    --panel-2: #222a36;
+    --line: #2e3745;
+    --clay: #cf7043;
+    --clay-deep: #8a5334;
+    --sand: #e9dfd0;
+    --slate: #8b9bb0;
+    --verify: #8fae62;
+    --amber: #d9a441;
+    --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html, body { background: var(--ink); }
+  body { margin: 0; padding: 0 16px 64px; color: var(--sand); font-family: var(--sans); line-height: 1.6; }
+  .page { max-width: 880px; margin: 0 auto; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 56px 8px 40px; border-bottom: 1px solid var(--line); }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 3px; color: var(--clay); margin: 0 0 16px; }
+  h1 { font-family: var(--mono); font-size: 42px; font-weight: 700; margin: 0 0 18px; letter-spacing: -1px; line-height: 1.1; text-wrap: balance; }
+  .lede { font-size: 18px; color: var(--sand); max-width: 640px; margin: 0 0 14px; }
+  .lede-2 { font-size: 15px; color: var(--slate); max-width: 640px; margin: 0; }
+  .lede-2 b { color: var(--sand); }
+
+  section { padding: 44px 8px 8px; }
+  h2 { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 3px; color: var(--slate); margin: 0 0 8px; }
+  h2 b { color: var(--clay); font-weight: 600; }
+  .section-lede { font-size: 15px; color: var(--slate); max-width: 640px; margin: 0 0 26px; }
+  .section-lede b, .section-lede strong { color: var(--sand); }
+
+  /* ---------- antes / después ---------- */
+  .versus { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .vcol { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .vcol.after { border-top: 3px solid var(--clay-deep); }
+  .vcol h3 { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; margin: 0 0 14px; color: var(--slate); }
+  .vcol.after h3 { color: var(--clay); }
+  .vcol ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--slate); }
+  .vcol li { margin-bottom: 10px; }
+  .vcol li::marker { color: var(--clay-deep); }
+  .vcol b { color: var(--sand); }
+
+  /* ---------- terminal simulator ---------- */
+  .sim { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .sim-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--line); background: #1a2029; }
+  .sim-tab { font-family: var(--mono); font-size: 12px; padding: 12px 14px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--slate); cursor: pointer; }
+  .sim-tab:hover { color: var(--sand); }
+  .sim-tab[aria-selected="true"] { color: var(--clay); border-bottom-color: var(--clay); }
+  .sim-tab:focus-visible { outline: 2px solid var(--clay); outline-offset: -2px; }
+  .sim-body { display: grid; grid-template-columns: 1.25fr 1fr; min-height: 340px; }
+  .term { background: #10141a; padding: 18px 22px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; overflow-x: auto; border-right: 1px solid var(--line); }
+  .term .ps { color: var(--clay); }
+  .term .out { color: var(--slate); }
+  .term .hi { color: var(--sand); }
+  .term .ok { color: var(--verify); }
+  .term .warn { color: var(--amber); }
+  .explain { padding: 22px 24px; }
+  .explain h3 { margin: 0 0 10px; font-size: 16px; font-weight: 650; }
+  .explain p { margin: 0 0 12px; font-size: 13.5px; color: var(--slate); }
+  .explain p b { color: var(--sand); }
+  .explain .why { border-left: 3px solid var(--clay-deep); padding: 8px 12px; background: var(--panel-2); border-radius: 0 4px 4px 0; font-size: 13px; color: var(--slate); }
+  .explain .why b { color: var(--clay); }
+  .sim-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 22px; border-top: 1px solid var(--line); background: #1a2029; }
+  .sim-nav button { font-family: var(--mono); font-size: 12.5px; padding: 8px 18px; border-radius: 4px; border: 1px solid var(--clay-deep); background: #2b2018; color: var(--clay); cursor: pointer; }
+  .sim-nav button:hover:not(:disabled) { background: #3a2a1d; }
+  .sim-nav button:disabled { opacity: 0.35; cursor: default; }
+  .sim-nav button:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; }
+  .sim-nav .pos { font-family: var(--mono); font-size: 11.5px; color: var(--slate); }
+
+  /* ---------- benefits ---------- */
+  .benefits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .benefit { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px 20px 18px; }
+  .benefit h3 { font-family: var(--mono); font-size: 12px; letter-spacing: 1.5px; color: var(--clay); margin: 0 0 12px; }
+  .benefit ul { margin: 0; padding-left: 16px; font-size: 13.5px; color: var(--slate); }
+  .benefit li { margin-bottom: 9px; }
+  .benefit li::marker { color: var(--clay-deep); }
+  .benefit b { color: var(--sand); }
+
+  /* ---------- glossary ---------- */
+  .gloss { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .g { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 13px 16px; }
+  .g dt { font-family: var(--mono); font-size: 12.5px; color: var(--sand); font-weight: 600; margin-bottom: 4px; }
+  .g dd { margin: 0; font-size: 13px; color: var(--slate); }
+  .g dd b { color: var(--sand); }
+
+  /* ---------- first 15 ---------- */
+  .steps15 { counter-reset: s; display: flex; flex-direction: column; gap: 10px; }
+  .s15 { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 14px 18px 13px 60px; }
+  .s15::before { counter-increment: s; content: counter(s); position: absolute; left: 18px; top: 13px; font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--clay); }
+  .s15 code { font-family: var(--mono); font-size: 12.5px; background: #10141a; border: 1px solid var(--line); border-radius: 3px; padding: 2px 7px; color: var(--sand); }
+  .s15 p { margin: 6px 0 0; font-size: 13px; color: var(--slate); }
+
+  /* ---------- golden rules ---------- */
+  .rules { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .rule { display: grid; grid-template-columns: 30px 1fr; gap: 12px; padding: 14px 18px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 14px; }
+  .rule:last-child { border-bottom: none; }
+  .rule .m { font-family: var(--mono); color: var(--verify); font-weight: 700; }
+  .rule p { margin: 0; color: var(--slate); }
+  .rule b { color: var(--sand); }
+
+  .colophon { margin-top: 48px; padding: 20px 8px 0; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--slate); display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .colophon b { color: var(--sand); }
+
+  @media (max-width: 760px) {
+    .versus, .benefits, .gloss { grid-template-columns: 1fr; }
+    .sim-body { grid-template-columns: 1fr; }
+    .term { border-right: none; border-bottom: 1px solid var(--line); }
+    h1 { font-size: 32px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .term-content { animation: fadein 200ms ease; }
+    @keyframes fadein { from { opacity: 0.4; } to { opacity: 1; } }
+  }
+</style>
+
+<div class="page">
+
+  <div class="hero">
+    <p class="eyebrow">STARTER GUIDE · 10 MIN</p>
+    <h1>What is hornero and why do we use it?</h1>
+    <p class="lede">Hornero turns what gets asked for in meetings into versioned
+    specifications, agent-built code, and an end-to-end audit trail — all
+    inside the git repo, with a person approving every step.</p>
+    <p class="lede-2">Think of it as a <b>product assistant living in your repo</b>: it reads
+    the notes you drop, proposes what changed in the requirements, waits for
+    your OK in the terminal, and writes everything down where you already
+    work — no Jira, no external wiki, no extra system to keep in sync.</p>
+  </div>
+
+  <section>
+    <h2>THE PROBLEM <b>— why it exists</b></h2>
+    <p class="section-lede">Requirements are born in conversations and die in documents. Three
+    sprints later nobody knows whether something was built, who approved it,
+    or why the code ended up this way.</p>
+    <div class="versus">
+      <div class="vcol">
+        <h3>WITHOUT HORNERO</h3>
+        <ul>
+          <li>Requests live in scattered notes; <b>the trail is lost</b>.</li>
+          <li>Specs (if any) drift from the code within weeks.</li>
+          <li>A coding agent gets vague instructions and hallucinates context.</li>
+          <li>“Why does this code look like this?” — nobody remembers.</li>
+        </ul>
+      </div>
+      <div class="vcol after">
+        <h3>WITH HORNERO</h3>
+        <ul>
+          <li>Every note is compared against the specs and <b>proposes deltas with textual evidence</b>.</li>
+          <li>The spec IS the tracker: its state lives in the file, versioned in git.</li>
+          <li>Agents receive a <b>verifiable contract</b>, not a “just do this”.</li>
+          <li>You can navigate: signal → delta → spec → task → PR → merge.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>HOW IT'S USED <b>— the loop, step by step</b></h2>
+    <p class="section-lede">This is a normal day with hornero. Move forward with <b>Next</b> or
+    click each stage — the terminal on the left shows what you'd actually see.</p>
+
+    <div class="sim">
+      <div class="sim-tabs" role="tablist" aria-label="Loop stages"></div>
+      <div class="sim-body">
+        <div class="term"><div class="term-content" id="term"></div></div>
+        <div class="explain" id="explain"></div>
+      </div>
+      <div class="sim-nav">
+        <button id="prev" type="button">← Back</button>
+        <span class="pos" id="pos"></span>
+        <button id="next" type="button">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>THE VALUE <b>— what each side gains</b></h2>
+    <div class="benefits">
+      <div class="benefit">
+        <h3>FOR YOU (DEV)</h3>
+        <ul>
+          <li><b>Instant context</b>: enter any repo and the wiki + specs orient you in minutes.</li>
+          <li>No re-discovering dead ends: <b>DRs record what was tried and why it was rejected</b>.</li>
+          <li>Less “ask whoever was there” — the repo remembers.</li>
+        </ul>
+      </div>
+      <div class="benefit">
+        <h3>FOR THE TEAM</h3>
+        <ul>
+          <li><b>Full traceability</b>: every line of code explains itself back to the meeting that originated it.</li>
+          <li>Agent prompts and rules <b>sync across repos like dependencies</b>, lockfile included.</li>
+          <li>Nothing approves itself: <b>a human always decides</b>, and it's on record.</li>
+        </ul>
+      </div>
+      <div class="benefit">
+        <h3>FOR THE BUSINESS</h3>
+        <ul>
+          <li>Auto-generated HTML reports: <b>what the product does today</b>, without asking anyone.</li>
+          <li>Real audit of what AI agents built and under whose authorization.</li>
+          <li>Zero infrastructure: <b>no server to operate, no SaaS to pay for</b>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>MINIMAL GLOSSARY <b>— 8 terms and you can follow any conversation</b></h2>
+    <dl class="gloss">
+      <div class="g"><dt>signal</dt><dd>Any text that comes in: meeting notes, a doc, an idea. It goes into <b>.hornero/inbox/</b>.</dd></div>
+      <div class="g"><dt>delta</dt><dd>A proposed requirement change: something NEW, CHANGED, OBSOLETE or a DUPLICATE relative to the specs.</dd></div>
+      <div class="g"><dt>verbatim evidence</dt><dd>Every delta must quote its source <b>character for character</b>. If the quote doesn't match, the delta is discarded — that's how hallucination gets stopped.</dd></div>
+      <div class="g"><dt>HITL (human-in-the-loop)</dt><dd>The human review in the terminal: approve / reject / edit / skip. Without an interactive terminal, <b>nothing gets written</b>.</dd></div>
+      <div class="g"><dt>spec</dt><dd>A requirement as a markdown file in <b>sdd/specs/</b>. Its frontmatter carries the state: proposed → approved → building → review → done.</dd></div>
+      <div class="g"><dt>dispatch</dt><dd>Sending an approved spec to a coding agent to build it. The result comes back as a PR to the same repo.</dd></div>
+      <div class="g"><dt>trace / DR</dt><dd>The <b>trace</b> records every agent action; the <b>Decision Record</b> summarizes it with verified citations into those events. Never narrative without evidence.</dd></div>
+      <div class="g"><dt>drift / diverged</dt><dd>State of toolkit files vs. their upstream. <b>diverged</b> = changed on both sides → a human resolves it, never a heuristic.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>YOUR FIRST 15 MINUTES</h2>
+    <div class="steps15">
+      <div class="s15"><code>git clone github.com/jelitox/hornero && uv pip install -e .</code>
+        <p>Python ≥ 3.11. A single runtime dependency.</p></div>
+      <div class="s15"><code>cd a-test-repo/ && hornero init</code>
+        <p>Creates <code>.hornero/</code> and the <code>sdd/</code> layout. Idempotent: running it twice breaks nothing.</p></div>
+      <div class="s15"><code>echo "users keep asking to export the report as CSV" &gt; .hornero/inbox/note.md</code>
+        <p>Your first signal. Any text works.</p></div>
+      <div class="s15"><code>hornero reconcile --dry-run</code>
+        <p>See what deltas it would propose. <b>Guaranteed</b>: nothing is written (check with <code>git status</code>).</p></div>
+      <div class="s15"><code>hornero reconcile</code> → approve the delta → <code>hornero build && hornero report</code>
+        <p>Open <code>sdd/reports/traceability.html</code> and follow the full chain from your note to the simulated PR.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>GOLDEN RULES <b>— remember only this and you're set</b></h2>
+    <div class="rules">
+      <div class="rule"><span class="m">1</span><p><b>Evidence is verbatim or the delta dies.</b> Never “fix” a quote that doesn't match — discard it.</p></div>
+      <div class="rule"><span class="m">2</span><p><b>No human, no writes.</b> If reconcile didn't ask you, it applied nothing. That's a feature, not a bug.</p></div>
+      <div class="rule"><span class="m">3</span><p><b>The spec wins.</b> When code and spec disagree, the spec wins — and the discrepancy gets recorded.</p></div>
+      <div class="rule"><span class="m">4</span><p><b>diverged = stop and ask.</b> Never force-merge toolkit files; use <code style="font-family:var(--mono);font-size:12px">--theirs</code> or <code style="font-family:var(--mono);font-size:12px">--ours</code> deliberately.</p></div>
+      <div class="rule"><span class="m">5</span><p><b>Nothing billed by surprise.</b> The <code style="font-family:var(--mono);font-size:12px">api</code> backend only runs if someone explicitly wrote it first in the config.</p></div>
+    </div>
+  </section>
+
+  <div class="colophon">
+    <span><b>github.com/jelitox/hornero</b> · MIT · questions → team channel</span>
+    <span>the ovenbird builds its house layer by layer 🪶</span>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  {
+    tab: "1 · signal",
+    term: [
+      ['ps', '$ '], ['hi', 'cat meeting-notes.md'], ['br'],
+      ['out', '“Sales asked again to be able to export'], ['br'],
+      ['out', ' the usage report as CSV. High priority.”'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'cp meeting-notes.md .hornero/inbox/'], ['br'],
+      ['out', '(done — that is all you have to do)'],
+    ],
+    title: "You drop the note in the inbox",
+    body: "Any text works: minutes, a pasted email, a half-formed idea. No required format, no form to fill in.",
+    why: "<b>Why it matters:</b> the entry barrier is zero. If capturing a requirement is costly, it never gets captured."
+  },
+  {
+    tab: "2 · deltas",
+    term: [
+      ['ps', '$ '], ['hi', 'hornero reconcile --dry-run'], ['br'],
+      ['out', '1 delta(s) drafted (run r-7):'], ['br'],
+      ['hi', '  [new] dlt-r-7-1 — Export report as CSV'], ['br'],
+      ['out', '      confidence 0.88; affects (new spec)'], ['br'],
+      ['ok',  '      sig-…c41 @ L2: “to be able to export'], ['br'],
+      ['ok',  '      the usage report as CSV”'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'git status'], ['br'],
+      ['ok', 'nothing to commit, working tree clean ✓'],
+    ],
+    title: "Hornero proposes deltas — with proof",
+    body: "The LLM compares the note against existing specs and proposes what is new, changed, or obsolete. The green line is the <b>evidence</b>: a literal quote from your note, verified character by character.",
+    why: "<b>Why it matters:</b> if the model “remembers” something that is not in the note, that delta discards itself. Hallucination never reaches your screen."
+  },
+  {
+    tab: "3 · your OK",
+    term: [
+      ['ps', '$ '], ['hi', 'hornero reconcile'], ['br'],
+      ['hi', '[NEW] dlt-r-7-1 — Export report as CSV'], ['br'],
+      ['out', '  evidence:'], ['br'],
+      ['ok',  '    sig-…c41 @ L2: “to be able to export…”'], ['br'],
+      ['warn','  [memory] DR-003: a previous attempt at'], ['br'],
+      ['warn','  streaming export was rejected — see note'], ['br'],
+      ['out', '  proposed patch: (full spec)'], ['br'],
+      ['hi', '[a]pprove / [r]eject / [e]dit / [s]kip > '], ['ok', 'a'],
+    ],
+    title: "You decide — always",
+    body: "Every delta is reviewed in the terminal: approve, reject, edit or skip. Note the amber line: if something similar was rejected before, <b>hornero reminds you before you approve</b>.",
+    why: "<b>Why it matters:</b> without an interactive terminal nothing is written (fail-closed). Nobody can automate approval “by accident”."
+  },
+  {
+    tab: "4 · spec",
+    term: [
+      ['ps', '$ '], ['hi', 'cat sdd/specs/SPEC-007-export-csv.md'], ['br'],
+      ['out', '---'], ['br'],
+      ['out', 'spec: SPEC-007'], ['br'],
+      ['out', 'title: Export report as CSV'], ['br'],
+      ['ok',  'status: approved'], ['br'],
+      ['out', 'sources: [sig-…c41]'], ['br'],
+      ['out', '---'], ['br'],
+      ['out', '# SPEC-007 — Export report as CSV'], ['br'],
+      ['out', '…runnable acceptance criteria…'],
+    ],
+    title: "The spec IS the tracker",
+    body: "What you approve becomes a markdown file versioned in git. State lives in the frontmatter — no Jira to sync, no board drifting away from the code.",
+    why: "<b>Why it matters:</b> spec and code live together, get reviewed together in the same PR, and drift far less."
+  },
+  {
+    tab: "5 · build",
+    term: [
+      ['ps', '$ '], ['hi', 'hornero build'], ['br'],
+      ['out', 'SPEC-007: completed -> review'], ['br'],
+      ['out', '  (https://…/pr/SPEC-007-1)'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'hornero runs show r-8-spec-007 --kind error'], ['br'],
+      ['out', 'e#14  error   pytest failed: encoding'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'hornero scribe r-8-spec-007'], ['br'],
+      ['ok', 'wrote sdd/decisions/DR-011-export-csv.md'],
+    ],
+    title: "An agent builds — and everything is recorded",
+    body: "The approved spec is dispatched to a coding agent. Every agent action lands in a <b>trace</b>; the scribe distills it into a Decision Record where every claim cites real trace events.",
+    why: "<b>Why it matters:</b> six months from now you will answer “why does this code look like this?” by navigating wiki → DR → events → raw trace."
+  },
+  {
+    tab: "6 · the trail",
+    term: [
+      ['ps', '$ '], ['hi', 'hornero report'], ['br'],
+      ['out', 'wrote sdd/reports/capabilities.html'], ['br'],
+      ['out', 'wrote sdd/reports/traceability.html'], ['br'],
+      ['out', 'wrote sdd/reports/workflows.html'], ['br'], ['br'],
+      ['out', 'traceability per requirement:'], ['br'],
+      ['ok',  ' signal → delta → SPEC-007 → run → PR → ✓'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'hornero report'], ['br'],
+      ['ok', 'reports already current  (no-op, zero churn)'],
+    ],
+    title: "The full trail, in HTML, without asking anyone",
+    body: "Reports regenerate on their own and show the entire audit chain — honest gaps included (“this was never built”). And when nothing changed, the run is a no-op: zero cron noise.",
+    why: "<b>Why it matters:</b> product state stops living in someone's head. It is in the repo, always current."
+  },
+];
+
+const tabsEl = document.querySelector('.sim-tabs');
+const termEl = document.getElementById('term');
+const explainEl = document.getElementById('explain');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const posEl = document.getElementById('pos');
+let idx = 0;
+
+STEPS.forEach((s, i) => {
+  const b = document.createElement('button');
+  b.className = 'sim-tab'; b.textContent = s.tab;
+  b.setAttribute('role', 'tab');
+  b.addEventListener('click', () => { idx = i; render(); });
+  tabsEl.appendChild(b);
+});
+
+function render() {
+  const s = STEPS[idx];
+  [...tabsEl.children].forEach((b, i) =>
+    b.setAttribute('aria-selected', i === idx ? 'true' : 'false'));
+  termEl.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'term-content';
+  s.term.forEach(([cls, text]) => {
+    if (cls === 'br') { wrap.appendChild(document.createElement('br')); return; }
+    const span = document.createElement('span');
+    span.className = cls; span.textContent = text;
+    wrap.appendChild(span);
+  });
+  termEl.appendChild(wrap);
+  explainEl.innerHTML =
+    '<h3>' + s.title + '</h3><p>' + s.body + '</p><div class="why">' + s.why + '</div>';
+  prevBtn.disabled = idx === 0;
+  nextBtn.disabled = idx === STEPS.length - 1;
+  posEl.textContent = (idx + 1) + ' / ' + STEPS.length;
+}
+prevBtn.addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+nextBtn.addEventListener('click', () => { if (idx < STEPS.length - 1) { idx++; render(); } });
+render();
+</script>

@@ -1,0 +1,252 @@
+<title>hornero — arquitectura</title>
+<style>
+  :root {
+    --ink: #14181f;          /* terminal ground */
+    --panel: #1c222c;
+    --line: #2e3745;
+    --clay: #cf7043;         /* the ovenbird's mud */
+    --clay-dim: #8a5334;
+    --sand: #e9dfd0;         /* text on ink */
+    --slate: #8b9bb0;        /* secondary text */
+    --verify: #8fae62;       /* gates & verified things only */
+    --amber: #d9a441;        /* human-decision moments */
+    --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html, body { background: var(--ink); }
+  body { margin: 0; padding: 32px 16px 48px; color: var(--sand); font-family: var(--sans); }
+  .frame { max-width: 1480px; margin: 0 auto; }
+  header { display: flex; align-items: baseline; gap: 16px; padding: 0 8px 18px; flex-wrap: wrap; }
+  header h1 { font-family: var(--mono); font-size: 26px; font-weight: 600; margin: 0; letter-spacing: 0.5px; }
+  header h1 .tick { color: var(--clay); }
+  header p { margin: 0; color: var(--slate); font-size: 14px; }
+  .board { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; }
+  svg { display: block; min-width: 1180px; width: 100%; height: auto; }
+  footer { padding: 14px 8px 0; color: var(--slate); font-family: var(--mono); font-size: 12px; letter-spacing: 0.4px; display: flex; gap: 24px; flex-wrap: wrap; }
+  footer b { color: var(--sand); font-weight: 600; }
+
+  /* SVG text roles */
+  text { font-family: var(--mono); }
+  .zone-label { fill: var(--slate); font-size: 11px; letter-spacing: 2.2px; font-weight: 600; }
+  .node-title { fill: var(--sand); font-size: 14px; font-weight: 600; }
+  .node-sub   { fill: var(--slate); font-size: 11px; }
+  .path-note  { fill: var(--slate); font-size: 10.5px; letter-spacing: 0.3px; }
+  .clay-t     { fill: var(--clay); }
+  .verify-t   { fill: var(--verify); }
+  .amber-t    { fill: var(--amber); }
+  .box        { fill: #222a36; stroke: var(--line); stroke-width: 1.25; }
+  .box-clay   { fill: #2b2018; stroke: var(--clay-dim); stroke-width: 1.5; }
+  .box-amber  { fill: #2a2416; stroke: #8a6c2f; stroke-width: 1.5; }
+  .box-verify { fill: #212a1a; stroke: #5c7340; stroke-width: 1.25; }
+  .rail       { fill: #1a1f28; stroke: var(--line); stroke-dasharray: 5 4; stroke-width: 1; }
+  .flow       { stroke: var(--clay); stroke-width: 2; fill: none; }
+  .flow-soft  { stroke: var(--slate); stroke-width: 1.4; fill: none; stroke-dasharray: 6 5; }
+  .flow-mem   { stroke: #5c7340; stroke-width: 1.4; fill: none; stroke-dasharray: 2 4; }
+</style>
+
+<div class="frame">
+  <header>
+    <h1><span class="tick">$</span> hornero <span style="color:var(--slate)">·</span> arquitectura</h1>
+    <p>product loop nativo del repo — todo lo de abajo vive en un solo repositorio git. Sin servidor, sin SaaS.</p>
+  </header>
+
+  <div class="board">
+  <svg viewBox="0 0 1480 860" role="img" aria-label="Hornero architecture diagram: signals flow through an evidence-verified reconciler and a human gate into the spec corpus, approved specs dispatch to coding agents whose traces are recorded and distilled into decision records, and a memory layer feeds everything back.">
+    <defs>
+      <marker id="a-clay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#cf7043"/>
+      </marker>
+      <marker id="a-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#8b9bb0"/>
+      </marker>
+      <marker id="a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#5c7340"/>
+      </marker>
+    </defs>
+
+    <!-- ================= ZONE HEADERS ================= -->
+    <text class="zone-label" x="40"   y="52">SEÑALES</text>
+    <text class="zone-label" x="330"  y="52">RECONCILIADOR</text>
+    <text class="zone-label" x="680"  y="52">CORPUS DE SPECS — sdd/ (el nido)</text>
+    <text class="zone-label" x="1030" y="52">BUILD &amp; DISPATCH</text>
+    <line x1="40" y1="62" x2="1440" y2="62" stroke="#2e3745" stroke-width="1"/>
+
+    <!-- ================= SIGNALS ================= -->
+    <rect class="box" x="40" y="96" width="230" height="86" rx="4"/>
+    <text class="node-title" x="58" y="126">Inbox</text>
+    <text class="node-sub" x="58" y="146">.hornero/inbox/</text>
+    <text class="node-sub" x="58" y="162">notas · docs · ideas</text>
+
+    <rect class="box" x="40" y="212" width="230" height="102" rx="4"/>
+    <text class="node-title" x="58" y="242">GitSource <tspan class="node-sub">(opt-in)</tspan></text>
+    <text class="node-sub" x="58" y="262">commits desde el watermark</text>
+    <text class="node-sub" x="58" y="278">→ señal digest redactada</text>
+    <text class="node-sub" x="58" y="294">omite commits del propio bot</text>
+
+    <!-- ================= RECONCILER ================= -->
+    <rect class="box" x="330" y="96" width="250" height="112" rx="4"/>
+    <text class="node-title" x="348" y="126">Deltas borrador <tspan class="node-sub">(seam LLM)</tspan></text>
+    <text class="node-sub" x="348" y="146">NEW · CHANGED · OBSOLETE · DUP</text>
+    <text class="verify-t" x="348" y="168" font-size="11">evidencia = substring literal,</text>
+    <text class="verify-t" x="348" y="184" font-size="11">verificada — o el draft muere</text>
+
+    <rect class="box" x="330" y="238" width="250" height="76" rx="4"/>
+    <text class="node-title" x="348" y="266">Presupuesto de deltas</text>
+    <text class="node-sub" x="348" y="286">máx. 5 por señal por corrida;</text>
+    <text class="node-sub" x="348" y="302">exceso en cola, nunca se pierde</text>
+
+    <rect class="box-amber" x="330" y="344" width="250" height="104" rx="4"/>
+    <text class="node-title" x="348" y="374">Gate HITL <tspan class="amber-t">· humano</tspan></text>
+    <text class="node-sub" x="348" y="394">aprobar/rechazar/editar/saltar</text>
+    <text class="node-sub" x="348" y="410">sin TTY ⇒ no escribe (fail-closed)</text>
+    <text class="amber-t" x="348" y="432" font-size="11">ve notas [memory] DR-014</text>
+
+    <!-- ================= SPEC CORPUS ================= -->
+    <rect class="box-clay" x="680" y="96" width="270" height="352" rx="5"/>
+    <text class="node-title clay-t" x="700" y="126">sdd/ — los specs SON el tracker</text>
+    <!-- two aligned columns: dir at x=700, meaning at x=812 -->
+    <text class="node-sub" x="700" y="154" fill="#e9dfd0">specs/</text>
+    <text class="node-sub" x="812" y="154">archivos SPEC-NNN</text>
+    <text class="node-sub" x="700" y="174" fill="#e9dfd0">decisions/</text>
+    <text class="node-sub" x="812" y="174">ADRs + DRs</text>
+    <text class="node-sub" x="700" y="194" fill="#e9dfd0">proposals/</text>
+    <text class="node-sub" x="812" y="194">brainstorms</text>
+    <text class="node-sub" x="700" y="214" fill="#e9dfd0">tasks/</text>
+    <text class="node-sub" x="812" y="214">tablero + índice</text>
+    <text class="node-sub" x="700" y="234" fill="#e9dfd0">reports/</text>
+    <text class="node-sub" x="812" y="234">HTML, offline</text>
+    <text class="path-note" x="700" y="254">capacidades · workflows · trazabilidad</text>
+    <line x1="700" y1="272" x2="930" y2="272" stroke="#8a5334" stroke-width="1" stroke-dasharray="3 4"/>
+    <text class="node-title" x="700" y="300">wiki/ <tspan class="node-sub">— para el PRÓXIMO agente</tspan></text>
+    <text class="node-sub" x="700" y="322">quickstart + áreas, links validados</text>
+    <text class="node-sub" x="700" y="338">updates quirúrgicos por ventana git</text>
+    <text class="node-sub" x="700" y="354">ventana vacía ⇒ cero llamadas LLM</text>
+    <text class="path-note clay-t" x="700" y="392">ciclo: proposed → approved →</text>
+    <text class="path-note clay-t" x="700" y="408">building → review → done</text>
+
+    <!-- ================= BUILD ================= -->
+    <rect class="box" x="1030" y="96" width="250" height="96" rx="4"/>
+    <text class="node-title" x="1048" y="126">BuildBrief → Dispatch</text>
+    <text class="node-sub" x="1048" y="146">backends: mock · cli (tu auth)</text>
+    <text class="node-sub" x="1048" y="162">api = solo entrada explícita</text>
+    <text class="node-sub" x="1048" y="178">primera — nunca fallback</text>
+
+    <rect class="box" x="1030" y="222" width="250" height="92" rx="4"/>
+    <text class="node-title" x="1048" y="252">Flight recorder</text>
+    <text class="node-sub" x="1048" y="272">.hornero/runs/&lt;ref&gt;/trace</text>
+    <text class="node-sub" x="1048" y="288">cada tool call, en secuencia,</text>
+    <text class="node-sub" x="1048" y="304">redactado al escribir</text>
+
+    <rect class="box-verify" x="1030" y="344" width="250" height="104" rx="4"/>
+    <text class="node-title" x="1048" y="374">Scribe → DR-NNN</text>
+    <text class="node-sub" x="1048" y="394">trace → decision record;</text>
+    <text class="verify-t" x="1048" y="416" font-size="11">cada claim cita [e#N–e#M]</text>
+    <text class="verify-t" x="1048" y="432" font-size="11">verificado — o se descarta</text>
+
+    <rect class="box" x="1030" y="478" width="250" height="76" rx="4"/>
+    <text class="node-title" x="1048" y="506">Write-back en PR <tspan class="node-sub">(atómico)</tspan></text>
+    <text class="node-sub" x="1048" y="526">código + spec + reportes + DR</text>
+    <text class="node-sub" x="1048" y="542">en la MISMA rama/PR</text>
+
+    <!-- ================= TOOLKIT SYNC (right rail) ================= -->
+    <rect class="rail" x="1320" y="96" width="120" height="458" rx="5"/>
+    <text class="zone-label" x="1338" y="126">TOOLKIT</text>
+    <text class="zone-label" x="1338" y="142">SYNC</text>
+    <text class="node-sub" x="1338" y="176">upstream ⇅</text>
+    <text class="node-sub" x="1338" y="192">sdd install</text>
+    <text class="node-sub" x="1338" y="208">status·sync</text>
+    <text class="node-sub" x="1338" y="240">sdd.lock =</text>
+    <text class="node-sub" x="1338" y="256">3-way drift</text>
+    <text class="node-sub" x="1338" y="272">(U / L / C)</text>
+    <text class="amber-t" x="1338" y="304" font-size="11">diverged ⇒</text>
+    <text class="amber-t" x="1338" y="320" font-size="11">bloquea; el</text>
+    <text class="amber-t" x="1338" y="336" font-size="11">humano elige</text>
+    <text class="amber-t" x="1338" y="352" font-size="11">--theirs/--ours</text>
+    <text class="node-sub" x="1338" y="384">--push = PR +</text>
+    <text class="node-sub" x="1338" y="400">scan secretos;</text>
+    <text class="node-sub" x="1338" y="416">nunca la rama</text>
+    <text class="node-sub" x="1338" y="432">default</text>
+    <text class="node-sub" x="1338" y="464">--workspace =</text>
+    <text class="node-sub" x="1338" y="480">fanout sobre</text>
+    <text class="node-sub" x="1338" y="496">repos con lock</text>
+
+    <!-- ================= MEMORY RAIL (bottom) ================= -->
+    <rect class="rail" x="40" y="620" width="1240" height="150" rx="5"/>
+    <text class="zone-label" x="60" y="652">MEMORIA Y AUDITORÍA — realimenta cada etapa</text>
+
+    <rect class="box" x="60" y="672" width="280" height="76" rx="4"/>
+    <text class="node-title" x="78" y="700">Índice de conocimiento</text>
+    <text class="node-sub" x="78" y="720">indexa sdd/ + procesadas;</text>
+    <text class="node-sub" x="78" y="736">pageindex o fallback tokens</text>
+
+    <rect class="box" x="370" y="672" width="280" height="76" rx="4"/>
+    <text class="node-title" x="388" y="700">Watermarks + no-op</text>
+    <text class="node-sub" x="388" y="720">snapshots por superficie; repo</text>
+    <text class="node-sub" x="388" y="736">quieto ⇒ cero escrituras</text>
+
+    <rect class="box" x="680" y="672" width="280" height="76" rx="4"/>
+    <text class="node-title" x="698" y="700">Ledger (SQLite)</text>
+    <text class="node-sub" x="698" y="720">runs · deltas · dispatches ·</text>
+    <text class="node-sub" x="698" y="736">agent_runs · dropped drafts</text>
+
+    <rect class="box" x="990" y="672" width="270" height="76" rx="4"/>
+    <text class="node-title" x="1008" y="700">redact()</text>
+    <text class="node-sub" x="1008" y="720">shapes secretos + env values;</text>
+    <text class="node-sub" x="1008" y="736">en toda superficie escrita</text>
+
+    <!-- ================= FLOWS ================= -->
+    <!-- signals -> draft -->
+    <path class="flow" d="M270,139 L322,150" marker-end="url(#a-clay)"/>
+    <path class="flow" d="M270,263 C300,263 300,180 322,166" marker-end="url(#a-clay)"/>
+    <!-- draft -> budget -> gate -->
+    <path class="flow" d="M455,208 L455,230" marker-end="url(#a-clay)"/>
+    <path class="flow" d="M455,314 L455,336" marker-end="url(#a-clay)"/>
+    <!-- gate -> corpus -->
+    <path class="flow" d="M580,396 C630,396 630,272 672,272" marker-end="url(#a-clay)"/>
+    <text class="path-note" x="592" y="326">aplica: spec / diff /</text>
+    <text class="path-note" x="592" y="341">ADR / propuesta;</text>
+    <text class="path-note" x="592" y="356">ack de señal</text>
+    <!-- corpus -> build -->
+    <path class="flow" d="M950,144 L1022,144" marker-end="url(#a-clay)"/>
+    <text class="path-note" x="958" y="132">aprobado</text>
+    <!-- dispatch -> recorder -> scribe -->
+    <path class="flow" d="M1155,192 L1155,214" marker-end="url(#a-clay)"/>
+    <path class="flow" d="M1155,314 L1155,336" marker-end="url(#a-clay)"/>
+    <!-- scribe DR back to corpus decisions -->
+    <path class="flow-soft" d="M1022,396 C986,396 986,200 958,186" marker-end="url(#a-slate)"/>
+    <text class="path-note" x="960" y="372">DR → decisions/</text>
+    <!-- recorder/pr -->
+    <path class="flow" d="M1155,448 L1155,470" marker-end="url(#a-clay)"/>
+    <!-- PR write-back into corpus -->
+    <path class="flow-soft" d="M1022,522 C700,560 480,540 300,528 C240,524 200,500 180,470" marker-end="url(#a-slate)"/>
+    <text class="path-note" x="560" y="580">merge → hook post-merge → reindex</text>
+    <!-- toolkit link -->
+    <path class="flow-soft" d="M1312,300 L1288,300"/>
+    <!-- memory feedback arrows -->
+    <path class="flow-mem" d="M200,672 L200,560 C200,480 260,470 320,440" marker-end="url(#a-green)"/>
+    <text class="path-note verify-t" x="82" y="600">contexto retrieval +</text>
+    <text class="path-note verify-t" x="82" y="615">rechazos DR previos</text>
+    <path class="flow-mem" d="M815,620 L815,470" marker-end="url(#a-green)"/>
+    <text class="path-note verify-t" x="830" y="560">la wiki funda briefs;</text>
+    <text class="path-note verify-t" x="830" y="575">reportes se regeneran</text>
+
+    <!-- nest motif -->
+    <g transform="translate(1395,690)" stroke="#8a5334" fill="none" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+      <path d="M-42,26 A46 46 0 0 1 42,26"/>
+      <path d="M-33,12 A38 38 0 0 1 33,12" stroke="#cf7043"/>
+      <path d="M-23,0 A28 28 0 0 1 23,0"/>
+      <path d="M-12,-9 A16 16 0 0 1 12,-9" stroke="#cf7043"/>
+      <line x1="-52" y1="26" x2="52" y2="26" stroke="#2e3745"/>
+    </g>
+    <text class="path-note" x="1341" y="748">capa por capa</text>
+  </svg>
+  </div>
+
+  <footer>
+    <span><b style="color:var(--clay)">──▶</b> flujo del producto</span>
+    <span><b style="color:var(--slate)">- - ▶</b> write-back / artefactos</span>
+    <span><b style="color:var(--verify)">· · ▶</b> memoria realimentando</span>
+    <span><b style="color:var(--amber)">■</b> decisiones humanas</span>
+    <span>github.com/jelitox/hornero · MIT</span>
+  </footer>
+</div>

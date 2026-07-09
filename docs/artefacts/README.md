@@ -1,15 +1,17 @@
-# Visual artefacts
+# Visual artefacts · Artefactos visuales
 
-Self-contained HTML pages (no external assets — open directly in a browser,
-or take a full-page screenshot to export as an image).
+Self-contained HTML pages — open directly in a browser, or take a full-page
+screenshot to export as an image. Every piece ships in **English and
+Spanish**. / Páginas HTML autocontenidas — abrilas directo en el navegador o
+capturalas como imagen. Cada pieza está en **inglés y español**.
 
-| File | What it is | Audience |
-|---|---|---|
-| [`architecture.html`](architecture.html) | Architecture diagram: signals → reconciler (HITL gate) → spec corpus → dispatch + flight recorder, with the memory rail and toolkit sync | engineers going deep |
-| [`infographic.html`](infographic.html) | Product infographic: the 6-step loop, guardrails, numbers, memory layers | sharing / announcements |
-| [`cheatsheet.html`](cheatsheet.html) | Daily-use quick reference: every command, config, drift states, paths, exit codes | anyone using the CLI |
-| [`onboarding.html`](onboarding.html) | Interactive starter guide (Spanish): what/why/how with a step-through terminal simulator, glossary, first 15 minutes | new team members |
+| Artefact | EN | ES | Audience / Audiencia |
+|---|---|---|---|
+| Architecture diagram · Diagrama de arquitectura | [`architecture.en.html`](architecture.en.html) | [`architecture.es.html`](architecture.es.html) | engineers going deep / ingeniería a fondo |
+| Product infographic · Infografía del producto | [`infographic.en.html`](infographic.en.html) | [`infographic.es.html`](infographic.es.html) | sharing / difusión |
+| CLI cheatsheet · Referencia rápida | [`cheatsheet.en.html`](cheatsheet.en.html) | [`cheatsheet.es.html`](cheatsheet.es.html) | daily CLI use / uso diario |
+| Interactive onboarding · Onboarding interactivo | [`onboarding.en.html`](onboarding.en.html) | [`onboarding.es.html`](onboarding.es.html) | new team members / gente nueva |
 
-All four share one visual identity: dark terminal ground, clay accent (the
-ovenbird builds with mud), monospace voice; green is reserved for
+All eight pages share one visual identity: dark terminal ground, clay accent
+(the ovenbird builds with mud), monospace voice; green is reserved for
 verified/gate semantics and amber for human-decision moments.

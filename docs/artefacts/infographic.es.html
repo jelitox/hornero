@@ -1,0 +1,203 @@
+<title>hornero — infografía del producto</title>
+<style>
+  :root {
+    --ink: #14181f;
+    --panel: #1c222c;
+    --panel-2: #222a36;
+    --line: #2e3745;
+    --clay: #cf7043;
+    --clay-deep: #8a5334;
+    --sand: #e9dfd0;
+    --slate: #8b9bb0;
+    --verify: #8fae62;
+    --amber: #d9a441;
+    --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html, body { background: var(--ink); }
+  body { margin: 0; padding: 40px 16px 56px; color: var(--sand); font-family: var(--sans); }
+  .poster { max-width: 900px; margin: 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 44px 48px 36px; border-bottom: 1px solid var(--line); display: flex; gap: 32px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .hero-copy { max-width: 560px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 3px; color: var(--clay); margin: 0 0 14px; }
+  h1 { font-family: var(--mono); font-size: 52px; font-weight: 700; margin: 0 0 12px; letter-spacing: -1px; line-height: 1; }
+  h1 small { display: block; font-size: 17px; font-weight: 400; color: var(--slate); letter-spacing: 0; margin-top: 12px; line-height: 1.5; text-wrap: balance; }
+  .hero svg { flex-shrink: 0; }
+
+  /* ---------- sections ---------- */
+  section { padding: 36px 48px; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+  h2 { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 3px; color: var(--slate); margin: 0 0 24px; }
+  h2 b { color: var(--clay); font-weight: 600; }
+
+  /* the loop */
+  .loop { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; counter-reset: step; }
+  .step { position: relative; background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 18px 20px 16px 64px; }
+  .step::before {
+    counter-increment: step; content: "0" counter(step);
+    position: absolute; left: 18px; top: 17px;
+    font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--clay);
+  }
+  .step h3 { margin: 0 0 6px; font-size: 15px; font-weight: 650; }
+  .step p { margin: 0; font-size: 13px; color: var(--slate); line-height: 1.5; }
+  .step .tag { display: inline-block; margin-top: 10px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 1px; padding: 3px 8px; border-radius: 3px; }
+  .tag-h { color: var(--amber); border: 1px solid #6b5525; background: #2a2416; }
+  .tag-v { color: var(--verify); border: 1px solid #4a5c34; background: #212a1a; }
+  .tag-c { color: var(--clay); border: 1px solid var(--clay-deep); background: #2b2018; }
+
+  /* invariants */
+  .invariants { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+  .inv { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: baseline; padding: 13px 18px; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+  .inv:last-child { border-bottom: none; }
+  .inv .mark { font-family: var(--mono); color: var(--verify); font-weight: 700; font-size: 14px; }
+  .inv p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+  .inv b { color: var(--sand); }  .inv p { color: var(--slate); }
+
+  /* numbers */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .stat { text-align: center; padding: 20px 8px 16px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; }
+  .stat .n { font-family: var(--mono); font-size: 34px; font-weight: 700; color: var(--clay); font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11.5px; color: var(--slate); margin-top: 6px; line-height: 1.4; }
+
+  /* layers */
+  .layers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .layer { background: var(--panel-2); border: 1px solid var(--line); border-top: 3px solid var(--clay-deep); border-radius: 5px; padding: 18px 18px 16px; }
+  .layer h3 { margin: 0 0 8px; font-family: var(--mono); font-size: 13px; font-weight: 650; color: var(--sand); }
+  .layer p { margin: 0; font-size: 12.5px; color: var(--slate); line-height: 1.55; }
+
+  .colophon { padding: 22px 48px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--slate); background: #171c25; }
+  .colophon b { color: var(--sand); font-weight: 600; }
+
+  @media (max-width: 720px) {
+    .loop, .layers { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .hero, section, .colophon { padding-left: 24px; padding-right: 24px; }
+    h1 { font-size: 40px; }
+  }
+</style>
+
+<div class="poster">
+
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">PRODUCT LOOP NATIVO DEL REPO</p>
+      <h1>hornero
+        <small>Entran notas de reunión. Salen specs, código y un rastro auditable — con
+        una persona aprobando en el medio. Todo vive en tu repo git: sin
+        servidor, sin SaaS, sin base de datos.</small>
+      </h1>
+    </div>
+    <!-- the nest: built layer by layer -->
+    <svg width="150" height="120" viewBox="0 0 150 120" role="img" aria-label="Nido de hornero dibujado como arcos de arcilla apilados">
+      <g stroke-linecap="round" fill="none">
+        <line x1="10" y1="104" x2="140" y2="104" stroke="#2e3745" stroke-width="2"/>
+        <path d="M20,104 A55 55 0 0 1 130,104" stroke="#8a5334" stroke-width="5"/>
+        <path d="M33,104 A42 42 0 0 1 117,104" stroke="#cf7043" stroke-width="5"/>
+        <path d="M46,104 A29 29 0 0 1 104,104" stroke="#8a5334" stroke-width="5"/>
+        <path d="M59,104 A16 16 0 0 1 91,104" stroke="#cf7043" stroke-width="5"/>
+      </g>
+      <text x="75" y="118" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#8b9bb0" letter-spacing="1.5">CAPA POR CAPA</text>
+    </svg>
+  </div>
+
+  <section>
+    <h2>EL LOOP <b>— de la señal al ship, trazable de punta a punta</b></h2>
+    <div class="loop">
+      <div class="step">
+        <h3>Entran señales</h3>
+        <p>Dejá minutas, docs o ideas en una carpeta inbox. Opcional: los propios
+        commits se vuelven señales, así código y specs nunca divergen en
+        silencio.</p>
+        <span class="tag tag-c">.hornero/inbox/ · GitSource</span>
+      </div>
+      <div class="step">
+        <h3>Deltas con evidencia verificada</h3>
+        <p>Un LLM propone qué es nuevo, qué cambió, qué quedó obsoleto. Cada delta
+        debe citar su fuente <em>literal</em> — verificado mecánicamente. Sin
+        evidencia no hay delta. La alucinación se descarta, no se corrige.</p>
+        <span class="tag tag-v">LITERAL O MUERE</span>
+      </div>
+      <div class="step">
+        <h3>Gate humano</h3>
+        <p>Aprobás, rechazás, editás o saltás — interactivo, en tu terminal.
+        Sin TTY no hay escrituras: el gate falla cerrado. Los rechazos
+        pasados reaparecen antes de aprobar una repetición.</p>
+        <span class="tag tag-h">HITL FAIL-CLOSED</span>
+      </div>
+      <div class="step">
+        <h3>El spec ES el tracker</h3>
+        <p>Lo aprobado se vuelve specs markdown versionados en git — el estado
+        vive en el frontmatter, las decisiones son ADRs, las ideas a medio
+        formar son propuestas de brainstorm. Nada externo que sincronizar.</p>
+        <span class="tag tag-c">sdd/specs/ · versionado en git</span>
+      </div>
+      <div class="step">
+        <h3>Dispatch a agentes de código</h3>
+        <p>Los specs aprobados se vuelven briefs y se despachan a un backend.
+        Cada corrida deja un trace tipo caja negra; un scribe lo destila en
+        un decision record cuyas afirmaciones citan eventos verificados.</p>
+        <span class="tag tag-v">TRACE ⇒ DR, CITAS VERIFICADAS</span>
+      </div>
+      <div class="step">
+        <h3>Write-back y reportes</h3>
+        <p>El código, el spec actualizado, los reportes regenerados y el DR
+        aterrizan en el mismo PR. La trazabilidad muestra señal → delta →
+        spec → tarea → corrida → PR → merge, huecos incluidos.</p>
+        <span class="tag tag-c">UN PR ATÓMICO</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>GUARDRAILS <b>— violarlos es un bug, nunca “aceptable por ahora”</b></h2>
+    <div class="invariants">
+      <div class="inv"><span class="mark">✓</span><p><b>La evidencia es literal o el delta muere.</b> Las citas son substrings verificados mecánicamente de la fuente; lo que no coincide se loguea y descarta.</p></div>
+      <div class="inv"><span class="mark">✓</span><p><b>El human-in-the-loop falla cerrado.</b> Sin canal de aprobación ⇒ ni mutación de specs ni dispatch. El dry-run siempre deja git limpio.</p></div>
+      <div class="inv"><span class="mark">✓</span><p><b>Nada facturado por sorpresa.</b> Una API paga corre solo como primera opción explícita y deliberada — nunca como fallback.</p></div>
+      <div class="inv"><span class="mark">✓</span><p><b>Los archivos diverged nunca se auto-mergean.</b> Los prompts se sincronizan como dependencias con lockfile; el conflicto bloquea hasta que un humano elige --theirs o --ours.</p></div>
+      <div class="inv"><span class="mark">✓</span><p><b>Los secretos nunca llegan al disco.</b> Toda superficie generada — reportes, wiki, traces, digests — pasa por una capa de redacción.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>EN NÚMEROS</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">234</div><div class="l">tests deterministas<br>(cero red, cero keys)</div></div>
+      <div class="stat"><div class="n">4</div><div class="l">specs construidas —<br>SDD self-hosted</div></div>
+      <div class="stat"><div class="n">11</div><div class="l">gates de fase,<br>todos verdes verbatim</div></div>
+      <div class="stat"><div class="n">1</div><div class="l">dependencia de runtime<br>(pyyaml)</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">servidores, daemons<br>o SaaS requeridos</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>TRES CAPAS DE MEMORIA <b>— el repo recuerda</b></h2>
+    <div class="layers">
+      <div class="layer">
+        <h3>wiki/ — para agentes</h3>
+        <p>Docs vivas escritas para la <em>próxima corrida de agente</em>:
+        quickstart obligatorio, links validados, updates quirúrgicos por
+        ventana de cambios git. Un repo quieto cuesta un hash — el cron hace no-op.</p>
+      </div>
+      <div class="layer">
+        <h3>toolkit sync — prompts como deps</h3>
+        <p>Comandos, reglas y templates de agentes se sincronizan entre repos
+        desde un upstream con lockfile commiteado y drift de tres vías. Las
+        mejoras vuelven vía PRs con scan de secretos.</p>
+      </div>
+      <div class="layer">
+        <h3>flight recorder — la verdad del proceso</h3>
+        <p>El stream de acciones es la verdad; la narrativa es solo un índice
+        sobre él. Auditá cualquier línea de código: wiki → decision record →
+        rango de eventos → trace crudo, cada salto suma resolución.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="colophon">
+    <span><b>github.com/jelitox/hornero</b> · MIT · Python ≥ 3.11</span>
+    <span>el hornero construye su propia casa — <b>esta herramienta también</b></span>
+  </div>
+</div>

@@ -1,0 +1,214 @@
+<title>hornero — cheatsheet (ES)</title>
+<style>
+  :root {
+    --ink: #14181f;
+    --panel: #1c222c;
+    --panel-2: #222a36;
+    --line: #2e3745;
+    --clay: #cf7043;
+    --clay-deep: #8a5334;
+    --sand: #e9dfd0;
+    --slate: #8b9bb0;
+    --verify: #8fae62;
+    --amber: #d9a441;
+    --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html, body { background: var(--ink); }
+  body { margin: 0; padding: 32px 16px 48px; color: var(--sand); font-family: var(--sans); }
+  .sheet { max-width: 1180px; margin: 0 auto; }
+
+  header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px; padding: 0 4px 20px; }
+  h1 { font-family: var(--mono); font-size: 24px; font-weight: 600; margin: 0; }
+  h1 .tick { color: var(--clay); }
+  header span { font-family: var(--mono); font-size: 12px; color: var(--slate); }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .card.wide { grid-column: span 2; }
+  .card h2 { font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: 2px; color: var(--clay); margin: 0; padding: 12px 16px 10px; border-bottom: 1px solid var(--line); background: #1a2029; }
+  .card h2 small { color: var(--slate); letter-spacing: 0.5px; font-weight: 400; text-transform: none; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  td { padding: 8px 16px; vertical-align: top; border-bottom: 1px solid #232b37; }
+  tr:last-child td { border-bottom: none; }
+  td.cmd { font-family: var(--mono); color: var(--sand); white-space: nowrap; font-size: 12px; }
+  td.cmd .flag { color: var(--slate); }
+  td.what { color: var(--slate); line-height: 1.45; }
+  td.what b { color: var(--sand); font-weight: 600; }
+  td.what .h { color: var(--amber); }
+  td.what .v { color: var(--verify); }
+
+  pre { margin: 0; padding: 12px 16px; font-family: var(--mono); font-size: 11.5px; line-height: 1.7; color: var(--slate); overflow-x: auto; }
+  pre b { color: var(--sand); font-weight: 600; }
+  pre .c { color: var(--clay); }
+  pre .k { color: var(--verify); }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+  .pill { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--line); color: var(--slate); }
+  .pill b { color: var(--sand); font-weight: 600; }
+  .pill.ok    { border-color: #4a5c34; color: var(--verify); }
+  .pill.warn  { border-color: #6b5525; color: var(--amber); }
+
+  footer { padding: 18px 4px 0; font-family: var(--mono); font-size: 11.5px; color: var(--slate); display: flex; gap: 20px; flex-wrap: wrap; }
+  footer b { color: var(--sand); }
+
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .card.wide { grid-column: span 1; } }
+</style>
+
+<div class="sheet">
+  <header>
+    <h1><span class="tick">$</span> hornero — cheatsheet</h1>
+    <span>v0.2.0 · github.com/jelitox/hornero · MIT</span>
+  </header>
+
+  <div class="grid">
+
+    <!-- ============ CORE LOOP ============ -->
+    <div class="card wide">
+      <h2>EL LOOP &nbsp;<small>señales → specs → código → reportes</small></h2>
+      <table>
+        <tr><td class="cmd">hornero init <span class="flag">[--hooks] [--no-sdd] [--no-wiki]</span></td>
+            <td class="what">Crea <b>.hornero/</b> + <b>sdd/</b> en cualquier repo. Idempotente; nunca pisa la config.</td></tr>
+        <tr><td class="cmd">cp notes.md .hornero/inbox/</td>
+            <td class="what">Alimentá una señal: minutas, docs, ideas — cualquier archivo de texto.</td></tr>
+        <tr><td class="cmd">hornero reconcile <span class="flag">--dry-run</span></td>
+            <td class="what">Previsualiza los deltas. <b>Garantizado: cero escrituras.</b></td></tr>
+        <tr><td class="cmd">hornero reconcile</td>
+            <td class="what"><span class="h">Revisión interactiva</span> — aprobar/rechazar/editar/saltar cada delta. Requiere TTY; sin terminal no se aplica nada.</td></tr>
+        <tr><td class="cmd">hornero build <span class="flag">[SPEC-ID] [--backend mock|cli]</span></td>
+            <td class="what">Specs aprobados → briefs → backend de agentes. Cada corrida deja un trace.</td></tr>
+        <tr><td class="cmd">hornero report <span class="flag">[--only NAME]</span></td>
+            <td class="what">Regenera <b>sdd/reports/</b>: capacidades · workflows · trazabilidad. No-op si está al día.</td></tr>
+        <tr><td class="cmd">hornero reindex</td>
+            <td class="what">Reconstruye el índice de conocimiento (determinista). Auto vía <span class="flag">--hooks</span> post-merge.</td></tr>
+        <tr><td class="cmd">hornero status</td>
+            <td class="what">Specs por estado · inbox pendiente · salud del índice.</td></tr>
+      </table>
+    </div>
+
+    <!-- ============ CONFIG ============ -->
+    <div class="card">
+      <h2>CONFIG &nbsp;<small>.hornero/config.yaml</small></h2>
+      <pre><b>signal_sources:</b> [inbox<span class="c">, git</span>]  <span class="k"># git = opt-in</span>
+<b>tracker:</b> repo
+<b>dispatch:</b>
+  <b>backend_order:</b> [mock]     <span class="k"># api nunca se</span>
+                             <span class="k"># agrega solo</span>
+<b>models:</b>
+  <b>reconciler:</b> fake:s.json
+  <b>wiki:</b>       fake:s.json
+  <b>scribe:</b>     fake:s.json
+<b>sdd_upstream:</b> git@…/toolkit
+<b>sdd_ref:</b> main</pre>
+      <div class="pills">
+        <span class="pill">clave desconocida <b>= error</b></span>
+      </div>
+    </div>
+
+    <!-- ============ TOOLKIT ============ -->
+    <div class="card wide">
+      <h2>TOOLKIT SDD &nbsp;<small>prompts como dependencias — sdd.lock, drift 3-vías</small></h2>
+      <table>
+        <tr><td class="cmd">hornero sdd install <span class="flag">--from SRC [--ref R]</span></td>
+            <td class="what">Instala el set gestionado + scaffold + lockfile. <b>Adopta</b> archivos existentes, nunca los pisa.</td></tr>
+        <tr><td class="cmd">hornero sdd status &nbsp;/&nbsp; diff <span class="flag">[FILE]</span></td>
+            <td class="what">Tabla de drift (una línea por archivo) / diff unificado vs upstream.</td></tr>
+        <tr><td class="cmd">hornero sdd sync <span class="flag">[--dry-run] [--force]</span></td>
+            <td class="what">Avanza <b>behind</b> + <b>new</b>; <span class="h">diverged bloquea (exit ≠ 0)</span> hasta resolverse.</td></tr>
+        <tr><td class="cmd">hornero sdd sync <span class="flag">--theirs F / --ours F</span></td>
+            <td class="what">Resuelve un diverged: gana upstream / gana local (lock re-baselineado).</td></tr>
+        <tr><td class="cmd">hornero sdd sync <span class="flag">--push FILE…</span></td>
+            <td class="what">Promueve mejoras al upstream vía PR. <span class="v">Scan de secretos</span>; nunca la rama default.</td></tr>
+        <tr><td class="cmd">hornero sdd sync <span class="flag">--workspace DIR</span></td>
+            <td class="what">Sincroniza cada repo hijo con <b>.hornero/sdd.lock</b>; ignora el resto.</td></tr>
+        <tr><td class="cmd">hornero sdd hold|unhold|pin <span class="flag">FILE</span></td>
+            <td class="what">Política por archivo: local (nunca se trae) · vuelve a sync · congelado.</td></tr>
+      </table>
+    </div>
+
+    <!-- ============ DRIFT STATES ============ -->
+    <div class="card">
+      <h2>ESTADOS DE DRIFT &nbsp;<small>U/L/C</small></h2>
+      <div class="pills">
+        <span class="pill ok">current</span>
+        <span class="pill">behind → <b>pull</b></span>
+        <span class="pill">modified → <b>¿push?</b></span>
+        <span class="pill warn">diverged → <b>humano</b></span>
+        <span class="pill">deleted_locally → <b>--force</b></span>
+        <span class="pill">new_upstream → <b>instala</b></span>
+        <span class="pill">held · pinned → <b>se salta</b></span>
+      </div>
+      <pre><span class="k"># U = upstream ahora</span>
+<span class="k"># L = lock (últ. sync)</span>
+<span class="k"># C = actual en disco</span>
+<span class="k"># sin timestamps, sin</span>
+<span class="k"># "gana el más nuevo"</span></pre>
+    </div>
+
+    <!-- ============ WIKI ============ -->
+    <div class="card">
+      <h2>WIKI &nbsp;<small>para el próximo agente</small></h2>
+      <table>
+        <tr><td class="cmd">hornero wiki init</td>
+            <td class="what">Primera construcción: quickstart + áreas, links validados.</td></tr>
+        <tr><td class="cmd">hornero wiki update</td>
+            <td class="what">Quirúrgico, acotado a la ventana git. Ventana vacía ⇒ <b>cero llamadas al modelo</b>.</td></tr>
+      </table>
+      <div class="pills">
+        <span class="pill">requiere <b>models.wiki</b></span>
+        <span class="pill ok">el no-op dice “already current”</span>
+      </div>
+    </div>
+
+    <!-- ============ RUNS / SCRIBE ============ -->
+    <div class="card">
+      <h2>TRACES &amp; DRs &nbsp;<small>la verdad del proceso</small></h2>
+      <table>
+        <tr><td class="cmd">hornero runs list <span class="flag">[--spec S]</span></td>
+            <td class="what">Corridas de agentes registradas.</td></tr>
+        <tr><td class="cmd">hornero runs show REF<br><span class="flag">--kind tool_use --range e#2:e#9</span></td>
+            <td class="what">Cortes exactos de eventos de un trace.</td></tr>
+        <tr><td class="cmd">hornero runs adopt FILE.jsonl</td>
+            <td class="what">Adopta un transcript de Claude Code.</td></tr>
+        <tr><td class="cmd">hornero scribe REF <span class="flag">[--force]</span></td>
+            <td class="what">Trace → DR-NNN. <span class="v">Citas verificadas</span> o el claim se descarta.</td></tr>
+      </table>
+    </div>
+
+    <!-- ============ PATHS ============ -->
+    <div class="card">
+      <h2>DÓNDE VIVE CADA COSA</h2>
+      <pre><b>sdd/specs/</b>       el tracker
+<b>sdd/decisions/</b>   ADRs + DRs
+<b>sdd/proposals/</b>   brainstorms
+<b>sdd/reports/</b>     auditoría HTML
+<b>wiki/</b>            docs p/ agentes
+<b>.hornero/inbox/</b>  señales
+<b>.hornero/runs/</b>   traces <span class="k">(ignorado)</span>
+<b>.hornero/sdd.lock</b>  <span class="k">commiteado</span>
+<b>.hornero/watermarks.json</b> <span class="k">commiteado</span>
+<b>.hornero/ledger.db</b> <span class="k">ignorado</span></pre>
+    </div>
+
+    <!-- ============ EXIT CODES ============ -->
+    <div class="card">
+      <h2>CÓDIGOS DE SALIDA</h2>
+      <div class="pills">
+        <span class="pill ok"><b>0</b> ok / ya está al día</span>
+        <span class="pill warn"><b>1</b> falla — o diverged esperando a un humano</span>
+        <span class="pill"><b>2</b> precondición (sin lock, archivo desconocido)</span>
+        <span class="pill"><b>3</b> sin modelo configurado</span>
+      </div>
+      <pre><span class="k"># reconcile sin TTY sale</span>
+<span class="k"># SIN escribir nada —</span>
+<span class="k"># es la seguridad, no un bug</span></pre>
+    </div>
+
+  </div>
+
+  <footer>
+    <span><b>regla de oro:</b> la evidencia es literal o el delta muere</span>
+    <span><b>cron-safe:</b> un repo quieto hace no-op — wiki + report + reindex diarios cuestan un hash</span>
+  </footer>
+</div>
