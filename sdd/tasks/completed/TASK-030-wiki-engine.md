@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-003 — Hornero wiki — agent-facing living docs, git watermarks, and code-as-signal
 **Spec**: `sdd/specs/SPEC-003-wiki-watermarks-gitsignal.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L
 **Depends-on**: TASK-028, TASK-029
@@ -35,10 +35,8 @@ scoped fixture commit edits only the impacted page; double update no-ops.
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5
+**Date**: 2026-07-08
+**Notes**: hornero/llm.py (shared resolve_llm, reconciler switched). hornero/wiki.py: wiki_init (strict-JSON pages; W1 quickstart mandatory; W2 anti-stub + small-repo cap; path/section validation; link-checker with ../ normalization; redacted writes; nothing lands on failure) + wiki_update (window = watermark..HEAD + dirty, OWN OUTPUTS FILTERED so the wiki-landing commit never re-triggers analysis; empty window => zero LLM calls; U2 budget enforced; U3 formatting-only edits reverted mechanically; no-op snapshot). CLI wiki init|update (models.wiki, fake: scripts); init offers wiki with --no-wiki. F7 wiki-half gate green. Suite 206 passed.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: analyzed-window-with-no-edits ADVANCES the watermark (else every scheduled run re-pays the model call for a vetted window) — §5 refinement recorded in the Log.

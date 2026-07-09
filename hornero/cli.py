@@ -33,7 +33,7 @@ _HORNERO_DIRS = ("inbox", "processed", "knowledge")
 _GITIGNORE_LINE = ".hornero/ledger.db*"  # includes SQLite -wal/-shm siblings
 
 
-def _cmd_init(root: Path, *, no_sdd: bool = False) -> int:
+def _cmd_init(root: Path, *, no_sdd: bool = False, no_wiki: bool = False) -> int:
     from hornero.layout import SDD_STATE_DIRS
     from hornero.sdd_toolkit.install import scaffold_dirs
 
@@ -57,8 +57,10 @@ def _cmd_init(root: Path, *, no_sdd: bool = False) -> int:
     Ledger(hornero_dir / "ledger.db").close()  # idempotent schema init
     print(f"initialized hornero in {root}")
 
-    # SPEC-002 §8: toolkit install is init's final step, skippable and
-    # offline-safe (runs only when an upstream is explicitly configured).
+    # SPEC-003 §3: init offers the wiki (offline-safe: a hint, never an LLM
+    # call); SPEC-002 §8: toolkit install is init's final step, skippable.
+    if not no_wiki and not (root / "wiki").is_dir():
+        print("hint: run 'hornero wiki init' to create the agent-facing wiki")
     if no_sdd:
         return 0
     try:
@@ -119,6 +121,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="print a CI reindex snippet and exit (writes nothing)")
     p.add_argument("--no-sdd", action="store_true",
                    help="skip the SDD toolkit install step")
+    p.add_argument("--no-wiki", action="store_true",
+                   help="skip the wiki-init offer")
     sub.add_parser("status", help="spec counts, inbox, index health")
     p = sub.add_parser("reconcile", help="poll -> deltas -> HITL -> apply")
     p.add_argument("--dry-run", action="store_true")
@@ -128,6 +132,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("reindex", help="rebuild .hornero/knowledge/")
     p = sub.add_parser("report", help="regenerate sdd/reports/*.html")
     p.add_argument("--only")
+    p_wiki = sub.add_parser("wiki", help="agent-facing living wiki (SPEC-003)")
+    wiki_sub = p_wiki.add_subparsers(dest="wiki_command", required=True)
+    wiki_sub.add_parser("init", help="first full wiki build")
+    wiki_sub.add_parser("update", help="surgical refresh scoped by the watermark")
 
     p_sdd = sub.add_parser("sdd", help="SDD toolkit management (SPEC-002)")
     sdd_sub = p_sdd.add_subparsers(dest="sdd_command", required=True)
@@ -264,7 +272,7 @@ def main(argv: list[str] | None = None) -> int:
 
             print(CI_SNIPPET, end="")
             return 0
-        rc = _cmd_init(root, no_sdd=args.no_sdd)
+        rc = _cmd_init(root, no_sdd=args.no_sdd, no_wiki=args.no_wiki)
         if rc == 0 and args.hooks:
             from hornero.hooks import HookError, install_post_merge_hook
 
@@ -320,6 +328,30 @@ def main(argv: list[str] | None = None) -> int:
         from hornero.reports.run import run_report
 
         return run_report(root, only=args.only)
+    if args.command == "wiki":
+        from hornero.config import ConfigError, load_config
+        from hornero.llm import model_name, resolve_llm
+        from hornero.wiki import WikiError, wiki_init, wiki_update
+
+        try:
+            cfg = load_config(root)
+        except ConfigError as exc:
+            print(f"config error: {exc}", file=sys.stderr)
+            return 1
+        llm = resolve_llm(cfg, root, "wiki")
+        if llm is None:
+            print(
+                "no model configured for the wiki "
+                "(set models.wiki; MVP supports fake:<script.json>)",
+                file=sys.stderr,
+            )
+            return 3
+        fn = wiki_init if args.wiki_command == "init" else wiki_update
+        try:
+            return fn(root, llm, model=model_name(cfg, "wiki"))
+        except WikiError as exc:
+            print(f"wiki {args.wiki_command} failed: {exc}", file=sys.stderr)
+            return 1
     if args.command == "sdd":
         return _cmd_sdd(args, root)
     raise AssertionError("unreachable")

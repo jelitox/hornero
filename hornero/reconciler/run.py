@@ -20,7 +20,7 @@ from pathlib import Path
 
 from hornero.adapters.inbox import InboxSource
 from hornero.adapters.repo_tracker import RepoTracker
-from hornero.config import ConfigError, HorneroConfig, load_config
+from hornero.config import ConfigError, load_config
 from hornero.lifecycle import SpecCorpus
 from hornero.memory.knowledge import open_knowledge
 from hornero.memory.ledger import Ledger
@@ -28,19 +28,11 @@ from hornero.models import RequirementDelta
 from hornero.reconciler.apply import apply_deltas
 from hornero.reconciler.draft import LLMPort, draft_deltas
 from hornero.reconciler.hitl import ApprovalChannel, Decision, TerminalChannel, gate
-from hornero.reconciler.testing import FakeLLM
 
 Echo = Callable[[str], None]
 
 
-def _resolve_llm(cfg: HorneroConfig, root: Path) -> LLMPort | None:
-    spec = cfg.models.get("reconciler", "")
-    if spec.startswith("fake:"):
-        path = Path(spec[len("fake:") :])
-        if not path.is_absolute():
-            path = root / path
-        return FakeLLM.from_file(path)
-    return None
+
 
 
 def _payload(delta: RequirementDelta) -> dict:
@@ -65,7 +57,9 @@ def run_reconcile(
         echo(f"config error: {exc}")
         return 1
     if llm is None:
-        llm = _resolve_llm(cfg, root)
+        from hornero.llm import resolve_llm
+
+        llm = resolve_llm(cfg, root, "reconciler")
     if llm is None:
         echo(
             "no model configured for the reconciler "

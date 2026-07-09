@@ -263,3 +263,9 @@ everything else sits on it.
   redaction, cron+PR automation. No code copied.
 - 2026-07-08 — Approved by owner (autonomous-mode directive); decomposition
   + implementation begins. SPEC-001/002 complete, so phases F6+ are unblocked.
+- 2026-07-08 — §5 refinement (TASK-030): a NON-EMPTY window analyzed to zero
+  edits still advances the wiki watermark (content_hash unchanged) — strict
+  write-only-on-change would re-pay the model call for the same vetted window
+  on every scheduled run. The wiki's own outputs (wiki/, .hornero/) are
+  filtered from the change window, so landing a wiki update never triggers
+  the next analysis. Empty window => zero LLM calls.
