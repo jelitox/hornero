@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-004 — Flight recorder & scribe — capturing, distilling, and auditing agent decisions
 **Spec**: `sdd/specs/SPEC-004-flight-recorder-scribe.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L
 **Depends-on**: TASK-033
@@ -33,10 +33,8 @@ dropped + logged; trivial-run fixture -> no DR.
 
 ## Completion Note
 
-*(Agent fills this in when done)*
-
-**Completed by**:
-**Date**:
-**Notes**:
+**Completed by**: claude-fable-5
+**Date**: 2026-07-08
+**Notes**: sdd/templates/decision_record.md + hornero/scribe.py. S1: every claim's [e#N-e#M] (dash or colon) must resolve to real seqs AND (S3) contain >=1 action event — invalid claims dropped + ledger-logged as unanchored_claim, never kept; S2: prompt inputs are trace events + spec body only; S4: a trace with zero action events yields no DR and never consults the model; all-claims-unverifiable also yields no DR. DR-NNN numbering, re-scribe requires --force and reuses the id, writes through redact(). Auto-scribe at dispatch close when models.scribe resolves (honest hint otherwise); CLI hornero scribe <run_ref> [--force]. Fixed a load_config shadowing bug in cli.main (local import made the name function-local). F10 GATE GREEN. Suite 231 passed.
 
 **Deviations from spec**: none

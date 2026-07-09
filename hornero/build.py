@@ -105,6 +105,21 @@ def run_build(
             status=result["status"], trace_path=result["trace_path"],
             started_at=now, finished_at=now,
         )
+        # SPEC-004 §4: the scribe runs automatically at dispatch close when
+        # a model is configured; otherwise an honest hint, never a fake DR.
+        from hornero.llm import resolve_llm
+
+        scribe_llm = resolve_llm(cfg, root, "scribe")
+        if scribe_llm is not None:
+            from hornero.scribe import ScribeError, scribe_run
+
+            try:
+                scribe_run(root, run_ref, scribe_llm, today=today, echo=echo)
+            except ScribeError as exc:
+                echo(f"scribe skipped: {exc}")
+        else:
+            echo(f"hint: 'hornero scribe {run_ref}' distills this trace "
+                 "into a decision record (set models.scribe)")
         if result["status"] == "completed":
             tracker.transition(spec_id, "review")
             tracker.comment(spec_id, f"PR opened: {result['pr_url']}")

@@ -154,6 +154,10 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("transcript")
     pr = runs_sub.add_parser("prune", help="delete old trace directories")
     pr.add_argument("--keep-days", type=float, required=True)
+    p_scribe = sub.add_parser("scribe", help="distill a trace into a DR (SPEC-004)")
+    p_scribe.add_argument("run_ref")
+    p_scribe.add_argument("--force", action="store_true",
+                          help="re-scribe a run that already has a DR")
     p_wiki = sub.add_parser("wiki", help="agent-facing living wiki (SPEC-003)")
     wiki_sub = p_wiki.add_subparsers(dest="wiki_command", required=True)
     wiki_sub.add_parser("init", help="first full wiki build")
@@ -411,8 +415,34 @@ def main(argv: list[str] | None = None) -> int:
         return run_report(root, only=args.only)
     if args.command == "runs":
         return _cmd_runs(args, root)
+    if args.command == "scribe":
+        from datetime import date
+
+        from hornero.llm import resolve_llm
+        from hornero.scribe import ScribeError, scribe_run
+
+        try:
+            cfg = load_config(root)
+        except ConfigError as exc:
+            print(f"config error: {exc}", file=sys.stderr)
+            return 1
+        llm = resolve_llm(cfg, root, "scribe")
+        if llm is None:
+            print(
+                "no model configured for the scribe "
+                "(set models.scribe; MVP supports fake:<script.json>)",
+                file=sys.stderr,
+            )
+            return 3
+        try:
+            return scribe_run(
+                root, args.run_ref, llm,
+                today=date.today().isoformat(), force=args.force,
+            )
+        except (FileNotFoundError, ScribeError) as exc:
+            print(f"scribe failed: {exc}", file=sys.stderr)
+            return 2
     if args.command == "wiki":
-        from hornero.config import ConfigError, load_config
         from hornero.llm import model_name, resolve_llm
         from hornero.wiki import WikiError, wiki_init, wiki_update
 
