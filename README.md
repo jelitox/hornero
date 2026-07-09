@@ -128,6 +128,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 - [Development guide](docs/DEVELOPMENT.md) — setup, architecture, the self-hosted SDD workflow
 - [Deployment guide](docs/DEPLOYMENT.md) — adopting hornero in your repos, CI, multi-repo fanout
 - [Changelog](CHANGELOG.md)
+- [Visual artefacts](docs/artefacts/) — architecture diagram, infographic, cheatsheet, interactive onboarding
 
 Specs are the source of truth: see `sdd/specs/`.
 
