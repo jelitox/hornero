@@ -1,0 +1,203 @@
+<title>hornero — product infographic</title>
+<style>
+  :root {
+    --ink: #14181f;
+    --panel: #1c222c;
+    --panel-2: #222a36;
+    --line: #2e3745;
+    --clay: #cf7043;
+    --clay-deep: #8a5334;
+    --sand: #e9dfd0;
+    --slate: #8b9bb0;
+    --verify: #8fae62;
+    --amber: #d9a441;
+    --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html, body { background: var(--ink); }
+  body { margin: 0; padding: 40px 16px 56px; color: var(--sand); font-family: var(--sans); }
+  .poster { max-width: 900px; margin: 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 44px 48px 36px; border-bottom: 1px solid var(--line); display: flex; gap: 32px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .hero-copy { max-width: 560px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 3px; color: var(--clay); margin: 0 0 14px; }
+  h1 { font-family: var(--mono); font-size: 52px; font-weight: 700; margin: 0 0 12px; letter-spacing: -1px; line-height: 1; }
+  h1 small { display: block; font-size: 17px; font-weight: 400; color: var(--slate); letter-spacing: 0; margin-top: 12px; line-height: 1.5; text-wrap: balance; }
+  .hero svg { flex-shrink: 0; }
+
+  /* ---------- sections ---------- */
+  section { padding: 36px 48px; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+  h2 { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 3px; color: var(--slate); margin: 0 0 24px; }
+  h2 b { color: var(--clay); font-weight: 600; }
+
+  /* the loop */
+  .loop { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; counter-reset: step; }
+  .step { position: relative; background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 18px 20px 16px 64px; }
+  .step::before {
+    counter-increment: step; content: "0" counter(step);
+    position: absolute; left: 18px; top: 17px;
+    font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--clay);
+  }
+  .step h3 { margin: 0 0 6px; font-size: 15px; font-weight: 650; }
+  .step p { margin: 0; font-size: 13px; color: var(--slate); line-height: 1.5; }
+  .step .tag { display: inline-block; margin-top: 10px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 1px; padding: 3px 8px; border-radius: 3px; }
+  .tag-h { color: var(--amber); border: 1px solid #6b5525; background: #2a2416; }
+  .tag-v { color: var(--verify); border: 1px solid #4a5c34; background: #212a1a; }
+  .tag-c { color: var(--clay); border: 1px solid var(--clay-deep); background: #2b2018; }
+
+  /* invariants */
+  .invariants { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+  .inv { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: baseline; padding: 13px 18px; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+  .inv:last-child { border-bottom: none; }
+  .inv .mark { font-family: var(--mono); color: var(--verify); font-weight: 700; font-size: 14px; }
+  .inv p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+  .inv b { color: var(--sand); }  .inv p { color: var(--slate); }
+
+  /* numbers */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .stat { text-align: center; padding: 20px 8px 16px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; }
+  .stat .n { font-family: var(--mono); font-size: 34px; font-weight: 700; color: var(--clay); font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 11.5px; color: var(--slate); margin-top: 6px; line-height: 1.4; }
+
+  /* layers */
+  .layers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .layer { background: var(--panel-2); border: 1px solid var(--line); border-top: 3px solid var(--clay-deep); border-radius: 5px; padding: 18px 18px 16px; }
+  .layer h3 { margin: 0 0 8px; font-family: var(--mono); font-size: 13px; font-weight: 650; color: var(--sand); }
+  .layer p { margin: 0; font-size: 12.5px; color: var(--slate); line-height: 1.55; }
+
+  .colophon { padding: 22px 48px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--slate); background: #171c25; }
+  .colophon b { color: var(--sand); font-weight: 600; }
+
+  @media (max-width: 720px) {
+    .loop, .layers { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .hero, section, .colophon { padding-left: 24px; padding-right: 24px; }
+    h1 { font-size: 40px; }
+  }
+</style>
+
+<div class="poster">
+
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">REPO-NATIVE PRODUCT LOOP</p>
+      <h1>hornero
+        <small>Meeting notes in. Specs, code, and an audit trail out — with a
+        human gate in the middle. Everything lives in your git repo: no
+        server, no SaaS, no database.</small>
+      </h1>
+    </div>
+    <!-- the nest: built layer by layer -->
+    <svg width="150" height="120" viewBox="0 0 150 120" role="img" aria-label="An ovenbird nest drawn as stacked clay arcs">
+      <g stroke-linecap="round" fill="none">
+        <line x1="10" y1="104" x2="140" y2="104" stroke="#2e3745" stroke-width="2"/>
+        <path d="M20,104 A55 55 0 0 1 130,104" stroke="#8a5334" stroke-width="5"/>
+        <path d="M33,104 A42 42 0 0 1 117,104" stroke="#cf7043" stroke-width="5"/>
+        <path d="M46,104 A29 29 0 0 1 104,104" stroke="#8a5334" stroke-width="5"/>
+        <path d="M59,104 A16 16 0 0 1 91,104" stroke="#cf7043" stroke-width="5"/>
+      </g>
+      <text x="75" y="118" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#8b9bb0" letter-spacing="1.5">LAYER BY LAYER</text>
+    </svg>
+  </div>
+
+  <section>
+    <h2>THE LOOP <b>— signal to shipped, traceable end to end</b></h2>
+    <div class="loop">
+      <div class="step">
+        <h3>Signals in</h3>
+        <p>Drop meeting notes, docs, or ideas into an inbox folder. Opt-in:
+        commits themselves become signals, so code and specs never silently
+        drift apart.</p>
+        <span class="tag tag-c">.hornero/inbox/ · GitSource</span>
+      </div>
+      <div class="step">
+        <h3>Evidence-verified deltas</h3>
+        <p>An LLM proposes what's new, changed, or obsolete. Every delta must
+        quote its source <em>verbatim</em> — mechanically checked. No evidence,
+        no delta. Hallucinations are dropped, not fixed.</p>
+        <span class="tag tag-v">VERBATIM OR IT DIES</span>
+      </div>
+      <div class="step">
+        <h3>Human gate</h3>
+        <p>Approve, reject, edit, or skip — interactively, in your terminal.
+        No TTY means no writes: the gate fails closed. Past rejections
+        resurface before you approve a repeat.</p>
+        <span class="tag tag-h">FAIL-CLOSED HITL</span>
+      </div>
+      <div class="step">
+        <h3>Specs are the tracker</h3>
+        <p>Approved deltas become markdown specs versioned in git — status
+        lives in the frontmatter, decisions become ADRs, half-formed ideas
+        become brainstorm proposals. Nothing external to sync.</p>
+        <span class="tag tag-c">sdd/specs/ · git-versioned</span>
+      </div>
+      <div class="step">
+        <h3>Dispatch to coding agents</h3>
+        <p>Approved specs render into build briefs and dispatch to a backend.
+        Every run leaves a flight-recorder trace; a scribe distills it into a
+        decision record whose every claim cites verified events.</p>
+        <span class="tag tag-v">TRACE ⇒ DR, CITATIONS CHECKED</span>
+      </div>
+      <div class="step">
+        <h3>Write-back &amp; reports</h3>
+        <p>Code, the updated spec, regenerated reports, and the decision
+        record land in the same PR. Traceability shows signal → delta → spec
+        → task → run → PR → merge, gaps included.</p>
+        <span class="tag tag-c">ONE ATOMIC PR</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>GUARDRAILS <b>— violations are bugs, never “acceptable for now”</b></h2>
+    <div class="invariants">
+      <div class="inv"><span class="mark">✓</span><p><b>Evidence is verbatim or the delta dies.</b> Excerpts are mechanically verified substrings of the source; mismatches are logged and discarded.</p></div>
+      <div class="inv"><span class="mark">✓</span><p><b>Human-in-the-loop fails closed.</b> No approval channel ⇒ no spec mutation, no dispatch. Dry-run always leaves git clean.</p></div>
+      <div class="inv"><span class="mark">✓</span><p><b>No billed backend by surprise.</b> A paid API runs only as an explicit, deliberate first choice — never as a fallback.</p></div>
+      <div class="inv"><span class="mark">✓</span><p><b>Diverged files are never auto-merged.</b> Prompts sync like dependencies with a lockfile; conflicts block until a human picks --theirs or --ours.</p></div>
+      <div class="inv"><span class="mark">✓</span><p><b>Secrets never reach disk.</b> Every generated surface — reports, wiki, traces, digests — passes through a redaction layer.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>BY THE NUMBERS</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">234</div><div class="l">deterministic tests<br>(zero network, zero keys)</div></div>
+      <div class="stat"><div class="n">4</div><div class="l">specs built —<br>self-hosted SDD</div></div>
+      <div class="stat"><div class="n">11</div><div class="l">phase gates,<br>all green verbatim</div></div>
+      <div class="stat"><div class="n">1</div><div class="l">runtime dependency<br>(pyyaml)</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">servers, daemons,<br>or SaaS required</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>THREE MEMORY LAYERS <b>— the repo remembers</b></h2>
+    <div class="layers">
+      <div class="layer">
+        <h3>wiki/ — for agents</h3>
+        <p>Living docs written for the <em>next agent run</em>: mandatory
+        quickstart, link-checked, updated surgically per git change window.
+        A quiet repo costs one hash comparison — scheduled runs no-op.</p>
+      </div>
+      <div class="layer">
+        <h3>toolkit sync — prompts as deps</h3>
+        <p>Agent commands, rules, and templates sync across repos from one
+        upstream with a committed lockfile and a three-way drift model.
+        Improvements promote back via secret-scanned PRs.</p>
+      </div>
+      <div class="layer">
+        <h3>flight recorder — process truth</h3>
+        <p>The action stream is the ground truth; narrative is just an index
+        over it. Audit any line of code: wiki → decision record → event
+        range → raw trace, each hop adding resolution.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="colophon">
+    <span><b>github.com/jelitox/hornero</b> · MIT · Python ≥ 3.11</span>
+    <span>el hornero builds its own house — <b>so does this tool</b></span>
+  </div>
+</div>

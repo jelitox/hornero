@@ -1,0 +1,393 @@
+<title>hornero — guía para empezar</title>
+<style>
+  :root {
+    --ink: #14181f;
+    --panel: #1c222c;
+    --panel-2: #222a36;
+    --line: #2e3745;
+    --clay: #cf7043;
+    --clay-deep: #8a5334;
+    --sand: #e9dfd0;
+    --slate: #8b9bb0;
+    --verify: #8fae62;
+    --amber: #d9a441;
+    --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html, body { background: var(--ink); }
+  body { margin: 0; padding: 0 16px 64px; color: var(--sand); font-family: var(--sans); line-height: 1.6; }
+  .page { max-width: 880px; margin: 0 auto; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 56px 8px 40px; border-bottom: 1px solid var(--line); }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 3px; color: var(--clay); margin: 0 0 16px; }
+  h1 { font-family: var(--mono); font-size: 42px; font-weight: 700; margin: 0 0 18px; letter-spacing: -1px; line-height: 1.1; text-wrap: balance; }
+  .lede { font-size: 18px; color: var(--sand); max-width: 640px; margin: 0 0 14px; }
+  .lede-2 { font-size: 15px; color: var(--slate); max-width: 640px; margin: 0; }
+  .lede-2 b { color: var(--sand); }
+
+  section { padding: 44px 8px 8px; }
+  h2 { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 3px; color: var(--slate); margin: 0 0 8px; }
+  h2 b { color: var(--clay); font-weight: 600; }
+  .section-lede { font-size: 15px; color: var(--slate); max-width: 640px; margin: 0 0 26px; }
+  .section-lede b, .section-lede strong { color: var(--sand); }
+
+  /* ---------- antes / después ---------- */
+  .versus { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .vcol { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .vcol.after { border-top: 3px solid var(--clay-deep); }
+  .vcol h3 { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; margin: 0 0 14px; color: var(--slate); }
+  .vcol.after h3 { color: var(--clay); }
+  .vcol ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--slate); }
+  .vcol li { margin-bottom: 10px; }
+  .vcol li::marker { color: var(--clay-deep); }
+  .vcol b { color: var(--sand); }
+
+  /* ---------- terminal simulator ---------- */
+  .sim { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .sim-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--line); background: #1a2029; }
+  .sim-tab { font-family: var(--mono); font-size: 12px; padding: 12px 14px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--slate); cursor: pointer; }
+  .sim-tab:hover { color: var(--sand); }
+  .sim-tab[aria-selected="true"] { color: var(--clay); border-bottom-color: var(--clay); }
+  .sim-tab:focus-visible { outline: 2px solid var(--clay); outline-offset: -2px; }
+  .sim-body { display: grid; grid-template-columns: 1.25fr 1fr; min-height: 340px; }
+  .term { background: #10141a; padding: 18px 22px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; overflow-x: auto; border-right: 1px solid var(--line); }
+  .term .ps { color: var(--clay); }
+  .term .out { color: var(--slate); }
+  .term .hi { color: var(--sand); }
+  .term .ok { color: var(--verify); }
+  .term .warn { color: var(--amber); }
+  .explain { padding: 22px 24px; }
+  .explain h3 { margin: 0 0 10px; font-size: 16px; font-weight: 650; }
+  .explain p { margin: 0 0 12px; font-size: 13.5px; color: var(--slate); }
+  .explain p b { color: var(--sand); }
+  .explain .why { border-left: 3px solid var(--clay-deep); padding: 8px 12px; background: var(--panel-2); border-radius: 0 4px 4px 0; font-size: 13px; color: var(--slate); }
+  .explain .why b { color: var(--clay); }
+  .sim-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 22px; border-top: 1px solid var(--line); background: #1a2029; }
+  .sim-nav button { font-family: var(--mono); font-size: 12.5px; padding: 8px 18px; border-radius: 4px; border: 1px solid var(--clay-deep); background: #2b2018; color: var(--clay); cursor: pointer; }
+  .sim-nav button:hover:not(:disabled) { background: #3a2a1d; }
+  .sim-nav button:disabled { opacity: 0.35; cursor: default; }
+  .sim-nav button:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; }
+  .sim-nav .pos { font-family: var(--mono); font-size: 11.5px; color: var(--slate); }
+
+  /* ---------- benefits ---------- */
+  .benefits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .benefit { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px 20px 18px; }
+  .benefit h3 { font-family: var(--mono); font-size: 12px; letter-spacing: 1.5px; color: var(--clay); margin: 0 0 12px; }
+  .benefit ul { margin: 0; padding-left: 16px; font-size: 13.5px; color: var(--slate); }
+  .benefit li { margin-bottom: 9px; }
+  .benefit li::marker { color: var(--clay-deep); }
+  .benefit b { color: var(--sand); }
+
+  /* ---------- glossary ---------- */
+  .gloss { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .g { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 13px 16px; }
+  .g dt { font-family: var(--mono); font-size: 12.5px; color: var(--sand); font-weight: 600; margin-bottom: 4px; }
+  .g dd { margin: 0; font-size: 13px; color: var(--slate); }
+  .g dd b { color: var(--sand); }
+
+  /* ---------- first 15 ---------- */
+  .steps15 { counter-reset: s; display: flex; flex-direction: column; gap: 10px; }
+  .s15 { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 14px 18px 13px 60px; }
+  .s15::before { counter-increment: s; content: counter(s); position: absolute; left: 18px; top: 13px; font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--clay); }
+  .s15 code { font-family: var(--mono); font-size: 12.5px; background: #10141a; border: 1px solid var(--line); border-radius: 3px; padding: 2px 7px; color: var(--sand); }
+  .s15 p { margin: 6px 0 0; font-size: 13px; color: var(--slate); }
+
+  /* ---------- golden rules ---------- */
+  .rules { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .rule { display: grid; grid-template-columns: 30px 1fr; gap: 12px; padding: 14px 18px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 14px; }
+  .rule:last-child { border-bottom: none; }
+  .rule .m { font-family: var(--mono); color: var(--verify); font-weight: 700; }
+  .rule p { margin: 0; color: var(--slate); }
+  .rule b { color: var(--sand); }
+
+  .colophon { margin-top: 48px; padding: 20px 8px 0; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--slate); display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .colophon b { color: var(--sand); }
+
+  @media (max-width: 760px) {
+    .versus, .benefits, .gloss { grid-template-columns: 1fr; }
+    .sim-body { grid-template-columns: 1fr; }
+    .term { border-right: none; border-bottom: 1px solid var(--line); }
+    h1 { font-size: 32px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .term-content { animation: fadein 200ms ease; }
+    @keyframes fadein { from { opacity: 0.4; } to { opacity: 1; } }
+  }
+</style>
+
+<div class="page">
+
+  <div class="hero">
+    <p class="eyebrow">GUÍA PARA EMPEZAR · 10 MIN</p>
+    <h1>¿Qué es hornero y por qué lo usamos?</h1>
+    <p class="lede">Hornero convierte lo que se pide en reuniones en especificaciones
+    versionadas, código construido por agentes, y un rastro auditable de punta a
+    punta — todo adentro del repo git, con una persona aprobando cada paso.</p>
+    <p class="lede-2">Pensalo como un <b>asistente de producto que vive en tu repo</b>:
+    lee las notas que le dejás, propone qué cambió en los requerimientos, espera tu
+    OK en la terminal, y deja todo escrito donde ya trabajás — sin Jira, sin wiki
+    externa, sin otro sistema que sincronizar.</p>
+  </div>
+
+  <section>
+    <h2>EL PROBLEMA <b>— por qué existe</b></h2>
+    <p class="section-lede">Los requerimientos nacen en conversaciones y mueren en
+    documentos. Tres sprints después nadie sabe si algo se hizo, quién lo aprobó,
+    ni por qué el código quedó así.</p>
+    <div class="versus">
+      <div class="vcol">
+        <h3>SIN HORNERO</h3>
+        <ul>
+          <li>Lo pedido queda en notas sueltas; <b>el rastro se pierde</b>.</li>
+          <li>Los specs (si existen) se desactualizan del código en semanas.</li>
+          <li>Un agente de código recibe instrucciones vagas y alucina contexto.</li>
+          <li>“¿Por qué este código es así?” — nadie recuerda.</li>
+        </ul>
+      </div>
+      <div class="vcol after">
+        <h3>CON HORNERO</h3>
+        <ul>
+          <li>Cada nota se compara contra los specs y <b>propone deltas con evidencia textual</b>.</li>
+          <li>El spec ES el tracker: su estado vive en el archivo, versionado en git.</li>
+          <li>Los agentes reciben un <b>contrato verificable</b>, no un “hacé esto”.</li>
+          <li>Podés navegar: señal → delta → spec → tarea → PR → merge.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>CÓMO SE USA <b>— el loop, paso a paso</b></h2>
+    <p class="section-lede">Esto es un día normal con hornero. Avanzá con
+    <b>Siguiente</b> o hacé click en cada etapa — la terminal de la izquierda
+    muestra lo que verías de verdad.</p>
+
+    <div class="sim">
+      <div class="sim-tabs" role="tablist" aria-label="Etapas del loop"></div>
+      <div class="sim-body">
+        <div class="term"><div class="term-content" id="term"></div></div>
+        <div class="explain" id="explain"></div>
+      </div>
+      <div class="sim-nav">
+        <button id="prev" type="button">← Anterior</button>
+        <span class="pos" id="pos"></span>
+        <button id="next" type="button">Siguiente →</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>EL VALOR <b>— qué gana cada uno</b></h2>
+    <div class="benefits">
+      <div class="benefit">
+        <h3>PARA VOS (DEV)</h3>
+        <ul>
+          <li><b>Contexto instantáneo</b>: entrás a cualquier repo y la wiki + los specs te orientan en minutos.</li>
+          <li>No re-descubrís caminos muertos: los <b>DRs guardan qué se intentó y por qué se descartó</b>.</li>
+          <li>Menos “preguntale a la persona que estuvo” — el repo recuerda.</li>
+        </ul>
+      </div>
+      <div class="benefit">
+        <h3>PARA EL EQUIPO</h3>
+        <ul>
+          <li><b>Trazabilidad completa</b>: cada línea de código se explica hasta la reunión que la originó.</li>
+          <li>Los prompts y reglas de agentes se <b>sincronizan entre repos como dependencias</b>, con lockfile.</li>
+          <li>Nada se aprueba solo: <b>el humano decide siempre</b>, y queda registrado.</li>
+        </ul>
+      </div>
+      <div class="benefit">
+        <h3>PARA EL NEGOCIO</h3>
+        <ul>
+          <li>Reportes HTML auto-generados: <b>qué hace el producto hoy</b>, sin preguntarle a nadie.</li>
+          <li>Auditoría real de qué construyeron los agentes de IA y con qué autorización.</li>
+          <li>Cero infraestructura: <b>no hay servidor que operar ni SaaS que pagar</b>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>GLOSARIO MÍNIMO <b>— 8 términos y ya podés seguir cualquier conversación</b></h2>
+    <dl class="gloss">
+      <div class="g"><dt>señal (signal)</dt><dd>Cualquier texto que entra: notas de reunión, un doc, una idea. Se deja en <b>.hornero/inbox/</b>.</dd></div>
+      <div class="g"><dt>delta</dt><dd>Un cambio de requerimiento propuesto: algo NUEVO, CAMBIADO, OBSOLETO o DUPLICADO respecto de los specs.</dd></div>
+      <div class="g"><dt>evidencia verbatim</dt><dd>Cada delta debe citar la fuente <b>textual, carácter por carácter</b>. Si la cita no coincide, el delta se descarta — así se frena la alucinación.</dd></div>
+      <div class="g"><dt>HITL (human-in-the-loop)</dt><dd>La revisión humana en la terminal: aprobar / rechazar / editar / saltar. Sin terminal interactiva, <b>no se escribe nada</b>.</dd></div>
+      <div class="g"><dt>spec</dt><dd>Un requerimiento como archivo markdown en <b>sdd/specs/</b>. Su frontmatter lleva el estado: proposed → approved → building → review → done.</dd></div>
+      <div class="g"><dt>dispatch</dt><dd>Enviar un spec aprobado a un agente de código para que lo construya. El resultado vuelve como PR al mismo repo.</dd></div>
+      <div class="g"><dt>trace / DR</dt><dd>El <b>trace</b> graba cada acción del agente; el <b>Decision Record</b> lo resume con citas verificadas a esos eventos. Narrativa nunca sin evidencia.</dd></div>
+      <div class="g"><dt>drift / diverged</dt><dd>Estado de los archivos del toolkit vs. su upstream. <b>diverged</b> = cambió en ambos lados → lo resuelve un humano, nunca una heurística.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>TUS PRIMEROS 15 MINUTOS</h2>
+    <div class="steps15">
+      <div class="s15"><code>git clone github.com/jelitox/hornero && uv pip install -e .</code>
+        <p>Python ≥ 3.11. Una sola dependencia de runtime.</p></div>
+      <div class="s15"><code>cd un-repo-de-prueba/ && hornero init</code>
+        <p>Crea <code>.hornero/</code> y el layout <code>sdd/</code>. Es idempotente: correrlo dos veces no rompe nada.</p></div>
+      <div class="s15"><code>echo "los usuarios piden exportar el reporte a CSV" &gt; .hornero/inbox/nota.md</code>
+        <p>Tu primera señal. Cualquier texto sirve.</p></div>
+      <div class="s15"><code>hornero reconcile --dry-run</code>
+        <p>Mirá qué deltas propondría. <b>Garantizado</b>: no escribe nada (verificalo con <code>git status</code>).</p></div>
+      <div class="s15"><code>hornero reconcile</code> → aprobá el delta → <code>hornero build && hornero report</code>
+        <p>Abrí <code>sdd/reports/traceability.html</code> y seguí la cadena completa de tu nota hasta el PR simulado.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>REGLAS DE ORO <b>— si recordás solo esto, ya estás</b></h2>
+    <div class="rules">
+      <div class="rule"><span class="m">1</span><p><b>La evidencia es literal o el delta muere.</b> Nunca “arregles” una cita que no coincide — descartala.</p></div>
+      <div class="rule"><span class="m">2</span><p><b>Sin humano no hay escritura.</b> Si reconcile no te pregunta, no aplicó nada. Eso es una feature, no un bug.</p></div>
+      <div class="rule"><span class="m">3</span><p><b>El spec manda.</b> Si el código y el spec se contradicen, gana el spec — y se anota la discrepancia.</p></div>
+      <div class="rule"><span class="m">4</span><p><b>diverged = pará y preguntá.</b> Nunca fuerces un merge de archivos del toolkit; usá <code style="font-family:var(--mono);font-size:12px">--theirs</code> o <code style="font-family:var(--mono);font-size:12px">--ours</code> a conciencia.</p></div>
+      <div class="rule"><span class="m">5</span><p><b>Nada facturado por sorpresa.</b> El backend <code style="font-family:var(--mono);font-size:12px">api</code> solo corre si alguien lo escribió explícitamente primero en la config.</p></div>
+    </div>
+  </section>
+
+  <div class="colophon">
+    <span><b>github.com/jelitox/hornero</b> · MIT · dudas → canal del equipo</span>
+    <span>el hornero construye su casa capa por capa 🪶</span>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  {
+    tab: "1 · señal",
+    term: [
+      ['ps', '$ '], ['hi', 'cat notas-reunion.md'], ['br'],
+      ['out', '“Ventas pidió de nuevo poder exportar el'], ['br'],
+      ['out', ' reporte de uso a CSV. Prioridad alta.”'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'cp notas-reunion.md .hornero/inbox/'], ['br'],
+      ['out', '(listo — eso es todo lo que hay que hacer)'],
+    ],
+    title: "Dejás la nota en el inbox",
+    body: "Cualquier texto sirve: minutas, un mail pegado, una idea a medio formar. No hay formato obligatorio ni formulario que llenar.",
+    why: "<b>Por qué importa:</b> la barrera de entrada es cero. Si capturar el requerimiento cuesta, no se captura."
+  },
+  {
+    tab: "2 · deltas",
+    term: [
+      ['ps', '$ '], ['hi', 'hornero reconcile --dry-run'], ['br'],
+      ['out', '1 delta(s) drafted (run r-7):'], ['br'],
+      ['hi', '  [new] dlt-r-7-1 — Exportar reporte a CSV'], ['br'],
+      ['out', '      confidence 0.88; affects (new spec)'], ['br'],
+      ['ok',  '      sig-…c41 @ L2: “poder exportar el'], ['br'],
+      ['ok',  '      reporte de uso a CSV”'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'git status'], ['br'],
+      ['ok', 'nothing to commit, working tree clean ✓'],
+    ],
+    title: "Hornero propone deltas — con prueba",
+    body: "El LLM compara la nota contra los specs existentes y propone qué es nuevo, qué cambió, qué quedó obsoleto. La línea verde es la <b>evidencia</b>: una cita textual de tu nota, verificada carácter por carácter.",
+    why: "<b>Por qué importa:</b> si el modelo “recuerda” algo que no está en la nota, ese delta se descarta solo. La alucinación no llega a tu pantalla."
+  },
+  {
+    tab: "3 · tu OK",
+    term: [
+      ['ps', '$ '], ['hi', 'hornero reconcile'], ['br'],
+      ['hi', '[NEW] dlt-r-7-1 — Exportar reporte a CSV'], ['br'],
+      ['out', '  evidence:'], ['br'],
+      ['ok',  '    sig-…c41 @ L2: “poder exportar…”'], ['br'],
+      ['warn','  [memory] DR-003: un intento previo de'], ['br'],
+      ['warn','  export streaming se rechazó — ver nota'], ['br'],
+      ['out', '  proposed patch: (spec completo)'], ['br'],
+      ['hi', '[a]pprove / [r]eject / [e]dit / [s]kip > '], ['ok', 'a'],
+    ],
+    title: "Vos decidís — siempre",
+    body: "Cada delta se revisa en la terminal: aprobar, rechazar, editar o saltar. Fijate la línea ámbar: si algo parecido ya se rechazó antes, <b>hornero te lo recuerda antes de que apruebes</b>.",
+    why: "<b>Por qué importa:</b> sin terminal interactiva no se escribe nada (fail-closed). Nadie puede automatizar la aprobación “por accidente”."
+  },
+  {
+    tab: "4 · spec",
+    term: [
+      ['ps', '$ '], ['hi', 'cat sdd/specs/SPEC-007-exportar-csv.md'], ['br'],
+      ['out', '---'], ['br'],
+      ['out', 'spec: SPEC-007'], ['br'],
+      ['out', 'title: Exportar reporte a CSV'], ['br'],
+      ['ok',  'status: approved'], ['br'],
+      ['out', 'sources: [sig-…c41]'], ['br'],
+      ['out', '---'], ['br'],
+      ['out', '# SPEC-007 — Exportar reporte a CSV'], ['br'],
+      ['out', '…criterios de aceptación ejecutables…'],
+    ],
+    title: "El spec ES el tracker",
+    body: "Lo aprobado se convierte en un archivo markdown versionado en git. El estado vive en el frontmatter — no hay Jira que sincronizar ni tablero que se desactualice del código.",
+    why: "<b>Por qué importa:</b> el spec y el código viven juntos, se revisan juntos en el mismo PR, y divergen mucho menos."
+  },
+  {
+    tab: "5 · build",
+    term: [
+      ['ps', '$ '], ['hi', 'hornero build'], ['br'],
+      ['out', 'SPEC-007: completed -> review'], ['br'],
+      ['out', '  (https://…/pr/SPEC-007-1)'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'hornero runs show r-8-spec-007 --kind error'], ['br'],
+      ['out', 'e#14  error   pytest failed: encoding'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'hornero scribe r-8-spec-007'], ['br'],
+      ['ok', 'wrote sdd/decisions/DR-011-exportar-csv.md'],
+    ],
+    title: "Un agente construye — y todo queda grabado",
+    body: "El spec aprobado se despacha a un agente de código. Cada acción del agente queda en un <b>trace</b>; el scribe lo destila en un Decision Record donde cada afirmación cita eventos reales del trace.",
+    why: "<b>Por qué importa:</b> dentro de 6 meses vas a poder responder “¿por qué este código es así?” navegando wiki → DR → eventos → trace crudo."
+  },
+  {
+    tab: "6 · rastro",
+    term: [
+      ['ps', '$ '], ['hi', 'hornero report'], ['br'],
+      ['out', 'wrote sdd/reports/capabilities.html'], ['br'],
+      ['out', 'wrote sdd/reports/traceability.html'], ['br'],
+      ['out', 'wrote sdd/reports/workflows.html'], ['br'], ['br'],
+      ['out', 'traceability por requerimiento:'], ['br'],
+      ['ok',  ' señal → delta → SPEC-007 → run → PR → ✓'], ['br'], ['br'],
+      ['ps', '$ '], ['hi', 'hornero report'], ['br'],
+      ['ok', 'reports already current  (no-op, cero churn)'],
+    ],
+    title: "El rastro completo, en HTML, sin pedirle nada a nadie",
+    body: "Los reportes se regeneran solos y muestran la cadena de auditoría entera — incluidos los huecos honestos (“esto nunca se buildeó”). Y si nada cambió, la corrida es un no-op: cero ruido en cron.",
+    why: "<b>Por qué importa:</b> el estado del producto deja de vivir en la cabeza de alguien. Está en el repo, siempre actualizado."
+  },
+];
+
+const tabsEl = document.querySelector('.sim-tabs');
+const termEl = document.getElementById('term');
+const explainEl = document.getElementById('explain');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const posEl = document.getElementById('pos');
+let idx = 0;
+
+STEPS.forEach((s, i) => {
+  const b = document.createElement('button');
+  b.className = 'sim-tab'; b.textContent = s.tab;
+  b.setAttribute('role', 'tab');
+  b.addEventListener('click', () => { idx = i; render(); });
+  tabsEl.appendChild(b);
+});
+
+function render() {
+  const s = STEPS[idx];
+  [...tabsEl.children].forEach((b, i) =>
+    b.setAttribute('aria-selected', i === idx ? 'true' : 'false'));
+  termEl.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'term-content';
+  s.term.forEach(([cls, text]) => {
+    if (cls === 'br') { wrap.appendChild(document.createElement('br')); return; }
+    const span = document.createElement('span');
+    span.className = cls; span.textContent = text;
+    wrap.appendChild(span);
+  });
+  termEl.appendChild(wrap);
+  explainEl.innerHTML =
+    '<h3>' + s.title + '</h3><p>' + s.body + '</p><div class="why">' + s.why + '</div>';
+  prevBtn.disabled = idx === 0;
+  nextBtn.disabled = idx === STEPS.length - 1;
+  posEl.textContent = (idx + 1) + ' / ' + STEPS.length;
+}
+prevBtn.addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+nextBtn.addEventListener('click', () => { if (idx < STEPS.length - 1) { idx++; render(); } });
+render();
+</script>
