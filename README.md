@@ -129,5 +129,8 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 - [Deployment guide](docs/DEPLOYMENT.md) — adopting hornero in your repos, CI, multi-repo fanout
 - [Changelog](CHANGELOG.md)
 
-Specs are the source of truth: `sdd/specs/SPEC-001-hornero-foundation.md` and
-`sdd/specs/SPEC-002-sdd-toolkit-sync.md`.
+Specs are the source of truth: see `sdd/specs/`.
+
+## License
+
+[MIT](LICENSE)
