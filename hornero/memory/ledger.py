@@ -53,8 +53,18 @@ CREATE TABLE IF NOT EXISTS dispatches (
     status     TEXT NOT NULL,
     pr_url     TEXT,
     branch     TEXT,
-    log_path   TEXT NOT NULL,
+    trace_path TEXT NOT NULL,
     created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS agent_runs (
+    run_ref     TEXT PRIMARY KEY,
+    spec_id     TEXT,
+    task_id     TEXT,
+    actor       TEXT NOT NULL,
+    status      TEXT NOT NULL,
+    trace_path  TEXT NOT NULL,
+    started_at  REAL NOT NULL,
+    finished_at REAL
 );
 CREATE TABLE IF NOT EXISTS checkpoints (
     key        TEXT PRIMARY KEY,
@@ -149,16 +159,47 @@ class Ledger:
         status: str,
         pr_url: str | None,
         branch: str | None,
-        log_path: str,
+        trace_path: str,
         created_at: float,
     ) -> None:
         self._conn.execute(
             "INSERT INTO dispatches "
-            "(spec_id, run_id, status, pr_url, branch, log_path, created_at) "
+            "(spec_id, run_id, status, pr_url, branch, trace_path, created_at) "
             "VALUES (?,?,?,?,?,?,?)",
-            (spec_id, run_id, status, pr_url, branch, log_path, created_at),
+            (spec_id, run_id, status, pr_url, branch, trace_path, created_at),
         )
         self._conn.commit()
+
+    def record_agent_run(
+        self,
+        run_ref: str,
+        *,
+        spec_id: str | None,
+        task_id: str | None,
+        actor: str,
+        status: str,
+        trace_path: str,
+        started_at: float,
+        finished_at: float | None = None,
+    ) -> None:
+        """SPEC-004 §3.3: the join point between specs, tasks and traces."""
+        self._conn.execute(
+            "INSERT OR REPLACE INTO agent_runs "
+            "(run_ref, spec_id, task_id, actor, status, trace_path, "
+            "started_at, finished_at) VALUES (?,?,?,?,?,?,?,?)",
+            (run_ref, spec_id, task_id, actor, status, trace_path,
+             started_at, finished_at),
+        )
+        self._conn.commit()
+
+    def agent_runs(self, spec_id: str | None = None) -> list[dict[str, Any]]:
+        q = "SELECT * FROM agent_runs"
+        args: tuple = ()
+        if spec_id is not None:
+            q += " WHERE spec_id = ?"
+            args = (spec_id,)
+        rows = self._conn.execute(q + " ORDER BY run_ref", args).fetchall()
+        return [dict(r) for r in rows]
 
     def checkpoint_set(self, key: str, value: Any, updated_at: float) -> None:
         self._conn.execute(

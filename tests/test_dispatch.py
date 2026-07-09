@@ -61,14 +61,19 @@ def test_brief_broken_criteria_raise(tmp_path):
 
 
 def test_mock_backend_deterministic(tmp_path):
+    from hornero.flight import TraceWriter
+
     brief = brief_from_spec(_doc(tmp_path), str(tmp_path), ALLOW, tmp_path / "d")
-    a = MockBackend(tmp_path, counter=1).run(brief)
-    b = MockBackend(tmp_path, counter=1).run(brief)
+    a = MockBackend(tmp_path, counter=1).run(
+        brief, TraceWriter(tmp_path, "r-a", "dispatch:mock", clock=lambda: 0.0)
+    )
+    b = MockBackend(tmp_path, counter=1).run(
+        brief, TraceWriter(tmp_path, "r-b", "dispatch:mock", clock=lambda: 0.0)
+    )
     assert a == b
     assert a["status"] == "completed"
     assert a["pr_url"] == "https://example.invalid/pr/SPEC-002-1"
     assert a["branch"] == "hornero/SPEC-002"
-    assert "MOCK BUILD SPEC-002" in open(a["log_path"]).read()
 
 
 def test_mock_resolution_default(tmp_path):
@@ -81,7 +86,11 @@ def test_cli_backend_absent_yields_needs_human(tmp_path):
     brief = brief_from_spec(_doc(tmp_path), str(tmp_path), ALLOW, tmp_path / "d")
     result = d.dispatch(brief)
     assert result["status"] == "needs_human" and result["pr_url"] is None
-    assert "not installed" in open(result["log_path"]).read()
+    from hornero.flight import read_trace
+
+    events = read_trace(tmp_path, "run-spec-002")
+    assert any(e["kind"] == "error" and "not installed" in e["summary"]
+               for e in events)
 
 
 def test_api_never_a_fallback(tmp_path, monkeypatch):

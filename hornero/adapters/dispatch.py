@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Protocol
 
 from hornero.criteria import parse_criteria
+from hornero.flight import TraceWriter
 from hornero.lifecycle import SpecDoc
 from hornero.ports import BuildBrief, BuildResult
 
@@ -71,13 +72,13 @@ def brief_from_spec(
 class Backend(Protocol):
     name: str
 
-    def run(self, brief: BuildBrief) -> BuildResult: ...
+    def run(self, brief: BuildBrief, trace: TraceWriter) -> BuildResult: ...
 
 
 class MockBackend:
     """Deterministic fake: same brief + same counter state => same result.
-    Writes a log under ``.hornero/dispatch-logs/`` — this is the e2e test
-    path (real engine, simulated externals)."""
+    Emits a synthetic event stream into the trace — this is the e2e test
+    path (real engine, simulated externals) and the F9 fixture."""
 
     name = "mock"
 
@@ -85,17 +86,15 @@ class MockBackend:
         self._logs = root / ".hornero" / "dispatch-logs"
         self._counter = counter
 
-    def run(self, brief: BuildBrief) -> BuildResult:
+    def run(self, brief: BuildBrief, trace: TraceWriter) -> BuildResult:
         self._logs.mkdir(parents=True, exist_ok=True)
         n = self._counter
         self._counter += 1
-        log_path = self._logs / f"{brief['spec_id']}.log"
-        log_path.write_text(
-            f"MOCK BUILD {brief['spec_id']} (#{n})\n"
-            f"summary: {brief['summary']}\n"
-            f"criteria: {brief['acceptance_criteria']}\n",
-            encoding="utf-8",
-        )
+        trace.emit("message", f"MOCK BUILD {brief['spec_id']} (#{n}): "
+                              f"{brief['summary']}")
+        trace.emit("tool_use", f"Edit src/{brief['spec_id'].lower()}.py (+12 -3)",
+                   {"criteria": list(brief["acceptance_criteria"])})
+        trace.emit("tool_result", "edit applied")
         # Simulate the write-back contract: the "PR" carries the spec updated
         # to review alongside the code (what a real backend must do).
         (self._logs / f"{brief['spec_id']}.pr-contents.md").write_text(
@@ -107,7 +106,7 @@ class MockBackend:
             status="completed",
             pr_url=f"https://example.invalid/pr/{brief['spec_id']}-{n}",
             branch=f"hornero/{brief['spec_id']}",
-            log_path=str(log_path),
+            trace_path="",  # the dispatcher owns the trace location
         )
 
 
@@ -120,14 +119,10 @@ class _UnavailableBackend:
         self._logs = root / ".hornero" / "dispatch-logs"
         self._reason = reason
 
-    def run(self, brief: BuildBrief) -> BuildResult:
-        self._logs.mkdir(parents=True, exist_ok=True)
-        log_path = self._logs / f"{brief['spec_id']}.log"
-        log_path.write_text(
-            f"backend '{self.name}' unavailable: {self._reason}\n", encoding="utf-8"
-        )
+    def run(self, brief: BuildBrief, trace: TraceWriter) -> BuildResult:
+        trace.emit("error", f"backend '{self.name}' unavailable: {self._reason}")
         return BuildResult(
-            status="needs_human", pr_url=None, branch=None, log_path=str(log_path)
+            status="needs_human", pr_url=None, branch=None, trace_path=""
         )
 
 
@@ -175,5 +170,21 @@ class MulticodersDispatch:
     def backend_name(self) -> str:
         return self._backend.name
 
-    def dispatch(self, brief: BuildBrief) -> BuildResult:
-        return self._backend.run(brief)
+    def dispatch(self, brief: BuildBrief, run_ref: str | None = None) -> BuildResult:
+        """SPEC-004 §3.1 capture contract: every dispatch produces a trace.
+        ``run_ref`` shares the ledger's run-id namespace; when omitted a
+        spec-derived ref keeps ad-hoc dispatches traceable too."""
+        run_ref = run_ref or f"run-{brief['spec_id'].lower()}"
+        trace = TraceWriter(
+            self._root, run_ref, f"dispatch:{self._backend.name}"
+        )
+        trace.emit(
+            "run.started",
+            f"dispatch {brief['spec_id']} via {self._backend.name}",
+            {"summary": brief["summary"]},
+        )
+        result = self._backend.run(brief, trace)
+        trace.emit("run.finished", f"status {result['status']}",
+                   {"pr_url": result["pr_url"]})
+        result["trace_path"] = str(trace.close())
+        return result

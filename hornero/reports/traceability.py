@@ -60,6 +60,8 @@ def generate(ctx: ReportContext) -> str:
             doc.path.name, set()
         )
         tasks_cell = ", ".join(esc(t) for t in sorted(task_ids)) or _GAP
+        runs = ctx.ledger.agent_runs(doc.spec_id)  # SPEC-004 §3.3: process
+        runs_cell = ", ".join(esc(r["run_ref"]) for r in runs) or _GAP
         prs = [d["pr_url"] for d in chain["dispatches"] if d["pr_url"]]
         pr_cell = ", ".join(esc(u) for u in prs) or _GAP
         merged = "yes" if doc.status is Status.DONE else _GAP
@@ -71,6 +73,7 @@ def generate(ctx: ReportContext) -> str:
             f'<td><a href="{esc(spec_href(doc.path))}">{esc(doc.spec_id)}</a> '
             f"<small>({esc(doc.status.value)})</small></td>"
             f"<td>{tasks_cell}</td>"
+            f"<td>{runs_cell}</td>"
             f"<td>{pr_cell}</td>"
             f"<td>{merged}</td>"
             "</tr>"
@@ -79,7 +82,7 @@ def generate(ctx: ReportContext) -> str:
         "<p>The audit chain per requirement. Gaps (—) are honest: they mark "
         "stages that have not happened.</p>"
         "<table><tr><th>Signals</th><th>Deltas</th><th>Spec</th>"
-        "<th>SDD tasks</th><th>PR</th><th>Merged</th></tr>"
+        "<th>SDD tasks</th><th>Runs</th><th>PR</th><th>Merged</th></tr>"
         + "".join(rows) + "</table>"
         if rows
         else "<p class='gap'>No specs yet.</p>"

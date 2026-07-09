@@ -68,7 +68,7 @@ class BuildResult(TypedDict):
     status: str  # completed|failed|needs_human
     pr_url: str | None
     branch: str | None
-    log_path: str
+    trace_path: str  # SPEC-004 §3.1: every dispatch MUST produce a trace
 
 
 @runtime_checkable

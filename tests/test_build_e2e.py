@@ -91,6 +91,6 @@ def test_failed_dispatch_goes_needs_human(repo, capsys):
     assert main(["build", "--backend", "cli"]) == 1
     doc = parse_spec(repo / "sdd" / "specs" / "SPEC-002-digest.md")
     assert doc.status is Status.NEEDS_HUMAN
-    assert "see log" in doc.body
+    assert "see trace" in doc.body
     with Ledger(repo / ".hornero" / "ledger.db") as led:
         assert led.dispatches("SPEC-002")[0]["status"] == "needs_human"

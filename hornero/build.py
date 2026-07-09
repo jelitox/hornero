@@ -93,10 +93,17 @@ def run_build(
         brief = brief_from_spec(
             doc, str(root), cfg.criterion_allowlist, layout.decisions_dir(root)
         )
-        result = dispatcher.dispatch(brief)
+        run_ref = f"{run_id}-{spec_id.lower()}"
+        result = dispatcher.dispatch(brief, run_ref=run_ref)
         ledger.record_dispatch(
             spec_id, run_id, result["status"], result["pr_url"],
-            result["branch"], result["log_path"], now,
+            result["branch"], result["trace_path"], now,
+        )
+        ledger.record_agent_run(  # SPEC-004 §3.3: specs <-> traces join
+            run_ref, spec_id=spec_id, task_id=None,
+            actor=f"dispatch:{dispatcher.backend_name}",
+            status=result["status"], trace_path=result["trace_path"],
+            started_at=now, finished_at=now,
         )
         if result["status"] == "completed":
             tracker.transition(spec_id, "review")
@@ -107,10 +114,10 @@ def run_build(
             tracker.transition(spec_id, "needs_human")
             tracker.comment(
                 spec_id,
-                f"dispatch {result['status']}; see log {result['log_path']}",
+                f"dispatch {result['status']}; see trace {result['trace_path']}",
             )
             echo(f"{spec_id}: {result['status']} -> needs_human "
-                 f"(log: {result['log_path']})")
+                 f"(trace: {result['trace_path']})")
 
     ledger.finish_run(run_id, now)
     if failures == 0:

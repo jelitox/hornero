@@ -2,7 +2,7 @@
 
 **Feature**: SPEC-004 — Flight recorder & scribe — capturing, distilling, and auditing agent decisions
 **Spec**: `sdd/specs/SPEC-004-flight-recorder-scribe.md`
-**Status**: pending
+**Status**: done
 **Priority**: high
 **Estimated effort**: L
 **Depends-on**: TASK-029
@@ -36,10 +36,8 @@ returns exact slices; adopt registers a fixture transcript.
 
 ## Completion Note
 
-*(Agent fills this in when done)*
+**Completed by**: claude-fable-5
+**Date**: 2026-07-08
+**Notes**: hornero/flight.py — TraceWriter (sequenced, redact-at-write, kind enum enforced), read_trace/slice_events/parse_range, tolerant Claude Code adopter (unknown shapes degrade to message, corrupt lines skipped, raw payload preserved). MulticodersDispatch.dispatch(brief, run_ref) wraps every dispatch in run.started/run.finished; MockBackend emits a synthetic message/tool_use/tool_result stream (F9 fixture); _UnavailableBackend emits an error event. BuildResult.log_path -> trace_path (schema + build + tests). Ledger agent_runs table + record_agent_run/agent_runs; traceability gains a Runs column. CLI runs list/show/adopt/prune (prune removes trace dirs, audit rows survive). init gitignores .hornero/runs/ + cache/. F9 GATE GREEN. Suite 224 passed.
 
-**Completed by**:
-**Date**:
-**Notes**:
-
-**Deviations from spec**: none
+**Deviations from spec**: zstd compression is feature-detected (zstandard optional dep; plain JSONL stands without it) — hard-requiring it would violate CLAUDE.md invariant 'feature-detect, never hard-require'.

@@ -30,7 +30,11 @@ models: {}
 """
 
 _HORNERO_DIRS = ("inbox", "processed", "knowledge")
-_GITIGNORE_LINE = ".hornero/ledger.db*"  # includes SQLite -wal/-shm siblings
+_GITIGNORE_LINES = (
+    ".hornero/ledger.db*",  # includes SQLite -wal/-shm siblings
+    ".hornero/runs/",       # traces: gitignored unless runs.commit opts in
+    ".hornero/cache/",
+)
 
 
 def _cmd_init(root: Path, *, no_sdd: bool = False, no_wiki: bool = False) -> int:
@@ -50,9 +54,9 @@ def _cmd_init(root: Path, *, no_sdd: bool = False, no_wiki: bool = False) -> int
 
     gitignore = root / ".gitignore"
     lines = gitignore.read_text(encoding="utf-8").splitlines() if gitignore.exists() else []
-    if _GITIGNORE_LINE not in lines:
-        content = "\n".join([*lines, _GITIGNORE_LINE]) + "\n"
-        gitignore.write_text(content, encoding="utf-8")
+    missing = [li for li in _GITIGNORE_LINES if li not in lines]
+    if missing:
+        gitignore.write_text("\n".join([*lines, *missing]) + "\n", encoding="utf-8")
 
     Ledger(hornero_dir / "ledger.db").close()  # idempotent schema init
     print(f"initialized hornero in {root}")
@@ -138,6 +142,18 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("reindex", help="rebuild .hornero/knowledge/")
     p = sub.add_parser("report", help="regenerate sdd/reports/*.html")
     p.add_argument("--only")
+    p_runs = sub.add_parser("runs", help="flight-recorder traces (SPEC-004)")
+    runs_sub = p_runs.add_subparsers(dest="runs_command", required=True)
+    pr = runs_sub.add_parser("list", help="registered agent runs")
+    pr.add_argument("--spec", default=None)
+    pr = runs_sub.add_parser("show", help="events of one run")
+    pr.add_argument("run_ref")
+    pr.add_argument("--kind", default=None, help="comma-separated kind filter")
+    pr.add_argument("--range", dest="span", default=None, metavar="e#N:e#M")
+    pr = runs_sub.add_parser("adopt", help="adopt a Claude Code transcript")
+    pr.add_argument("transcript")
+    pr = runs_sub.add_parser("prune", help="delete old trace directories")
+    pr.add_argument("--keep-days", type=float, required=True)
     p_wiki = sub.add_parser("wiki", help="agent-facing living wiki (SPEC-003)")
     wiki_sub = p_wiki.add_subparsers(dest="wiki_command", required=True)
     wiki_sub.add_parser("init", help="first full wiki build")
@@ -269,6 +285,65 @@ def _cmd_sdd(args: argparse.Namespace, root: Path) -> int:
     raise AssertionError("unreachable")
 
 
+def _cmd_runs(args: argparse.Namespace, root: Path) -> int:
+    import shutil
+    import time
+
+    from hornero import flight
+
+    if args.runs_command == "list":
+        with Ledger(root / ".hornero" / "ledger.db") as led:
+            rows = led.agent_runs(spec_id=args.spec)
+        for r in rows:
+            print(f"{r['run_ref']}  {r['status']:<12} "
+                  f"{r['spec_id'] or '-':<10} {r['actor']}")
+        print(f"{len(rows)} run(s)")
+        return 0
+    if args.runs_command == "show":
+        try:
+            events = flight.read_trace(root, args.run_ref)
+        except FileNotFoundError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        kinds = set(args.kind.split(",")) if args.kind else None
+        try:
+            span = flight.parse_range(args.span) if args.span else None
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        for e in flight.slice_events(events, kinds, span):
+            print(f"e#{e['seq']:<5} {e['kind']:<16} {e['summary']}")
+        return 0
+    if args.runs_command == "adopt":
+        transcript = Path(args.transcript)
+        if not transcript.is_file():
+            print(f"no such transcript: {transcript}", file=sys.stderr)
+            return 2
+        run_ref = flight.adopt_transcript(root, transcript)
+        events = flight.read_trace(root, run_ref)
+        with Ledger(root / ".hornero" / "ledger.db") as led:
+            led.record_agent_run(
+                run_ref, spec_id=None, task_id=None, actor="adopted:claude-code",
+                status="adopted", trace_path=str(flight.runs_dir(root) / run_ref),
+                started_at=events[0]["ts"], finished_at=events[-1]["ts"],
+            )
+        print(f"adopted as {run_ref} ({len(events)} event(s))")
+        return 0
+    if args.runs_command == "prune":
+        cutoff = time.time() - args.keep_days * 86400
+        removed = 0
+        with Ledger(root / ".hornero" / "ledger.db") as led:
+            for r in led.agent_runs():
+                finished = r["finished_at"] or r["started_at"]
+                run_dir = flight.runs_dir(root) / r["run_ref"]
+                if finished < cutoff and run_dir.is_dir():
+                    shutil.rmtree(run_dir)  # ledger row stays: audit history
+                    removed += 1
+        print(f"pruned {removed} trace dir(s)")
+        return 0
+    raise AssertionError("unreachable")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     root = Path.cwd()
@@ -334,6 +409,8 @@ def main(argv: list[str] | None = None) -> int:
         from hornero.reports.run import run_report
 
         return run_report(root, only=args.only)
+    if args.command == "runs":
+        return _cmd_runs(args, root)
     if args.command == "wiki":
         from hornero.config import ConfigError, load_config
         from hornero.llm import model_name, resolve_llm
