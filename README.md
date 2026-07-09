@@ -46,6 +46,16 @@ needs a server, a database service, or a SaaS.
   `.claude/` + `sdd/` toolkit files against an upstream repo with a committed
   lockfile and a three-way drift model — like a package manager for prompts,
   where **diverged files are never auto-merged**.
+- **Agent-facing wiki**: `wiki/` is a second projection of the knowledge
+  layer, written FOR the next agent run — watermark-scoped surgical updates,
+  anti-stub and link-check gates, and a no-op discipline that makes scheduled
+  refreshes churn-free (quiet days produce no PR).
+- **Code as signal**: opt-in `GitSource` turns commits into requirement
+  signals so specs and code never silently drift apart.
+- **Flight recorder & scribe**: every dispatch leaves a redacted action-stream
+  trace; the scribe distills it into a Decision Record whose every claim
+  cites a verified event range — and past rejections resurface in the HITL
+  preview before you approve a repeat.
 
 ## Install
 
@@ -95,6 +105,9 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 | `hornero sdd sync --push FILE...` | Promote improved files upstream via a PR (secret-scanned) |
 | `hornero sdd sync --workspace DIR` | Pull-sync every child repo carrying `.hornero/sdd.lock` |
 | `hornero sdd hold\|unhold\|pin FILE` | Per-file sync policy |
+| `hornero wiki init\|update` | Agent-facing living wiki (watermark-scoped, no-op-disciplined) |
+| `hornero runs list\|show\|adopt\|prune` | Flight-recorder traces of every dispatch |
+| `hornero scribe RUN [--force]` | Distill a trace into a Decision Record (verified citations) |
 
 ## Hard invariants
 

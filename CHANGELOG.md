@@ -4,6 +4,56 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org/).
 
+## [0.2.0] — 2026-07-08
+
+SPEC-003 (agent-facing wiki, git watermarks, code-as-signal) and SPEC-004
+(flight recorder & scribe) fully built — gates F6 through F11 green. 234
+deterministic tests.
+
+### Added — wiki, watermarks, code-as-signal (SPEC-003)
+
+- **Git watermarks + no-op discipline**: committed `.hornero/watermarks.json`
+  (one entry per surface); `report`/`reindex`/`wiki update` snapshot their
+  output tree and say "already current" instead of churning — a quiet repo
+  costs one hash comparison, so scheduled CI runs produce no PR on quiet days.
+- **`hornero wiki init|update`**: LLM-drafted, mechanically gated agent-facing
+  wiki (`wiki/`): mandatory quickstart, anti-stub + small-repo caps, relative
+  link checker, surgical updates scoped to the git change window (empty
+  window = zero model calls), diff budget (U2), formatting-only edits
+  reverted (U3), redacted writes.
+- **Instruction injection**: `init` and `sdd install` keep a standardized
+  `## Hornero` section in top-level `CLAUDE.md`/`AGENTS.md` — semantic
+  staleness only, idempotent, neighbors preserved.
+- **`GitSource`** (opt-in `signal_sources: [inbox, git]`): commits since the
+  watermark become one redacted digest signal (messages + stats, never
+  diffs); hornero-authored commits excluded; spec drift detected from the
+  code side.
+- **Delta budget**: max 5 fresh deltas per signal per run; the excess is
+  queued in the ledger and re-presented next run — never dropped.
+- **Shared `redact()` layer**: secret shapes + live env values scrubbed from
+  every generated surface (reports, wiki, digests, traces).
+- **CI examples**: GitHub Actions + GitLab scheduled-update pipelines
+  (PR-gated, never direct push; reconcile only as dry-run advisory).
+
+### Added — flight recorder & scribe (SPEC-004)
+
+- **Flight recorder**: every dispatch produces an append-only, redacted,
+  sequenced JSONL trace under `.hornero/runs/<run_ref>/` (zstd when
+  available); ledger `agent_runs` table joins specs ↔ tasks ↔ traces;
+  traceability report gains a Runs column.
+- **`hornero runs list|show|adopt|prune`**: inspect traces (`--kind`,
+  `--range e#N:e#M`), adopt Claude Code session transcripts (tolerant
+  parser), prune old trace dirs (audit rows survive).
+- **The scribe** (`hornero scribe <run>`, auto at dispatch close when
+  `models.scribe` is set): distills a trace into a Decision Record in
+  `sdd/decisions/DR-NNN-*.md` where **every claim carries an event-range
+  citation that is mechanically verified** — unanchorable claims are dropped
+  and logged, trivial runs yield no DR.
+- **Institutional memory**: DRs are indexed as decisions; when a new signal
+  re-proposes an approach a past DR rejected, the HITL preview shows
+  `[memory] DR-NNN ...` before the human decides. Wiki quickstart links the
+  decision history.
+
 ## [0.1.0] — 2026-07-08
 
 First complete release: SPEC-001 (product loop MVP, gates F1–F5) and SPEC-002

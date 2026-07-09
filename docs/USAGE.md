@@ -198,6 +198,65 @@ hornero sdd sync
   hornero sdd sync --workspace ~/repos   # syncs every child with .hornero/sdd.lock
   ```
 
+## 9. Agent-facing wiki
+
+```bash
+hornero wiki init      # first full build (requires models.wiki)
+hornero wiki update    # surgical refresh scoped by the git watermark
+```
+
+Set the model in config (`models: {wiki: fake:script.json}` for the MVP fake
+backend; real providers arrive behind the same seam). Mechanics:
+
+- `quickstart.md` is mandatory; sections: `architecture/ workflows/ domain/
+  operations/`. Stub pages and broken relative links are rejected — nothing
+  lands on failure.
+- Updates analyze only the change window since the wiki watermark; an empty
+  window never calls the model. The diff budget bounds edits (small windows
+  touch at most 1-2 pages) and formatting-only edits are reverted.
+- `.hornero/watermarks.json` (committed) records per-surface sync state for
+  wiki, reports, reindex and gitsource; every surface says "already current"
+  instead of rewriting identical bytes.
+
+## 10. Code as signal (GitSource)
+
+```yaml
+# .hornero/config.yaml
+signal_sources: [inbox, git]   # git is opt-in
+```
+
+Commits since the last reconcile watermark arrive as one digest signal
+(messages + stats, redacted, never full diffs). Commits authored by hornero
+identities are skipped. Evidence for git-sourced deltas cites verbatim
+commit-message excerpts — the same mechanical check as inbox signals.
+
+The reconciler also enforces a **delta budget**: at most 5 fresh deltas per
+signal per run; the excess is queued in the ledger and re-presented next run.
+
+## 11. Flight recorder & scribe
+
+Every dispatch writes a redacted, sequenced event trace:
+
+```bash
+hornero runs list [--spec SPEC-002]
+hornero runs show r-3-spec-002 --kind tool_use,error --range e#12:e#40
+hornero runs adopt ~/.claude/session.jsonl    # adopt a Claude Code transcript
+hornero runs prune --keep-days 90
+```
+
+The scribe distills a trace into a Decision Record (`sdd/decisions/DR-NNN`):
+
+```bash
+hornero scribe r-3-spec-002        # or automatic at dispatch close
+                                   # when models.scribe is configured
+```
+
+Every DR claim carries an `[e#N-e#M]` citation that is mechanically
+verified against the trace — unanchorable claims are dropped and logged,
+and a trivial run yields no DR. DRs are indexed as knowledge: when a new
+signal re-proposes an approach a past DR rejected, the HITL preview shows
+`[memory] DR-NNN ...` before you decide.
+
 ## Exit codes
 
 - `0` success · `1` operational failure (or unresolved diverged files in sync)
