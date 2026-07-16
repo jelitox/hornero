@@ -1,5 +1,7 @@
 """Ledger schema, append, trace, and idempotency tests."""
 
+from concurrent.futures import ThreadPoolExecutor
+
 from hornero.memory.ledger import SCHEMA_VERSION, Ledger
 
 
@@ -58,6 +60,30 @@ def test_next_run_id_monotonic(tmp_path):
         assert led.next_run_id() == "r-1"
         led.record_run("r-1", "reconcile", 1.0)
         assert led.next_run_id() == "r-2"
+
+
+def test_next_run_id_is_unique_across_concurrent_connections(tmp_path):
+    db = tmp_path / "l.db"
+
+    def reserve(_):
+        with Ledger(db) as led:
+            return led.next_run_id()
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        ids = list(pool.map(reserve, range(24)))
+    assert len(ids) == len(set(ids)) == 24
+    assert {int(value.removeprefix("r-")) for value in ids} == set(range(1, 25))
+
+
+def test_delta_decision_and_outcome_are_distinct(tmp_path):
+    with Ledger(tmp_path / "l.db") as led:
+        led.record_delta(
+            "d-1", "r-1", "changed", "x", "failed", 0.8, {},
+            decision="approved", outcome="failed",
+        )
+        row = led.deltas()[0]
+        assert row["decision"] == "approved"
+        assert row["outcome"] == "failed"
 
 
 def test_run_finish_and_dry_run_flag(tmp_path):

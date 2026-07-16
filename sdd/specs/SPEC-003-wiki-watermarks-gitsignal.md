@@ -1,7 +1,7 @@
 ---
 spec: SPEC-003
 title: Hornero wiki — agent-facing living docs, git watermarks, and code-as-signal
-status: approved
+status: review
 kind: new_feature
 created: 2026-07-08
 owner: javier@javierleon.dev
@@ -275,3 +275,5 @@ everything else sits on it.
   zero-leak redaction). OQ9 (rebased watermark SHA) remains open for a real-
   world sample; the missing-watermark path already covers vanished SHAs
   conservatively (full-window digest).
+- 2026-07-14 — build started (run r-1, backend mock).
+- 2026-07-14 — PR opened: https://example.invalid/pr/SPEC-003-3

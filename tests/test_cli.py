@@ -106,3 +106,21 @@ def test_all_subcommands_are_wired(repo):
     import inspect
 
     assert "_stub(" not in inspect.getsource(cli.main)
+
+
+def test_nested_invocation_discovers_hornero_root(repo, monkeypatch, capsys):
+    assert main(["init"]) == 0
+    nested = repo / "src" / "pkg"
+    nested.mkdir(parents=True)
+    monkeypatch.chdir(nested)
+    assert main(["status"]) == 0
+    assert "specs: 0 total" in capsys.readouterr().out
+    assert not (nested / ".hornero").exists()
+
+
+def test_operational_command_without_project_fails_closed(tmp_path, monkeypatch, capsys):
+    isolated = tmp_path / "isolated"
+    isolated.mkdir()
+    monkeypatch.chdir(isolated)
+    assert main(["status"]) == 2
+    assert "no Hornero or git project" in capsys.readouterr().err

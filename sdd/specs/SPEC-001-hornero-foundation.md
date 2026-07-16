@@ -1,7 +1,7 @@
 ---
 spec: SPEC-001
 title: Hornero — foundational contracts and MVP scope
-status: approved
+status: review
 kind: new_feature
 created: 2026-07-06
 owner: javier@javierleon.dev
@@ -229,6 +229,8 @@ MVP adapters (the only ones in this repo):
 | `TrackerPort` | `RepoTracker` | the spec file IS the ticket; `transition` edits frontmatter; `comment` appends to a `## Log` section |
 | `TrackerPort` | `GitHubIssuesTracker` (optional) | thin `gh` wrapper, feature-flagged |
 | `DispatchPort` | `MulticodersDispatch` | wraps `multicoders.backends` (`--backend {cli,mock}`); `mock` is the test default |
+- 2026-07-14 — build started (run r-1, backend mock).
+- 2026-07-14 — PR opened: https://example.invalid/pr/SPEC-001-1
 
 ## 8. Knowledge layer
 

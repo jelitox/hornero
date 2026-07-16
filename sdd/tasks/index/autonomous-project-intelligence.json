@@ -1,0 +1,31 @@
+{
+  "feature": "autonomous-project-intelligence",
+  "feature_id": "SPEC-005",
+  "spec": "sdd/specs/SPEC-005-autonomous-project-intelligence.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-16",
+  "completed_at": "2026-07-16",
+  "tasks": [
+    {"id":"TASK-036","slug":"path-containment","status":"done","priority":"critical","depends_on":[],"file":"sdd/tasks/completed/TASK-036-path-containment.md"},
+    {"id":"TASK-037","slug":"knowledge-redaction","status":"done","priority":"critical","depends_on":["TASK-036"],"file":"sdd/tasks/completed/TASK-037-knowledge-redaction.md"},
+    {"id":"TASK-038","slug":"prompt-trust-boundary","status":"done","priority":"high","depends_on":["TASK-037"],"file":"sdd/tasks/completed/TASK-038-prompt-trust-boundary.md"},
+    {"id":"TASK-039","slug":"atomic-build","status":"done","priority":"high","depends_on":[],"file":"sdd/tasks/completed/TASK-039-atomic-build.md"},
+    {"id":"TASK-040","slug":"concurrent-run-ids","status":"done","priority":"high","depends_on":[],"file":"sdd/tasks/completed/TASK-040-concurrent-run-ids.md"},
+    {"id":"TASK-041","slug":"truthful-apply-outcomes","status":"done","priority":"high","depends_on":["TASK-040"],"file":"sdd/tasks/completed/TASK-041-truthful-apply-outcomes.md"},
+    {"id":"TASK-042","slug":"strict-config-schema","status":"done","priority":"high","depends_on":[],"file":"sdd/tasks/completed/TASK-042-strict-config-schema.md"},
+    {"id":"TASK-043","slug":"durable-delta-queue","status":"done","priority":"medium","depends_on":["TASK-040"],"file":"sdd/tasks/completed/TASK-043-durable-delta-queue.md"},
+    {"id":"TASK-044","slug":"repository-root-discovery","status":"done","priority":"high","depends_on":[],"file":"sdd/tasks/completed/TASK-044-repository-root-discovery.md"},
+    {"id":"TASK-045","slug":"index-recovery","status":"done","priority":"high","depends_on":["TASK-037","TASK-044"],"file":"sdd/tasks/completed/TASK-045-index-recovery.md"},
+    {"id":"TASK-046","slug":"project-factory","status":"done","priority":"high","depends_on":["TASK-036","TASK-042","TASK-044"],"file":"sdd/tasks/completed/TASK-046-project-factory.md"},
+    {"id":"TASK-047","slug":"blueprint-engine","status":"done","priority":"high","depends_on":["TASK-046"],"file":"sdd/tasks/completed/TASK-047-blueprint-engine.md"},
+    {"id":"TASK-048","slug":"semantic-graph","status":"done","priority":"high","depends_on":["TASK-037","TASK-045"],"file":"sdd/tasks/completed/TASK-048-semantic-graph.md"},
+    {"id":"TASK-049","slug":"provenance","status":"done","priority":"high","depends_on":["TASK-048"],"file":"sdd/tasks/completed/TASK-049-provenance.md"},
+    {"id":"TASK-050","slug":"graph-validator","status":"done","priority":"critical","depends_on":["TASK-049"],"file":"sdd/tasks/completed/TASK-050-graph-validator.md"},
+    {"id":"TASK-051","slug":"document-ingestion","status":"done","priority":"medium","depends_on":["TASK-036","TASK-037"],"file":"sdd/tasks/completed/TASK-051-document-ingestion.md"},
+    {"id":"TASK-052","slug":"llm-providers","status":"done","priority":"high","depends_on":["TASK-037","TASK-038","TASK-042"],"file":"sdd/tasks/completed/TASK-052-llm-providers.md"},
+    {"id":"TASK-053","slug":"cli-dispatch","status":"done","priority":"high","depends_on":["TASK-036","TASK-039","TASK-042"],"file":"sdd/tasks/completed/TASK-053-cli-dispatch.md"},
+    {"id":"TASK-054","slug":"improvement-analyzers","status":"done","priority":"high","depends_on":["TASK-049","TASK-050","TASK-051"],"file":"sdd/tasks/completed/TASK-054-improvement-analyzers.md"},
+    {"id":"TASK-055","slug":"autonomous-controller","status":"done","priority":"critical","depends_on":["TASK-041","TASK-043","TASK-050","TASK-052","TASK-053","TASK-054"],"file":"sdd/tasks/completed/TASK-055-autonomous-controller.md"}
+  ]
+}

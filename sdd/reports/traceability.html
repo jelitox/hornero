@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Traceability</title>
+<style>
+body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 60rem;
+       padding: 0 1rem; color: #1a1a1a; background: #fff; line-height: 1.5; }
+h1 { border-bottom: 2px solid #b45309; padding-bottom: .3rem; }
+h2 { margin-top: 2rem; color: #7c2d12; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #d4d4d4; padding: .4rem .6rem; text-align: left;
+         vertical-align: top; }
+th { background: #fef3c7; }
+code { background: #f5f5f5; padding: .1rem .3rem; border-radius: 3px; }
+.status { font-size: .85em; padding: .1rem .5rem; border-radius: 999px;
+          background: #e5e5e5; }
+.status-done { background: #bbf7d0; }
+.status-obsolete, .status-rejected { background: #fecaca; }
+.gap { color: #a3a3a3; }
+footer { margin-top: 3rem; font-size: .8em; color: #737373;
+         border-top: 1px solid #e5e5e5; padding-top: .5rem; }
+</style>
+</head>
+<body>
+<h1>Traceability</h1>
+<p>The audit chain per requirement. Gaps (—) are honest: they mark stages that have not happened.</p><table><tr><th>Signals</th><th>Deltas</th><th>Spec</th><th>SDD tasks</th><th>Runs</th><th>PR</th><th>Merged</th></tr><tr><td><span class="gap">—</span></td><td><span class="gap">—</span></td><td><a href="../specs/SPEC-001-hornero-foundation.md">SPEC-001</a> <small>(review)</small></td><td>TASK-001, TASK-002, TASK-003, TASK-004, TASK-005, TASK-006, TASK-007, TASK-008, TASK-009, TASK-010, TASK-011, TASK-012, TASK-013, TASK-014, TASK-015, TASK-016, TASK-017, TASK-018, TASK-019</td><td>r-1-spec-001</td><td>https://example.invalid/pr/SPEC-001-1</td><td><span class="gap">—</span></td></tr><tr><td><span class="gap">—</span></td><td><span class="gap">—</span></td><td><a href="../specs/SPEC-002-sdd-toolkit-sync.md">SPEC-002</a> <small>(review)</small></td><td>TASK-020, TASK-021, TASK-022, TASK-023, TASK-024, TASK-025, TASK-026, TASK-027</td><td>r-1-spec-002</td><td>https://example.invalid/pr/SPEC-002-2</td><td><span class="gap">—</span></td></tr><tr><td><span class="gap">—</span></td><td><span class="gap">—</span></td><td><a href="../specs/SPEC-003-wiki-watermarks-gitsignal.md">SPEC-003</a> <small>(review)</small></td><td>TASK-028, TASK-029, TASK-030, TASK-031, TASK-032</td><td>r-1-spec-003</td><td>https://example.invalid/pr/SPEC-003-3</td><td><span class="gap">—</span></td></tr><tr><td><span class="gap">—</span></td><td><span class="gap">—</span></td><td><a href="../specs/SPEC-004-flight-recorder-scribe.md">SPEC-004</a> <small>(review)</small></td><td>TASK-033, TASK-034, TASK-035</td><td>r-1-spec-004</td><td>https://example.invalid/pr/SPEC-004-4</td><td><span class="gap">—</span></td></tr></table>
+<footer>hornero · generated from repo state 0ac86578f35c63f611cfcb6dc1bce23d8f4c9f35 · sources: spec frontmatter, knowledge layer, ledger — never parametric memory</footer>
+</body>
+</html>

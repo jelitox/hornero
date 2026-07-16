@@ -13,6 +13,8 @@ from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 
+from hornero.paths import contained_path
+
 from hornero.sdd_toolkit.lock import (
     FileEntry,
     SddLock,
@@ -28,7 +30,7 @@ Echo = Callable[[str], None]
 
 def scaffold_dirs(repo_root: Path, dirs: list[str]) -> None:
     for rel in dirs:
-        d = repo_root / rel
+        d = contained_path(repo_root, rel.rstrip("/"))
         d.mkdir(parents=True, exist_ok=True)
         (d / ".gitkeep").touch()
 
@@ -55,8 +57,8 @@ def install(
     entries: dict[str, FileEntry] = {}
     installed = adopted = kept = 0
     for rel in resolve_managed(checkout.root, manifest):
-        src = checkout.root / rel
-        dest = repo_root / rel
+        src = contained_path(checkout.root, rel)
+        dest = contained_path(repo_root, rel)
         upstream_hash = sha256_file(src)
         if not dest.exists():
             dest.parent.mkdir(parents=True, exist_ok=True)

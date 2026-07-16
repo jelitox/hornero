@@ -1,7 +1,7 @@
 ---
 spec: SPEC-004
 title: Flight recorder & scribe — capturing, distilling, and auditing agent decisions
-status: approved
+status: review
 kind: new_feature
 created: 2026-07-08
 owner: javier@javierleon.dev
@@ -244,3 +244,5 @@ after F3 (dispatch bridge) since it instruments the same seam.
   unanchored claims dropped; DR-rejected approach surfaced in the HITL
   preview). OQ11/OQ12 deferred (approvals log, DR threading); OQ13 resolved
   tolerantly (unknown transcript shapes degrade to message events).
+- 2026-07-14 — build started (run r-1, backend mock).
+- 2026-07-14 — PR opened: https://example.invalid/pr/SPEC-004-4

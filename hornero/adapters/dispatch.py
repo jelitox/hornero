@@ -14,11 +14,14 @@ layer uses for parrot. Hard rules (CLAUDE.md invariant 3, NG2):
 """
 
 import importlib.util
+import json
+import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Protocol
 
 from hornero.criteria import parse_criteria
+from hornero.redact import redact
 from hornero.flight import TraceWriter
 from hornero.lifecycle import SpecDoc
 from hornero.ports import BuildBrief, BuildResult
@@ -126,13 +129,76 @@ class _UnavailableBackend:
         )
 
 
+class CliBackend:
+    """BYO-auth coding backend using an explicit argv and JSON stdin/stdout."""
+
+    name = "cli"
+
+    def __init__(
+        self, root: Path, command: Sequence[str], *, timeout: float,
+        max_output_bytes: int,
+    ) -> None:
+        self._root = root
+        self._command = list(command)
+        self._timeout = timeout
+        self._max_output = max_output_bytes
+
+    def run(self, brief: BuildBrief, trace: TraceWriter) -> BuildResult:
+        trace.emit("tool_use", f"coding CLI: {self._command[0]}")
+        try:
+            proc = subprocess.run(
+                self._command, cwd=self._root,
+                input=json.dumps(brief, ensure_ascii=False),
+                capture_output=True, text=True, timeout=self._timeout,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            trace.emit("error", f"coding CLI failed: {exc}")
+            return BuildResult(
+                status="failed", pr_url=None, branch=None, trace_path=""
+            )
+        stdout = proc.stdout[:self._max_output]
+        stderr = redact(proc.stderr[:self._max_output])
+        if stderr:
+            trace.emit("message", stderr)
+        if proc.returncode != 0:
+            trace.emit("error", f"coding CLI exited {proc.returncode}")
+            return BuildResult(
+                status="failed", pr_url=None, branch=None, trace_path=""
+            )
+        try:
+            payload = json.loads(stdout)
+            status = str(payload["status"])
+            if status not in ("completed", "failed", "needs_human"):
+                raise ValueError("invalid status")
+            result = BuildResult(
+                status=status,
+                pr_url=str(payload["pr_url"]) if payload.get("pr_url") else None,
+                branch=str(payload["branch"]) if payload.get("branch") else None,
+                trace_path="",
+            )
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            trace.emit("error", f"coding CLI returned invalid JSON result: {exc}")
+            return BuildResult(
+                status="needs_human", pr_url=None, branch=None, trace_path=""
+            )
+        trace.emit("tool_result", f"coding CLI result: {result['status']}")
+        return result
+
+
 class MulticodersDispatch:
     """DispatchPort adapter. Resolution walks ``backend_order`` and picks the
     first AVAILABLE backend — except ``api``, which is honored only as the
     explicit first entry and never reached by falling through a failed one."""
 
-    def __init__(self, backend_order: Sequence[str], root: Path) -> None:
+    def __init__(
+        self, backend_order: Sequence[str], root: Path, *,
+        cli_command: Sequence[str] = (), timeout: float = 900.0,
+        max_output_bytes: int = 1_000_000,
+    ) -> None:
         self._root = root
+        self._cli_command = list(cli_command)
+        self._timeout = timeout
+        self._max_output_bytes = max_output_bytes
         self._backend = self._resolve(list(backend_order))
 
     def _real_backend(self, name: str) -> Backend:
@@ -149,6 +215,11 @@ class MulticodersDispatch:
             if name == "mock":
                 return MockBackend(self._root)
             if name == "cli":
+                if self._cli_command:
+                    return CliBackend(
+                        self._root, self._cli_command, timeout=self._timeout,
+                        max_output_bytes=self._max_output_bytes,
+                    )
                 if _multicoders_available():
                     return self._real_backend("cli")
                 return _UnavailableBackend(
@@ -183,8 +254,16 @@ class MulticodersDispatch:
             f"dispatch {brief['spec_id']} via {self._backend.name}",
             {"summary": brief["summary"]},
         )
-        result = self._backend.run(brief, trace)
-        trace.emit("run.finished", f"status {result['status']}",
-                   {"pr_url": result["pr_url"]})
+        try:
+            result = self._backend.run(brief, trace)
+        except Exception as exc:
+            trace.emit("error", f"backend {self._backend.name} failed: {exc}")
+            result = BuildResult(
+                status="failed", pr_url=None, branch=None, trace_path=""
+            )
+        trace.emit(
+            "run.finished", f"status {result['status']}",
+            {"pr_url": result["pr_url"]},
+        )
         result["trace_path"] = str(trace.close())
         return result

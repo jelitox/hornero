@@ -14,6 +14,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from hornero.paths import contained_path, validate_relative_path
+
 # Secret shapes live in the shared redaction layer (SPEC-003 §9); push keeps
 # refusal semantics (scan, don't rewrite) on top of the same pattern set.
 from hornero.redact import SECRET_PATTERNS, scan_secrets  # noqa: F401
@@ -56,6 +58,7 @@ def push(
     echo: Echo = print,
     allow_secrets: bool = False,
 ) -> int:
+    files = [validate_relative_path(rel) for rel in files]
     lock = load_lock(repo_root)
     if lock is None:
         raise SyncError("no .hornero/sdd.lock — run 'hornero sdd install' first")
@@ -91,7 +94,7 @@ def push(
     findings = {
         rel: hits
         for rel in files
-        if (hits := scan_secrets((repo_root / rel).read_text(encoding="utf-8")))
+        if (hits := scan_secrets(contained_path(repo_root, rel).read_text(encoding="utf-8")))
     }
     if findings:
         for rel, hits in sorted(findings.items()):
@@ -121,9 +124,9 @@ def push(
             echo(f"push failed at {' '.join(step)}: {result.stderr.strip()}")
             return 1
     for rel in files:  # copy AFTER the branch exists, so the commit sees them
-        dest = checkout.root / rel
+        dest = contained_path(checkout.root, rel)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(repo_root / rel, dest)
+        shutil.copy2(contained_path(repo_root, rel), dest)
     for step in (
         ["git", "add", *files],
         ["git", "commit", "-m", title],

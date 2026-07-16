@@ -55,7 +55,11 @@ def generate(ctx: ReportContext) -> str:
                 if sid and sid not in signals:
                     signals.append(sid)
 
-        deltas = ", ".join(esc(d["delta_id"]) for d in chain["deltas"]) or _GAP
+        deltas = ", ".join(
+            esc(d["delta_id"])
+            + (f" ({esc(d['outcome'])})" if d.get("outcome") else "")
+            for d in chain["deltas"]
+        ) or _GAP
         task_ids = tasks_by_spec.get(doc.spec_id, set()) | tasks_by_spec.get(
             doc.path.name, set()
         )

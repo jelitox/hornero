@@ -1,7 +1,7 @@
 ---
 spec: SPEC-002
 title: Hornero SDD toolkit — install, memory bootstrap, and cross-repo sync
-status: approved
+status: review
 kind: new_feature
 created: 2026-07-06
 owner: javier@javierleon.dev
@@ -275,3 +275,5 @@ has zero LLM dependency.
   F4.5 verified green verbatim (install+adopt+idempotent lock; six-state
   matrix per §6 with diverged blocking exit != 0; mock-gh push payloads +
   lockfile-only workspace fanout). SPEC-002 scope is built.
+- 2026-07-14 — build started (run r-1, backend mock).
+- 2026-07-14 — PR opened: https://example.invalid/pr/SPEC-002-2

@@ -11,6 +11,8 @@ import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from hornero.paths import PathViolation, validate_relative_path
+
 LOCK_NAME = "sdd.lock"
 POLICIES = ("sync", "local", "pinned")
 
@@ -49,13 +51,20 @@ def load_lock(repo_root: Path) -> SddLock | None:
     if not path.is_file():
         return None
     data = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        files = {
+            validate_relative_path(str(p)): FileEntry(**entry)
+            for p, entry in data.get("files", {}).items()
+        }
+    except PathViolation as exc:
+        raise ValueError(f"{path}: unsafe managed path: {exc}") from exc
     return SddLock(
         upstream=data["upstream"],
         upstream_ref=data["upstream_ref"],
         toolkit_version=data["toolkit_version"],
         upstream_commit=data.get("upstream_commit"),
         synced_at=data["synced_at"],
-        files={p: FileEntry(**entry) for p, entry in data.get("files", {}).items()},
+        files=files,
     )
 
 

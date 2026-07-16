@@ -186,3 +186,27 @@ def test_no_model_configured_exits_nonzero_before_polling(tmp_path, monkeypatch,
     assert "no model configured" in capsys.readouterr().out
     with Ledger(tmp_path / ".hornero" / "ledger.db") as led:
         assert led._conn.execute("SELECT COUNT(*) c FROM runs").fetchone()["c"] == 0
+
+
+def test_failed_apply_records_approved_decision_and_failed_outcome(
+    tmp_path, monkeypatch
+):
+    root = _build_repo(tmp_path, monkeypatch)
+    script_path = root / ".hornero" / "fake_llm.json"
+    script = json.loads(script_path.read_text(encoding="utf-8"))
+    script["customer id column for dedupe"]["deltas"][0]["proposed_patch"] = (
+        "@@ -999,1 +999,1 @@\n-impossible\n+still impossible\n"
+    )
+    script_path.write_text(json.dumps(script), encoding="utf-8")
+    channel = ScriptedChannel([
+        ReviewResult(Decision.APPROVED),
+        ReviewResult(Decision.APPROVED),
+    ])
+    assert run_reconcile(
+        root, channel=channel, now=100.0, today="2026-07-07"
+    ) == 1
+    with Ledger(root / ".hornero" / "ledger.db") as led:
+        failed = [row for row in led.deltas() if row["outcome"] == "failed"]
+        assert len(failed) == 1
+        assert failed[0]["decision"] == "approved"
+        assert failed[0]["status"] == "failed"

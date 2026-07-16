@@ -6,10 +6,9 @@ poll -> retrieve+draft -> HITL -> apply, with ledger records per run.
 spec mutation — only the (gitignored) ledger records the run. A normal run
 without a TTY is fail-closed: deltas stay proposed, exit 0, no exception.
 
-Model resolution is deliberately austere in MVP: ``models.reconciler`` set
-to ``fake:<script.json>`` loads the deterministic :class:`FakeLLM`; anything
-else (or nothing) refuses to run BEFORE polling. Real providers arrive
-post-MVP behind the same :class:`LLMPort` seam.
+Model resolution is explicit: deterministic fake scripts and configured
+command/HTTP providers share the same :class:`LLMPort` seam. No configured
+model refuses to run before polling.
 """
 
 import json
@@ -92,15 +91,29 @@ def run_reconcile(
         echo(f"config error: {exc}")
         return 1
     if llm is None:
-        from hornero.llm import resolve_llm
+        from hornero.llm import LLMError, resolve_llm
 
-        llm = resolve_llm(cfg, root, "reconciler")
+        try:
+            llm = resolve_llm(cfg, root, "reconciler")
+        except LLMError as exc:
+            echo(f"model error: {exc}")
+            return 1
     if llm is None:
         echo(
             "no model configured for the reconciler "
             "(set models.reconciler; MVP supports fake:<script.json>)"
         )
         return 3  # refuse before polling: no half-run
+
+    from hornero.memory.validate import validate
+
+    graph = validate(root, repair=False)
+    if graph.blocking:
+        echo(
+            f"graph preflight failed: {graph.blocking} blocking finding(s); "
+            "run 'hornero validate --repair'"
+        )
+        return 1
 
     now = time.time() if now is None else now
     today = date.today().isoformat() if today is None else today
@@ -134,20 +147,30 @@ def run_reconcile(
     ledger.record_run(run_id, "reconcile", now, dry_run=dry_run)
 
     # U2 queue: deltas parked past the budget on a previous run go first.
-    deltas: list[RequirementDelta] = [
-        _revive(row) for row in ledger.queued_deltas()
-    ]
+    queued_rows = ledger.queued_deltas()
+    queued_ids = {row["delta_id"] for row in queued_rows}
+    deltas: list[RequirementDelta] = [_revive(row) for row in queued_rows]
     if deltas:
         echo(f"{len(deltas)} queued delta(s) from previous runs re-presented.")
 
     fresh: list[RequirementDelta] = []
-    for i, sig in enumerate(signals, start=1):
-        text = Path(sig["path"]).read_text(encoding="utf-8", errors="replace")
-        fresh.extend(
-            draft_deltas(
-                sig, text, corpus, knowledge, llm, ledger, f"{run_id}.{i}", now
+    try:
+        for i, sig in enumerate(signals, start=1):
+            text = Path(sig["path"]).read_text(encoding="utf-8", errors="replace")
+            fresh.extend(
+                draft_deltas(
+                    sig, text, corpus, knowledge, llm, ledger, f"{run_id}.{i}", now
+                )
             )
-        )
+    except Exception as exc:
+        from hornero.llm import LLMError
+
+        if not isinstance(exc, LLMError):
+            raise
+        ledger.finish_run(run_id, now)
+        ledger.close()
+        echo(f"model error: {exc}")
+        return 1
 
     # SPEC-003 §7 U2 delta budget: at most DELTA_BUDGET fresh deltas per
     # signal per run, highest confidence first; the excess is QUEUED in the
@@ -180,11 +203,15 @@ def run_reconcile(
 
     if dry_run:
         for d in deltas:
-            ledger.record_delta(
-                d.delta_id, run_id, d.kind.value, d.title, "proposed",
-                d.confidence, _payload(d),
-            )
+            if d.delta_id in queued_ids:
+                ledger.mark_delta_presented(d.delta_id, run_id)
+            else:
+                ledger.record_delta(
+                    d.delta_id, run_id, d.kind.value, d.title, "proposed",
+                    d.confidence, _payload(d),
+                )
         ledger.finish_run(run_id, now)
+        ledger.close()
         echo("dry-run: nothing applied.")
         return 0
 
@@ -192,11 +219,15 @@ def run_reconcile(
         channel = TerminalChannel.open()
     if channel is None:  # fail-closed, quietly
         for d in deltas:
-            ledger.record_delta(
-                d.delta_id, run_id, d.kind.value, d.title, "proposed",
-                d.confidence, _payload(d),
-            )
+            if d.delta_id in queued_ids:
+                ledger.mark_delta_presented(d.delta_id, run_id)
+            else:
+                ledger.record_delta(
+                    d.delta_id, run_id, d.kind.value, d.title, "proposed",
+                    d.confidence, _payload(d),
+                )
         ledger.finish_run(run_id, now)
+        ledger.close()
         echo(
             f"no approval channel (stdin/stdout is not a TTY); "
             f"{len(deltas)} delta(s) remain proposed."
@@ -250,13 +281,28 @@ def run_reconcile(
         Decision.REJECTED: "rejected",
         Decision.SKIPPED: "proposed",
     }
+    failed_delta_ids = {delta_id for delta_id, _ in report.errors}
     for item in reviewed:
         d = item.delta
+        decision = item.result.decision.value
+        if d.delta_id in failed_delta_ids:
+            status = "failed"
+            outcome = "failed"
+        elif item.result.decision in (Decision.APPROVED, Decision.EDITED):
+            status = status_by_decision[item.result.decision]
+            outcome = "applied"
+        elif item.result.decision is Decision.REJECTED:
+            status = "rejected"
+            outcome = "rejected"
+        else:
+            status = "proposed"
+            outcome = "pending"
         ledger.record_delta(
-            d.delta_id, run_id, d.kind.value, d.title,
-            status_by_decision[item.result.decision], d.confidence, _payload(d),
+            d.delta_id, run_id, d.kind.value, d.title, status,
+            d.confidence, _payload(d), decision=decision, outcome=outcome,
         )
     ledger.finish_run(run_id, now)
+    ledger.close()
 
     echo(
         f"applied: {len(report.created)} created, {len(report.patched)} patched, "

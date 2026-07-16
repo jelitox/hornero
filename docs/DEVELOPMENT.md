@@ -30,6 +30,15 @@ or external services. The pattern is *real engine + simulated externals*
 hornero/
   cli.py               argparse surface; thin — every command delegates
   config.py            .hornero/config.yaml, fail-closed on unknown keys
+  project.py           verified repository-root discovery and marker
+  blueprints.py        project factory, composition, lock and drift
+  blueprint_registry.py signed registry envelopes and catalog merge
+  contracts.py         OpenAPI/event/data/client generation from one model
+  workspace.py         federated multi-repository graphs and impact
+  assurance.py         SBOM, STRIDE and compliance evidence engines
+  sandbox.py           sanitized, resource-bounded command execution
+  runtime.py           schedules/webhooks, approvals, PR seam and feedback
+  ingest.py            bounded document normalization + provenance sidecars
   layout.py            single resolver for the sdd/ layout paths
   ports.py             Protocols: Signal, SignalSource, TrackerPort, DispatchPort
   models.py            RequirementDelta + Evidence (verbatim-substring check)
@@ -47,8 +56,15 @@ hornero/
     apply.py           the ONLY writer of sdd/specs in the pipeline
   memory/
     ledger.py          SQLite audit ledger (runs, deltas, dispatches, signals)
-    knowledge.py       pageindex/graphindex feature-detect + token-overlap fallback
-    reindex.py         deterministic index build; staleness reporting
+    codegraph.py       stdlib SQLite code graph (file/dir pages + typed edges)
+    semantic.py        requirements/tasks/code/tests/controls/finding projection
+    intelligence.py    temporal lineage, reasoning, impact and context packs
+    validate.py        graph/provenance/traceability preflight and repair
+    knowledge.py       codegraph first, pageindex feature-detect, token fallback
+    reindex.py         deterministic index build; graph HTML report; staleness
+  improvement/
+    analyzers.py       deterministic evidence-backed policy packs
+    controller.py      bounded worktree execution, gates, ledger learning
   reports/
     engine.py          shared context, HTML skeleton, deterministic rendering
     capabilities.py / workflows.py / traceability.py
@@ -64,10 +80,14 @@ tests/                 one file per surface; fixtures inline
 sdd/                   this repo's own specs/tasks/state (self-hosting)
 ```
 
-Two specs govern everything: `sdd/specs/SPEC-001-hornero-foundation.md`
+Five specs govern the current product. Start with
+`sdd/specs/SPEC-001-hornero-foundation.md`
 (ports, delta model, lifecycle, phases F1–F5) and
 `sdd/specs/SPEC-002-sdd-toolkit-sync.md` (toolkit install/sync/push, drift
-model, phases F2.5/F3.5/F4.5). **When code and spec disagree, the spec wins**;
+model, phases F2.5/F3.5/F4.5), then SPEC-003/004 for wiki and flight history,
+`SPEC-005` for the initial factory/graph/controller, and `SPEC-006` for
+temporal intelligence, production stacks, assurance and autonomous operations.
+**When code and spec disagree, the spec wins**;
 record the discrepancy instead of silently picking one.
 
 ## Hard invariants (violations are bugs, never "acceptable for now")
@@ -79,6 +99,10 @@ record the discrepancy instead of silently picking one.
 4. Diverged toolkit files are never auto-merged. No timestamp heuristics.
 5. Knowledge layers are feature-detected; the fallback is a first-class path.
 6. Deterministic tests only.
+7. Autonomous mutation is opt-in, budgeted, worktree-isolated and never pushes
+   or merges the default branch. Medium/high risk requires exact finding approval.
+8. Scheduled autonomous `run` requires an explicit external sandbox wrapper;
+   webhook events require HMAC signatures and replay-safe delivery ids.
 
 ## The SDD workflow (this repo is self-hosting)
 

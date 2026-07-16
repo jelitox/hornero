@@ -13,7 +13,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 6
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -30,7 +30,11 @@ CREATE TABLE IF NOT EXISTS deltas (
     title        TEXT NOT NULL,
     status       TEXT NOT NULL,
     confidence   REAL NOT NULL,
-    payload_json TEXT NOT NULL
+    payload_json TEXT NOT NULL,
+    decision     TEXT,
+    outcome      TEXT,
+    presented_count INTEGER NOT NULL DEFAULT 0,
+    last_presented_run TEXT
 );
 CREATE TABLE IF NOT EXISTS dropped_drafts (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,6 +75,67 @@ CREATE TABLE IF NOT EXISTS checkpoints (
     value_json TEXT NOT NULL,
     updated_at REAL NOT NULL
 );
+CREATE TABLE IF NOT EXISTS sequences (
+    name       TEXT PRIMARY KEY,
+    next_value INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS improvement_runs (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id       TEXT NOT NULL,
+    finding_id   TEXT NOT NULL,
+    status       TEXT NOT NULL,
+    branch       TEXT,
+    details_json TEXT NOT NULL,
+    created_at   REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS graph_snapshots (
+    snapshot_id  TEXT PRIMARY KEY,
+    head_ref     TEXT,
+    manifest_hash TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS graph_entity_versions (
+    entity_id     TEXT NOT NULL,
+    version_hash  TEXT NOT NULL,
+    kind          TEXT NOT NULL,
+    payload_json  TEXT NOT NULL,
+    first_snapshot TEXT NOT NULL,
+    last_snapshot  TEXT NOT NULL,
+    active         INTEGER NOT NULL,
+    PRIMARY KEY (entity_id, version_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_graph_versions_entity
+ON graph_entity_versions(entity_id, active);
+CREATE TABLE IF NOT EXISTS runtime_events (
+    event_id       TEXT PRIMARY KEY,
+    action         TEXT NOT NULL,
+    payload_json   TEXT NOT NULL,
+    risk           TEXT NOT NULL,
+    cost_units     INTEGER NOT NULL,
+    status         TEXT NOT NULL,
+    attempts       INTEGER NOT NULL DEFAULT 0,
+    next_at        REAL NOT NULL,
+    created_at     REAL NOT NULL,
+    result_json    TEXT,
+    approved_by    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_runtime_events_ready
+ON runtime_events(status, next_at);
+CREATE TABLE IF NOT EXISTS runtime_schedules (
+    schedule_id TEXT PRIMARY KEY,
+    last_at     REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS runtime_feedback (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    finding_id  TEXT NOT NULL,
+    rule_id     TEXT NOT NULL,
+    rating      INTEGER NOT NULL,
+    notes       TEXT NOT NULL,
+    created_at  REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS runtime_webhooks (
+    delivery_id TEXT PRIMARY KEY,
+    event_id    TEXT NOT NULL
+);
 """
 
 
@@ -78,13 +143,42 @@ class Ledger:
     def __init__(self, path: Path) -> None:
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(path)
+        self._conn = sqlite3.connect(path, timeout=30)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.executescript(_SCHEMA)
+        columns = {
+            str(row["name"])
+            for row in self._conn.execute("PRAGMA table_info(deltas)")
+        }
+        if "decision" not in columns:
+            self._conn.execute("ALTER TABLE deltas ADD COLUMN decision TEXT")
+        if "outcome" not in columns:
+            self._conn.execute("ALTER TABLE deltas ADD COLUMN outcome TEXT")
+        if "presented_count" not in columns:
+            self._conn.execute(
+                "ALTER TABLE deltas ADD COLUMN presented_count INTEGER "
+                "NOT NULL DEFAULT 0"
+            )
+        if "last_presented_run" not in columns:
+            self._conn.execute(
+                "ALTER TABLE deltas ADD COLUMN last_presented_run TEXT"
+            )
+        first_run = self._conn.execute(
+            "SELECT COALESCE(MAX(CAST(SUBSTR(run_id, 3) AS INTEGER)), 0) + 1 "
+            "FROM runs WHERE run_id GLOB 'r-[0-9]*'"
+        ).fetchone()[0]
+        self._conn.execute(
+            "INSERT OR IGNORE INTO sequences (name, next_value) VALUES ('run', ?)",
+            (first_run,),
+        )
         self._conn.execute(
             "INSERT OR IGNORE INTO checkpoints (key, value_json, updated_at) "
             "VALUES ('schema_version', ?, 0)",
+            (json.dumps(SCHEMA_VERSION),),
+        )
+        self._conn.execute(
+            "UPDATE checkpoints SET value_json = ? WHERE key = 'schema_version'",
             (json.dumps(SCHEMA_VERSION),),
         )
         self._conn.commit()
@@ -107,6 +201,12 @@ class Ledger:
             "INSERT INTO runs (run_id, command, started_at, dry_run) VALUES (?,?,?,?)",
             (run_id, command, started_at, int(dry_run)),
         )
+        if run_id.startswith("r-") and run_id[2:].isdigit():
+            self._conn.execute(
+                "UPDATE sequences SET next_value = MAX(next_value, ?) "
+                "WHERE name = 'run'",
+                (int(run_id[2:]) + 1,),
+            )
         self._conn.commit()
 
     def finish_run(self, run_id: str, finished_at: float) -> None:
@@ -124,12 +224,31 @@ class Ledger:
         status: str,
         confidence: float,
         payload: dict[str, Any],
+        *,
+        decision: str | None = None,
+        outcome: str | None = None,
     ) -> None:
         self._conn.execute(
-            "INSERT OR REPLACE INTO deltas "
-            "(delta_id, run_id, kind, title, status, confidence, payload_json) "
-            "VALUES (?,?,?,?,?,?,?)",
-            (delta_id, run_id, kind, title, status, confidence, json.dumps(payload)),
+            "INSERT INTO deltas "
+            "(delta_id, run_id, kind, title, status, confidence, payload_json, "
+            "decision, outcome) VALUES (?,?,?,?,?,?,?,?,?) "
+            "ON CONFLICT(delta_id) DO UPDATE SET "
+            "run_id=excluded.run_id, kind=excluded.kind, title=excluded.title, "
+            "status=excluded.status, confidence=excluded.confidence, "
+            "payload_json=excluded.payload_json, decision=excluded.decision, "
+            "outcome=excluded.outcome",
+            (
+                delta_id, run_id, kind, title, status, confidence,
+                json.dumps(payload), decision, outcome,
+            ),
+        )
+        self._conn.commit()
+
+    def mark_delta_presented(self, delta_id: str, run_id: str) -> None:
+        self._conn.execute(
+            "UPDATE deltas SET presented_count = presented_count + 1, "
+            "last_presented_run = ? WHERE delta_id = ?",
+            (run_id, delta_id),
         )
         self._conn.commit()
 
@@ -192,6 +311,244 @@ class Ledger:
         )
         self._conn.commit()
 
+    def record_improvement(
+        self, run_id: str, finding_id: str, status: str,
+        branch: str | None, details: dict[str, Any], created_at: float,
+    ) -> None:
+        self._conn.execute(
+            "INSERT INTO improvement_runs "
+            "(run_id, finding_id, status, branch, details_json, created_at) "
+            "VALUES (?,?,?,?,?,?)",
+            (run_id, finding_id, status, branch, json.dumps(details), created_at),
+        )
+        self._conn.commit()
+
+    def improvements(self, finding_id: str | None = None) -> list[dict[str, Any]]:
+        query = "SELECT * FROM improvement_runs"
+        args: tuple[Any, ...] = ()
+        if finding_id is not None:
+            query += " WHERE finding_id = ?"
+            args = (finding_id,)
+        rows = self._conn.execute(query + " ORDER BY id", args)
+        return [dict(row) for row in rows]
+
+    def record_graph_snapshot(
+        self, snapshot_id: str, head_ref: str | None, manifest_hash: str,
+        entities: list[tuple[str, str, str, dict[str, Any]]],
+    ) -> bool:
+        """Record immutable entity versions; repeated snapshots are no-ops."""
+        exists = self._conn.execute(
+            "SELECT 1 FROM graph_snapshots WHERE snapshot_id = ?", (snapshot_id,)
+        ).fetchone()
+        if exists:
+            return False
+        current_ids = {entity_id for entity_id, _, _, _ in entities}
+        active = self._conn.execute(
+            "SELECT entity_id, version_hash FROM graph_entity_versions "
+            "WHERE active = 1"
+        ).fetchall()
+        for row in active:
+            if str(row["entity_id"]) not in current_ids:
+                self._conn.execute(
+                    "UPDATE graph_entity_versions SET active=0, last_snapshot=? "
+                    "WHERE entity_id=? AND version_hash=?",
+                    (snapshot_id, row["entity_id"], row["version_hash"]),
+                )
+        for entity_id, kind, version_hash, payload in entities:
+            self._conn.execute(
+                "UPDATE graph_entity_versions SET active=0, last_snapshot=? "
+                "WHERE entity_id=? AND version_hash<>? AND active=1",
+                (snapshot_id, entity_id, version_hash),
+            )
+            self._conn.execute(
+                "INSERT INTO graph_entity_versions "
+                "(entity_id, version_hash, kind, payload_json, first_snapshot, "
+                "last_snapshot, active) VALUES (?,?,?,?,?,?,1) "
+                "ON CONFLICT(entity_id, version_hash) DO UPDATE SET "
+                "last_snapshot=excluded.last_snapshot, active=1",
+                (
+                    entity_id, version_hash, kind,
+                    json.dumps(payload, sort_keys=True, ensure_ascii=False),
+                    snapshot_id, snapshot_id,
+                ),
+            )
+        self._conn.execute(
+            "INSERT INTO graph_snapshots VALUES (?,?,?)",
+            (snapshot_id, head_ref, manifest_hash),
+        )
+        self._conn.commit()
+        return True
+
+    def graph_history(self, entity_id: str) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT * FROM graph_entity_versions WHERE entity_id=? "
+            "ORDER BY first_snapshot, version_hash", (entity_id,)
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def graph_snapshots(self) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT * FROM graph_snapshots ORDER BY snapshot_id"
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def next_sequence(self, name: str) -> int:
+        self._conn.execute("BEGIN IMMEDIATE")
+        try:
+            self._conn.execute(
+                "INSERT OR IGNORE INTO sequences (name, next_value) VALUES (?, 1)",
+                (name,),
+            )
+            row = self._conn.execute(
+                "SELECT next_value FROM sequences WHERE name=?", (name,)
+            ).fetchone()
+            assert row is not None
+            value = int(row["next_value"])
+            self._conn.execute(
+                "UPDATE sequences SET next_value=? WHERE name=?", (value + 1, name)
+            )
+            self._conn.commit()
+            return value
+        except Exception:
+            self._conn.rollback()
+            raise
+
+    def emit_runtime_event(
+        self, action: str, payload: dict[str, Any], risk: str, cost_units: int,
+        now: float,
+    ) -> str:
+        event_id = f"evt-{self.next_sequence('runtime-event')}"
+        self._conn.execute(
+            "INSERT INTO runtime_events "
+            "(event_id, action, payload_json, risk, cost_units, status, next_at, "
+            "created_at) VALUES (?,?,?,?,?,'queued',?,?)",
+            (event_id, action, json.dumps(payload), risk, cost_units, now, now),
+        )
+        self._conn.commit()
+        return event_id
+
+    def emit_webhook_event(
+        self, delivery_id: str, action: str, payload: dict[str, Any],
+        risk: str, cost_units: int, now: float,
+    ) -> tuple[str, bool]:
+        self._conn.execute("BEGIN IMMEDIATE")
+        try:
+            existing = self._conn.execute(
+                "SELECT event_id FROM runtime_webhooks WHERE delivery_id=?",
+                (delivery_id,),
+            ).fetchone()
+            if existing:
+                self._conn.commit()
+                return str(existing["event_id"]), False
+            self._conn.execute(
+                "INSERT OR IGNORE INTO sequences (name, next_value) "
+                "VALUES ('runtime-event', 1)"
+            )
+            row = self._conn.execute(
+                "SELECT next_value FROM sequences WHERE name='runtime-event'"
+            ).fetchone()
+            assert row is not None
+            value = int(row["next_value"])
+            self._conn.execute(
+                "UPDATE sequences SET next_value=? WHERE name='runtime-event'",
+                (value + 1,),
+            )
+            event_id = f"evt-{value}"
+            self._conn.execute(
+                "INSERT INTO runtime_events "
+                "(event_id, action, payload_json, risk, cost_units, status, "
+                "next_at, created_at) VALUES (?,?,?,?,?,'queued',?,?)",
+                (event_id, action, json.dumps(payload), risk, cost_units, now, now),
+            )
+            self._conn.execute(
+                "INSERT INTO runtime_webhooks VALUES (?,?)", (delivery_id, event_id)
+            )
+            self._conn.commit()
+            return event_id, True
+        except Exception:
+            self._conn.rollback()
+            raise
+
+    def runtime_events(self, *, ready_at: float | None = None) -> list[dict[str, Any]]:
+        query = "SELECT * FROM runtime_events"
+        args: tuple[Any, ...] = ()
+        if ready_at is not None:
+            query += " WHERE status IN ('queued','retry','awaiting_approval') AND next_at<=?"
+            args = (ready_at,)
+        rows = self._conn.execute(query + " ORDER BY created_at, event_id", args)
+        return [dict(row) for row in rows]
+
+    def update_runtime_event(
+        self, event_id: str, *, status: str, attempts: int,
+        next_at: float, result: dict[str, Any] | None = None,
+        approved_by: str | None = None,
+    ) -> None:
+        self._conn.execute(
+            "UPDATE runtime_events SET status=?, attempts=?, next_at=?, "
+            "result_json=?, approved_by=COALESCE(?, approved_by) WHERE event_id=?",
+            (
+                status, attempts, next_at,
+                json.dumps(result, sort_keys=True) if result is not None else None,
+                approved_by, event_id,
+            ),
+        )
+        self._conn.commit()
+
+    def schedule_due(self, schedule_id: str, now: float, every_seconds: float) -> bool:
+        row = self._conn.execute(
+            "SELECT last_at FROM runtime_schedules WHERE schedule_id=?", (schedule_id,)
+        ).fetchone()
+        return row is None or now - float(row["last_at"]) >= every_seconds
+
+    def mark_schedule(self, schedule_id: str, now: float) -> None:
+        self._conn.execute(
+            "INSERT INTO runtime_schedules VALUES (?,?) ON CONFLICT(schedule_id) "
+            "DO UPDATE SET last_at=excluded.last_at", (schedule_id, now),
+        )
+        self._conn.commit()
+
+    def record_feedback(
+        self, finding_id: str, rule_id: str, rating: int, notes: str, now: float,
+    ) -> None:
+        if rating not in (-1, 1):
+            raise ValueError("feedback rating must be -1 or 1")
+        self._conn.execute(
+            "INSERT INTO runtime_feedback "
+            "(finding_id, rule_id, rating, notes, created_at) VALUES (?,?,?,?,?)",
+            (finding_id, rule_id, rating, notes, now),
+        )
+        self._conn.commit()
+
+    def policy_weights(self) -> dict[str, float]:
+        rows = self._conn.execute(
+            "SELECT rule_id, SUM(CASE WHEN rating=1 THEN 1 ELSE 0 END) positive, "
+            "SUM(CASE WHEN rating=-1 THEN 1 ELSE 0 END) negative "
+            "FROM runtime_feedback GROUP BY rule_id ORDER BY rule_id"
+        ).fetchall()
+        return {
+            str(row["rule_id"]): max(
+                0.5, min(1.5, (float(row["positive"]) + 1) / (float(row["negative"]) + 1))
+            )
+            for row in rows
+        }
+
+    def runtime_metrics(self) -> dict[str, Any]:
+        statuses = {
+            str(row["status"]): int(row["n"])
+            for row in self._conn.execute(
+                "SELECT status, COUNT(*) n FROM runtime_events GROUP BY status"
+            )
+        }
+        totals = self._conn.execute(
+            "SELECT COUNT(*) n, COALESCE(SUM(cost_units),0) cost, "
+            "COALESCE(SUM(attempts),0) attempts FROM runtime_events"
+        ).fetchone()
+        return {
+            "events": int(totals["n"]), "cost_units": int(totals["cost"]),
+            "attempts": int(totals["attempts"]), "by_status": statuses,
+            "policy_weights": self.policy_weights(),
+        }
+
     def agent_runs(self, spec_id: str | None = None) -> list[dict[str, Any]]:
         q = "SELECT * FROM agent_runs"
         args: tuple = ()
@@ -250,9 +607,9 @@ class Ledger:
         return [dict(r) for r in self._conn.execute(q + " ORDER BY id", args)]
 
     def next_run_id(self) -> str:
-        """Deterministic monotonic run id: r-1, r-2, ..."""
-        n = self._conn.execute("SELECT COUNT(*) AS c FROM runs").fetchone()["c"]
-        return f"r-{n + 1}"
+        """Atomically reserve a monotonic run id: r-1, r-2, ..."""
+        value = self.next_sequence("run")
+        return f"r-{value}"
 
     def trace(self, spec_id: str) -> dict[str, list[dict[str, Any]]]:
         """The signal → delta → spec → PR chain for one spec (§11

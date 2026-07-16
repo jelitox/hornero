@@ -77,64 +77,95 @@ def run_build(
         echo("nothing to build (no approved specs).")  # NG3: quiet no-op
         return 0
 
+    from hornero.memory.validate import validate
+
+    graph = validate(root, repair=False)
+    if graph.blocking:
+        echo(
+            f"graph preflight failed: {graph.blocking} blocking finding(s); "
+            "run 'hornero validate --repair'"
+        )
+        return 1
+
     backend_order = [backend] if backend else cfg.dispatch.backend_order
-    dispatcher = MulticodersDispatch(backend_order, root)
+    dispatcher = MulticodersDispatch(
+        backend_order, root, cli_command=cfg.dispatch.cli_command,
+        timeout=cfg.dispatch.timeout_seconds,
+        max_output_bytes=cfg.dispatch.max_output_bytes,
+    )
     tracker = RepoTracker(layout.specs_dir(root), clock=lambda: today)
+
+    # Validate every brief before the first lifecycle mutation. One malformed
+    # target aborts the batch without leaving any spec in ``building``.
+    briefs = {}
+    try:
+        for spec_id in targets:
+            briefs[spec_id] = brief_from_spec(
+                corpus.by_id[spec_id], str(root), cfg.criterion_allowlist,
+                layout.decisions_dir(root),
+            )
+    except (OSError, ValueError) as exc:
+        echo(f"build preflight failed: {exc}")
+        return 1
+
     ledger = Ledger(root / ".hornero" / "ledger.db")
     run_id = ledger.next_run_id()
     ledger.record_run(run_id, "build", now)
 
     failures = 0
-    for spec_id in targets:
-        doc = corpus.by_id[spec_id]
-        tracker.transition(spec_id, "building")
-        tracker.comment(spec_id, f"build started (run {run_id}, backend "
-                                 f"{dispatcher.backend_name}).")
-        brief = brief_from_spec(
-            doc, str(root), cfg.criterion_allowlist, layout.decisions_dir(root)
-        )
-        run_ref = f"{run_id}-{spec_id.lower()}"
-        result = dispatcher.dispatch(brief, run_ref=run_ref)
-        ledger.record_dispatch(
-            spec_id, run_id, result["status"], result["pr_url"],
-            result["branch"], result["trace_path"], now,
-        )
-        ledger.record_agent_run(  # SPEC-004 §3.3: specs <-> traces join
-            run_ref, spec_id=spec_id, task_id=None,
-            actor=f"dispatch:{dispatcher.backend_name}",
-            status=result["status"], trace_path=result["trace_path"],
-            started_at=now, finished_at=now,
-        )
+    try:
+        for spec_id in targets:
+            tracker.transition(spec_id, "building")
+            tracker.comment(spec_id, f"build started (run {run_id}, backend "
+                                     f"{dispatcher.backend_name}).")
+            brief = briefs[spec_id]
+            run_ref = f"{run_id}-{spec_id.lower()}"
+            result = dispatcher.dispatch(brief, run_ref=run_ref)
+            ledger.record_dispatch(
+                spec_id, run_id, result["status"], result["pr_url"],
+                result["branch"], result["trace_path"], now,
+            )
+            ledger.record_agent_run(  # SPEC-004 §3.3: specs <-> traces join
+                run_ref, spec_id=spec_id, task_id=None,
+                actor=f"dispatch:{dispatcher.backend_name}",
+                status=result["status"], trace_path=result["trace_path"],
+                started_at=now, finished_at=now,
+            )
         # SPEC-004 §4: the scribe runs automatically at dispatch close when
         # a model is configured; otherwise an honest hint, never a fake DR.
-        from hornero.llm import resolve_llm
-
-        scribe_llm = resolve_llm(cfg, root, "scribe")
-        if scribe_llm is not None:
-            from hornero.scribe import ScribeError, scribe_run
+            from hornero.llm import LLMError, resolve_llm
 
             try:
-                scribe_run(root, run_ref, scribe_llm, today=today, echo=echo)
-            except ScribeError as exc:
-                echo(f"scribe skipped: {exc}")
-        else:
-            echo(f"hint: 'hornero scribe {run_ref}' distills this trace "
-                 "into a decision record (set models.scribe)")
-        if result["status"] == "completed":
-            tracker.transition(spec_id, "review")
-            tracker.comment(spec_id, f"PR opened: {result['pr_url']}")
-            echo(f"{spec_id}: completed -> review ({result['pr_url']})")
-        else:
-            failures += 1
-            tracker.transition(spec_id, "needs_human")
-            tracker.comment(
-                spec_id,
-                f"dispatch {result['status']}; see trace {result['trace_path']}",
-            )
-            echo(f"{spec_id}: {result['status']} -> needs_human "
-                 f"(trace: {result['trace_path']})")
+                scribe_llm = resolve_llm(cfg, root, "scribe")
+            except LLMError as exc:
+                scribe_llm = None
+                echo(f"scribe skipped: model error: {exc}")
+            if scribe_llm is not None:
+                from hornero.scribe import ScribeError, scribe_run
 
-    ledger.finish_run(run_id, now)
+                try:
+                    scribe_run(root, run_ref, scribe_llm, today=today, echo=echo)
+                except (ScribeError, LLMError) as exc:
+                    echo(f"scribe skipped: {exc}")
+            elif not cfg.models.get("scribe"):
+                echo(f"hint: 'hornero scribe {run_ref}' distills this trace "
+                     "into a decision record (set models.scribe)")
+            if result["status"] == "completed":
+                tracker.transition(spec_id, "review")
+                tracker.comment(spec_id, f"PR opened: {result['pr_url']}")
+                echo(f"{spec_id}: completed -> review ({result['pr_url']})")
+            else:
+                failures += 1
+                tracker.transition(spec_id, "needs_human")
+                tracker.comment(
+                    spec_id,
+                    f"dispatch {result['status']}; see trace {result['trace_path']}",
+                )
+                echo(f"{spec_id}: {result['status']} -> needs_human "
+                     f"(trace: {result['trace_path']})")
+    finally:
+        ledger.finish_run(run_id, now)
+        ledger.close()
     if failures == 0:
         for hook in post_build_hooks:
             hook(root, echo)
