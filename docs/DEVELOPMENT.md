@@ -80,13 +80,14 @@ tests/                 one file per surface; fixtures inline
 sdd/                   this repo's own specs/tasks/state (self-hosting)
 ```
 
-Five specs govern the current product. Start with
+Seven specs govern the current product. Start with
 `sdd/specs/SPEC-001-hornero-foundation.md`
 (ports, delta model, lifecycle, phases F1–F5) and
 `sdd/specs/SPEC-002-sdd-toolkit-sync.md` (toolkit install/sync/push, drift
 model, phases F2.5/F3.5/F4.5), then SPEC-003/004 for wiki and flight history,
-`SPEC-005` for the initial factory/graph/controller, and `SPEC-006` for
-temporal intelligence, production stacks, assurance and autonomous operations.
+`SPEC-005` for the initial factory/graph/controller, `SPEC-006` for
+temporal intelligence, production stacks, assurance and autonomous operations,
+and `SPEC-007` for trusted automated PyPI delivery.
 **When code and spec disagree, the spec wins**;
 record the discrepancy instead of silently picking one.
 

@@ -175,6 +175,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 - [Usage guide](docs/USAGE.md) — the full loop, configuration, SDD toolkit sync
 - [Development guide](docs/DEVELOPMENT.md) — setup, architecture, the self-hosted SDD workflow
 - [Deployment guide](docs/DEPLOYMENT.md) — adopting hornero in your repos, CI, multi-repo fanout
+- [PyPI release runbook](docs/RELEASING.md) — trusted automatic publishing from master
 - [Changelog](CHANGELOG.md)
 - [Visual artefacts](docs/artefacts/) — architecture diagram, infographic, cheatsheet, interactive onboarding (English + Spanish)
 
