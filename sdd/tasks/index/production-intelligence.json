@@ -1,0 +1,31 @@
+{
+  "feature": "production-intelligence",
+  "feature_id": "SPEC-006",
+  "spec": "sdd/specs/SPEC-006-production-intelligence-platform.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-16",
+  "completed_at": "2026-07-16",
+  "tasks": [
+    {"id":"TASK-056","slug":"temporal-graph","status":"done","priority":"high","depends_on":[],"file":"sdd/tasks/completed/TASK-056-temporal-graph.md"},
+    {"id":"TASK-057","slug":"contradiction-detection","status":"done","priority":"high","depends_on":["TASK-056"],"file":"sdd/tasks/completed/TASK-057-contradiction-detection.md"},
+    {"id":"TASK-058","slug":"semantic-deduplication","status":"done","priority":"high","depends_on":["TASK-056"],"file":"sdd/tasks/completed/TASK-058-semantic-deduplication.md"},
+    {"id":"TASK-059","slug":"evidence-extraction","status":"done","priority":"high","depends_on":["TASK-056"],"file":"sdd/tasks/completed/TASK-059-evidence-extraction.md"},
+    {"id":"TASK-060","slug":"impact-analysis","status":"done","priority":"high","depends_on":["TASK-057","TASK-058"],"file":"sdd/tasks/completed/TASK-060-impact-analysis.md"},
+    {"id":"TASK-061","slug":"traceability-coverage","status":"done","priority":"medium","depends_on":["TASK-060"],"file":"sdd/tasks/completed/TASK-061-traceability-coverage.md"},
+    {"id":"TASK-062","slug":"graph-query-explain","status":"done","priority":"high","depends_on":["TASK-060"],"file":"sdd/tasks/completed/TASK-062-graph-query-explain.md"},
+    {"id":"TASK-063","slug":"agent-context-packs","status":"done","priority":"high","depends_on":["TASK-060","TASK-061"],"file":"sdd/tasks/completed/TASK-063-agent-context-packs.md"},
+    {"id":"TASK-064","slug":"signed-blueprint-registry","status":"done","priority":"critical","depends_on":[],"file":"sdd/tasks/completed/TASK-064-signed-blueprint-registry.md"},
+    {"id":"TASK-065","slug":"blueprint-upgrades","status":"done","priority":"high","depends_on":["TASK-064"],"file":"sdd/tasks/completed/TASK-065-blueprint-upgrades.md"},
+    {"id":"TASK-066","slug":"capability-resolver","status":"done","priority":"high","depends_on":["TASK-064"],"file":"sdd/tasks/completed/TASK-066-capability-resolver.md"},
+    {"id":"TASK-067","slug":"production-stacks","status":"done","priority":"high","depends_on":["TASK-066"],"file":"sdd/tasks/completed/TASK-067-production-stacks.md"},
+    {"id":"TASK-068","slug":"contract-generation","status":"done","priority":"high","depends_on":["TASK-066"],"file":"sdd/tasks/completed/TASK-068-contract-generation.md"},
+    {"id":"TASK-069","slug":"workspace-graph","status":"done","priority":"high","depends_on":["TASK-060","TASK-066"],"file":"sdd/tasks/completed/TASK-069-workspace-graph.md"},
+    {"id":"TASK-070","slug":"finding-baselines","status":"done","priority":"critical","depends_on":[],"file":"sdd/tasks/completed/TASK-070-finding-baselines.md"},
+    {"id":"TASK-071","slug":"policy-sdk","status":"done","priority":"high","depends_on":["TASK-070"],"file":"sdd/tasks/completed/TASK-071-policy-sdk.md"},
+    {"id":"TASK-072","slug":"supply-chain-intelligence","status":"done","priority":"high","depends_on":["TASK-071"],"file":"sdd/tasks/completed/TASK-072-supply-chain-intelligence.md"},
+    {"id":"TASK-073","slug":"threat-modeling","status":"done","priority":"high","depends_on":["TASK-060","TASK-071"],"file":"sdd/tasks/completed/TASK-073-threat-modeling.md"},
+    {"id":"TASK-074","slug":"compliance-catalogs","status":"done","priority":"high","depends_on":["TASK-061","TASK-071"],"file":"sdd/tasks/completed/TASK-074-compliance-catalogs.md"},
+    {"id":"TASK-075","slug":"autonomous-runtime","status":"done","priority":"critical","depends_on":["TASK-063","TASK-065","TASK-069","TASK-072","TASK-073","TASK-074"],"file":"sdd/tasks/completed/TASK-075-autonomous-runtime.md"}
+  ]
+}

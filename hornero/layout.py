@@ -11,7 +11,8 @@ from pathlib import Path
 SDD_STATE_DIRS = [
     "sdd/proposals", "sdd/specs", "sdd/state",
     "sdd/tasks/active", "sdd/tasks/completed", "sdd/tasks/index",
-    "sdd/reviews", "sdd/decisions", "sdd/reports",
+    "sdd/reviews", "sdd/decisions", "sdd/reports", "sdd/findings",
+    "sdd/improvements",
 ]
 
 
@@ -37,3 +38,11 @@ def templates_dir(root: Path) -> Path:
 
 def tasks_index_dir(root: Path) -> Path:
     return root / "sdd" / "tasks" / "index"
+
+
+def findings_dir(root: Path) -> Path:
+    return root / "sdd" / "findings"
+
+
+def improvements_dir(root: Path) -> Path:
+    return root / "sdd" / "improvements"

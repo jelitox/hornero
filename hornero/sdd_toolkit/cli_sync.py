@@ -10,6 +10,8 @@ import difflib
 from collections.abc import Callable
 from pathlib import Path
 
+from hornero.paths import contained_path, validate_relative_path
+
 from hornero.sdd_toolkit.drift import (
     DriftState,
     FileDrift,
@@ -80,8 +82,8 @@ def cmd_diff(
         targets = [d for d in drifts if d.state is not DriftState.CURRENT]
     for d in targets:
         diff = difflib.unified_diff(
-            _read_lines(checkout.root / d.path),
-            _read_lines(root / d.path),
+            _read_lines(contained_path(checkout.root, d.path)),
+            _read_lines(contained_path(root, d.path)),
             fromfile=f"upstream/{d.path}",
             tofile=f"local/{d.path}",
         )
@@ -92,7 +94,8 @@ def cmd_diff(
 
 
 def _resolve_theirs(checkout: Checkout, root: Path, lock: SddLock, rel: str) -> None:
-    src, dest = checkout.root / rel, root / rel
+    rel = validate_relative_path(rel)
+    src, dest = contained_path(checkout.root, rel), contained_path(root, rel)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(src.read_bytes())
     upstream_hash = sha256_file(src)
@@ -108,8 +111,8 @@ def _resolve_ours(checkout: Checkout, root: Path, lock: SddLock, rel: str) -> No
     # current, upstream_hash = upstream-now) => the file reads MODIFIED (a
     # push candidate) and a further upstream move reads DIVERGED again.
     lock.files[rel] = FileEntry(
-        upstream_hash=sha256_file(checkout.root / rel),
-        installed_hash=sha256_file(root / rel),
+        upstream_hash=sha256_file(contained_path(checkout.root, rel)),
+        installed_hash=sha256_file(contained_path(root, rel)),
         policy=lock.files[rel].policy,
     )
 

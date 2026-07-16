@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
 
+from hornero.paths import contained_path, validate_relative_path
+
 from hornero.sdd_toolkit.lock import FileEntry, SddLock, save_lock, sha256_file
 from hornero.sdd_toolkit.manifest import Manifest, resolve_managed
 
@@ -69,11 +71,14 @@ def classify(
     candidate), never BEHIND, or a pull would clobber the very file
     adoption kept. When upstream later moves over a dirty baseline the
     human decides: DIVERGED."""
-    paths = sorted(set(resolve_managed(upstream_root, manifest)) | set(lock.files))
+    paths = sorted(
+        validate_relative_path(rel)
+        for rel in set(resolve_managed(upstream_root, manifest)) | set(lock.files)
+    )
     drifts: list[FileDrift] = []
     for rel in paths:
-        upstream = _hash_or_none(upstream_root / rel)
-        current = _hash_or_none(repo_root / rel)
+        upstream = _hash_or_none(contained_path(upstream_root, rel))
+        current = _hash_or_none(contained_path(repo_root, rel))
         entry = lock.files.get(rel)
 
         if entry is None:
@@ -125,8 +130,8 @@ def classify(
 
 
 def _pull_file(upstream_root: Path, repo_root: Path, lock: SddLock, rel: str) -> None:
-    src = upstream_root / rel
-    dest = repo_root / rel
+    src = contained_path(upstream_root, rel)
+    dest = contained_path(repo_root, rel)
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dest)
     upstream_hash = sha256_file(src)

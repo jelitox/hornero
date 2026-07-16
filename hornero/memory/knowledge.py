@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
+from hornero.redact import redact
+
 _TOKEN = re.compile(r"[a-z0-9]+")
 _EXCERPT_LEN = 200
 
@@ -32,6 +34,7 @@ def available() -> dict[str, bool]:
     return {
         "pageindex": _find("parrot.knowledge.pageindex"),
         "graphindex": _find("parrot.knowledge.graphindex"),
+        "codegraph": True,
         "fallback": True,
     }
 
@@ -75,7 +78,9 @@ class TokenOverlapKnowledge:
                 continue
             for path in sorted(root.rglob("*")):
                 if path.is_file() and path.suffix.lower() in (".md", ".txt", ".vtt"):
-                    text = path.read_text(encoding="utf-8", errors="replace")
+                    text = redact(
+                        path.read_text(encoding="utf-8", errors="replace")
+                    )
                     self._docs.append(
                         (str(path), text[:_EXCERPT_LEN], _tokenize(text))
                     )
@@ -133,6 +138,39 @@ class PageIndexKnowledge:
         return hits
 
 
+class CodeGraphKnowledge:
+    """Retriever over Hornero's local SQLite code graph.
+
+    Constructed only when ``hornero reindex`` has written
+    ``.hornero/knowledge/graph/wiki.db``. Operational failures degrade to
+    the fallback path in :func:`open_knowledge`.
+    """
+
+    def __init__(self, root: Path) -> None:
+        from hornero.memory import codegraph
+
+        if not codegraph.db_path(root).is_file():
+            raise FileNotFoundError(codegraph.db_path(root))
+        if not codegraph.stats(root).get("built"):
+            raise ValueError("code graph is corrupt or incompatible")
+        self._root = root
+
+    def retrieve(self, query: str, k: int = 5) -> list[Hit]:
+        from hornero.memory import codegraph
+
+        hits = []
+        for item in codegraph.search(self._root, query, limit=k):
+            hits.append(
+                Hit(
+                    path=str(self._root / item.path),
+                    score=item.score,
+                    excerpt=(item.summary or item.body)[:_EXCERPT_LEN],
+                    kind=codegraph._kind_for_path(item.path, item.category),
+                )
+            )
+        return hits
+
+
 def knowledge_roots(root: Path) -> list[Path]:
     # SPEC-002 §2/§8: the FULL sdd/ corpus is first-class knowledge — specs,
     # proposals, findings under sdd/state/*/findings/, templates, task logs —
@@ -144,6 +182,10 @@ def open_knowledge(root: Path, config: object = None) -> KnowledgeLayer:
     """Best available layer; the fallback is always constructible and no
     code path hard-requires the parrot indexes (§8)."""
     roots = knowledge_roots(root)
+    try:
+        return CodeGraphKnowledge(root)
+    except Exception:
+        pass
     if available()["pageindex"]:
         try:
             return PageIndexKnowledge(roots)

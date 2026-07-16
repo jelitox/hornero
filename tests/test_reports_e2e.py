@@ -74,9 +74,15 @@ def test_f5_gate_all_reports_offline(repo, block_network):
     assert main(["report"]) == 0
     reports = repo / "sdd" / "reports"
     names = sorted(p.name for p in reports.glob("*.html"))
-    assert names == ["capabilities.html", "traceability.html", "workflows.html"]
-    for name in names:  # every done spec appears in each report
+    assert names == [
+        "capabilities.html", "knowledge-graph.html",
+        "traceability.html", "workflows.html",
+    ]
+    for name in ["capabilities.html", "traceability.html", "workflows.html"]:
         assert "SPEC-001" in (reports / name).read_text(encoding="utf-8")
+    assert "Hornero Knowledge Graph" in (
+        reports / "knowledge-graph.html"
+    ).read_text(encoding="utf-8")
 
 
 def test_reports_content_specifics(repo, block_network):
@@ -94,7 +100,9 @@ def test_reports_content_specifics(repo, block_network):
 def test_only_flag(repo, capsys):
     assert main(["report", "--only", "workflows"]) == 0
     reports = repo / "sdd" / "reports"
-    assert [p.name for p in reports.glob("*.html")] == ["workflows.html"]
+    assert sorted(p.name for p in reports.glob("*.html")) == [
+        "knowledge-graph.html", "workflows.html",
+    ]
     assert main(["report", "--only", "nonsense"]) == 1
     assert "unknown report" in capsys.readouterr().out
 

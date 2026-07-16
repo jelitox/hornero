@@ -1,11 +1,15 @@
 """F3 gate: approved fixture spec -> mock backend -> approved→building→review
 with a fake PR URL recorded in the ledger."""
 
+import json
+import sys
+
 import pytest
 
 from hornero.cli import main
 from hornero.lifecycle import Status, parse_spec
 from hornero.memory.ledger import Ledger
+from hornero.memory.reindex import reindex
 
 APPROVED_SPEC = """---
 spec: SPEC-002
@@ -94,3 +98,64 @@ def test_failed_dispatch_goes_needs_human(repo, capsys):
     assert "see trace" in doc.body
     with Ledger(repo / ".hornero" / "ledger.db") as led:
         assert led.dispatches("SPEC-002")[0]["status"] == "needs_human"
+
+
+def test_invalid_brief_does_not_transition_or_start_run(repo, capsys):
+    _add_spec(
+        repo,
+        APPROVED_SPEC.replace('  - "pytest tests/digest -q"', '  - ""'),
+    )
+    assert main(["build", "--backend", "mock"]) == 1
+    assert "build preflight failed" in capsys.readouterr().out
+    assert parse_spec(
+        repo / "sdd" / "specs" / "SPEC-002-digest.md"
+    ).status is Status.APPROVED
+    with Ledger(repo / ".hornero" / "ledger.db") as led:
+        assert led._conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+        assert led.dispatches() == []
+
+
+def test_real_cli_backend_uses_json_protocol_without_shell(repo):
+    _add_spec(repo)
+    runner = repo / "coding_backend.py"
+    runner.write_text(
+        "import json, pathlib, sys\n"
+        "brief = json.load(sys.stdin)\n"
+        "pathlib.Path('brief-seen.json').write_text(json.dumps(brief))\n"
+        "print(json.dumps({'status': 'completed', "
+        "'pr_url': 'https://example.invalid/pr/cli-1', "
+        "'branch': 'hornero/cli-build'}))\n",
+        encoding="utf-8",
+    )
+    config = repo / ".hornero" / "config.yaml"
+    config.write_text(
+        "dispatch:\n  backend_order: [cli]\n  cli_command:\n"
+        f"    - {sys.executable}\n    - {runner}\n"
+        "  timeout_seconds: 10\n  max_output_bytes: 10000\n"
+        "models: {}\n",
+        encoding="utf-8",
+    )
+    assert main(["build"]) == 0
+    brief = json.loads((repo / "brief-seen.json").read_text(encoding="utf-8"))
+    assert brief["spec_id"] == "SPEC-002"
+    assert parse_spec(
+        repo / "sdd" / "specs" / "SPEC-002-digest.md"
+    ).status is Status.REVIEW
+    with Ledger(repo / ".hornero" / "ledger.db") as led:
+        row = led.dispatches("SPEC-002")[0]
+        assert row["pr_url"] == "https://example.invalid/pr/cli-1"
+        assert row["branch"] == "hornero/cli-build"
+
+
+def test_stale_graph_blocks_build_before_lifecycle_mutation(repo, capsys):
+    _add_spec(repo)
+    reindex(repo)
+    spec = repo / "sdd" / "specs" / "SPEC-002-digest.md"
+    spec.write_text(spec.read_text(encoding="utf-8") + "\nChanged.\n")
+
+    assert main(["build", "--backend", "mock"]) == 1
+
+    assert "graph preflight failed" in capsys.readouterr().out
+    assert parse_spec(spec).status is Status.APPROVED
+    with Ledger(repo / ".hornero" / "ledger.db") as led:
+        assert led.dispatches() == []

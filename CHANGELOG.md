@@ -4,6 +4,69 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org/).
 
+## [0.4.0] — 2026-07-16
+
+SPEC-006 adds production-grade graph intelligence, factory evolution,
+assurance evidence and a bounded event runtime across 20 completed features.
+
+### Added
+
+- Temporal graph snapshots and entity versions, explicit supersession,
+  contradiction/duplicate candidates, impact traversal, traceability coverage,
+  semantic queries/explanations and hard-budget context packs.
+- AI-assisted knowledge extraction whose proposed entities survive only when
+  their evidence excerpt is a verbatim substring of the source document.
+- HMAC-signed local/HTTPS blueprint registry envelopes, schema 2 locks with
+  generated bases, three-way upgrades and explicit divergence resolution.
+- Capability-aware production stacks for database/migrations, authentication,
+  queueing, telemetry, containers, IaC, CI and shared API/event/data contracts.
+- Federated workspace graphs and bounded cross-repository impact plans.
+- Expiring finding baselines with owner/reason, declarative local policy rules,
+  offline CycloneDX SBOM/vulnerability feeds, STRIDE threat models, and
+  evidence mappings for SOC 2, ISO 27001, GDPR and PCI.
+- Persistent schedules and HMAC webhooks with replay protection, resource
+  sandboxing, cost/event budgets, retries, risk approvals, explicit push/PR
+  policy, runtime metrics and bounded feedback-derived rule weights.
+
+### Safety
+
+- Scheduled code mutation requires an explicitly configured sandbox wrapper.
+  Subprocess environments exclude credentials by default and apply CPU,
+  memory, file-size and process limits.
+- PR creation requires runtime push enablement, event-level `allow_push`, and a
+  named approval. No runtime path merges the default branch.
+
+## [0.3.0] — 2026-07-16
+
+SPEC-005 implements the autonomous project-intelligence program and closes the
+20-item security, reliability, factory, graph, provider and improvement audit.
+
+### Added
+
+- `hornero new` and versioned composable blueprints with safe rendering,
+  lockfile hashes and non-mutating drift status.
+- A typed semantic graph connecting sources, requirements, criteria, controls,
+  tasks, decisions, code, tests and findings, with source-hash provenance;
+  `hornero validate` repairs derived state and reports stable validation IDs.
+- Bounded document ingestion for text/Markdown/VTT/HTML/JSON/YAML/DOCX and
+  optional PDF, including normalized Markdown and provenance sidecars.
+- Explicit local-command and OpenAI-compatible LLM providers with environment
+  credentials, budgets, timeouts, retries and redacted/hash-only auditing;
+  real coding CLI dispatch uses JSON over stdin/stdout and argv without shell.
+- `hornero improve scan|plan|run|status`: nine deterministic policy packs,
+  stable finding lifecycle, risk/HITL policy, isolated worktree execution,
+  gates, review branches, rollback and ledgered learning.
+
+### Security and reliability
+
+- Central path containment rejects traversal and symlink escape across toolkit
+  and generated-project writes; strict configuration rejects wrong shapes.
+- Knowledge is redacted before persistence and untrusted prompt blocks are
+  JSON-delimited; corrupt derived indexes are quarantined and rebuilt.
+- Run IDs are atomic, delta decision/outcome state is truthful, queues survive
+  non-interactive runs, project roots are marker-verified, and build preflight
+  cannot leave partial lifecycle transitions.
+
 ## [0.2.0] — 2026-07-08
 
 SPEC-003 (agent-facing wiki, git watermarks, code-as-signal) and SPEC-004

@@ -69,4 +69,7 @@ class InboxSource:
                 dest = self.processed / f"{src.stem}-{n}{src.suffix}"
                 n += 1
             shutil.move(str(src), str(dest))
+            sidecar = src.with_suffix(".source.json")
+            if sidecar.is_file():
+                shutil.move(str(sidecar), str(self.processed / sidecar.name))
             return

@@ -106,3 +106,37 @@ def test_reconcile_and_build_do_not_write_knowledge(tmp_path, monkeypatch):
     main(["build"])  # no approved specs: no-op, and must not touch knowledge
     assert main(["reconcile"]) == 3  # no model configured: refuses pre-poll
     assert _knowledge_hash(root) == before
+
+
+def test_reindex_redacts_secrets_from_all_derived_artifacts(tmp_path, monkeypatch):
+    root = _repo(tmp_path, monkeypatch)
+    secret = "sk-abcdefghijklmnopqrstuvwx"
+    (root / "sdd" / "specs" / "SPEC-002-secret.md").write_text(
+        f"A leaked credential is {secret}\n", encoding="utf-8"
+    )
+    reindex(root)
+    for path in (root / ".hornero" / "knowledge").rglob("*"):
+        if path.is_file():
+            assert secret.encode() not in path.read_bytes(), path
+    assert secret.encode() not in (
+        root / "sdd" / "reports" / "knowledge-graph.html"
+    ).read_bytes()
+
+
+def test_corrupt_derived_indexes_are_reported_quarantined_and_rebuilt(
+    tmp_path, monkeypatch, capsys
+):
+    root = _repo(tmp_path, monkeypatch)
+    reindex(root)
+    manifest = root / ".hornero" / "knowledge" / "manifest.json"
+    graph = root / ".hornero" / "knowledge" / "graph" / "wiki.db"
+    manifest.write_text("{broken", encoding="utf-8")
+    graph.write_bytes(b"not sqlite")
+    assert index_staleness(root) == "corrupt"
+    assert main(["status"]) == 0
+    assert "knowledge index: corrupt" in capsys.readouterr().out
+    assert main(["reindex"]) == 0
+    assert index_staleness(root) == "fresh"
+    quarantine = root / ".hornero" / "cache" / "quarantine"
+    assert (quarantine / "manifest.corrupt.json").is_file()
+    assert (quarantine / "wiki.corrupt.db").is_file()

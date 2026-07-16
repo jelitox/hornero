@@ -119,6 +119,14 @@ def test_f8_gate_budget_queues_and_represents(tmp_path, monkeypatch):
     with Ledger(repo / ".hornero" / "ledger.db") as led:
         queued = led.queued_deltas()
     assert len(queued) == 2  # excess queued, not dropped
+    # A scheduled/no-TTY pass may surface queue debt but must not consume it.
+    assert run_reconcile(
+        repo, llm=FakeLLM({}), channel=None, now=1.5, today="2026-07-08"
+    ) == 0
+    with Ledger(repo / ".hornero" / "ledger.db") as led:
+        still_queued = led.queued_deltas()
+        assert len(still_queued) == 2
+        assert all(row["presented_count"] == 1 for row in still_queued)
     # next run: nothing new to draft; the 2 queued are re-presented
     ch2 = ApproveAll()
     llm2 = FakeLLM({})  # any drafting call would raise
