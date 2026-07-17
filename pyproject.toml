@@ -2,9 +2,26 @@
 name = "hornero"
 version = "0.4.0"
 description = "Repo-native product loop: signals -> living memory -> SDD specs -> dispatched builds -> reports. The ovenbird builds its own house."
+readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 dependencies = ["pyyaml"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Build Tools",
+]
+
+[project.urls]
+Homepage = "https://github.com/jelitox/hornero"
+Issues = "https://github.com/jelitox/hornero/issues"
+Repository = "https://github.com/jelitox/hornero"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "ruff", "mypy", "types-pyyaml"]

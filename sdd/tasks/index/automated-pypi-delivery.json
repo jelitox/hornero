@@ -1,0 +1,19 @@
+{
+  "feature": "automated-pypi-delivery",
+  "feature_id": "SPEC-007",
+  "spec": "sdd/specs/SPEC-007-automated-pypi-delivery.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-16",
+  "completed_at": "2026-07-16",
+  "tasks": [
+    {
+      "id": "TASK-076",
+      "slug": "automated-pypi-delivery",
+      "status": "done",
+      "priority": "critical",
+      "depends_on": ["TASK-075"],
+      "file": "sdd/tasks/completed/TASK-076-automated-pypi-delivery.md"
+    }
+  ]
+}

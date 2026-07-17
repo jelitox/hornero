@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Automatic wheel and source-distribution publication after every successful
+  push to master, using immutable PEP 440 post-release versions, PyPI Trusted
+  Publishing, PEP 740 attestations, installed-wheel smoke tests, least-
+  privilege jobs and commit-pinned GitHub Actions.
+
 ## [0.4.0] — 2026-07-16
 
 SPEC-006 adds production-grade graph intelligence, factory evolution,
