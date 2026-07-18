@@ -1,6 +1,6 @@
 """Knowledge layer: feature detection + first-class fallback (SPEC-001 §8).
 
-``parrot.knowledge.pageindex`` / ``graphindex`` are used when importable
+``parrot.knowledge.wiki`` / ``pageindex`` / ``graphindex`` are used when available
 (note the post-FEAT-198 path — never ``parrot.pageindex``); otherwise a
 deterministic token-overlap retriever runs. The fallback is a first-class
 code path with its own tests, not a stub (CLAUDE.md invariant 5): in a venv
@@ -32,6 +32,7 @@ def _find(mod: str) -> bool:
 
 def available() -> dict[str, bool]:
     return {
+        "wiki": _find("parrot.knowledge.wiki"),
         "pageindex": _find("parrot.knowledge.pageindex"),
         "graphindex": _find("parrot.knowledge.graphindex"),
         "codegraph": True,
@@ -138,6 +139,34 @@ class PageIndexKnowledge:
         return hits
 
 
+class ParrotWikiKnowledge:
+    """Hornero protocol adapter over ai-parrot's supported CLI boundary."""
+
+    def __init__(self, root: Path) -> None:
+        from hornero.parrot_wiki import toolkit_available, wiki_built
+
+        if not toolkit_available() or not wiki_built(root):
+            raise ValueError("ai-parrot wiki is unavailable or not built")
+        self._root = root
+
+    def retrieve(self, query: str, k: int = 5) -> list[Hit]:
+        from hornero.parrot_wiki import query_rows
+
+        hits: list[Hit] = []
+        for item in query_rows(self._root, query, limit=k):
+            hits.append(
+                Hit(
+                    path=str(item.get("node_id") or item.get("concept_id") or ""),
+                    score=float(item.get("score", 0.0)),
+                    excerpt=str(item.get("summary") or item.get("snippet") or "")[
+                        :_EXCERPT_LEN
+                    ],
+                    kind=str(item.get("category") or "wiki"),
+                )
+            )
+        return hits
+
+
 class CodeGraphKnowledge:
     """Retriever over Hornero's local SQLite code graph.
 
@@ -182,6 +211,14 @@ def open_knowledge(root: Path, config: object = None) -> KnowledgeLayer:
     """Best available layer; the fallback is always constructible and no
     code path hard-requires the parrot indexes (§8)."""
     roots = knowledge_roots(root)
+    # A built .parrot plane is an explicit repository-level choice, so prefer
+    # it over Hornero's automatic derived graph. Any runtime/API failure still
+    # degrades to the deterministic local layers below.
+    if available()["wiki"]:
+        try:
+            return ParrotWikiKnowledge(root)
+        except Exception:
+            pass
     try:
         return CodeGraphKnowledge(root)
     except Exception:

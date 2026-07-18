@@ -42,6 +42,7 @@ def _corpus(tmp_path):
 def test_available_reports_fallback_true_and_no_crash():
     caps = available()
     assert caps["fallback"] is True
+    assert caps["wiki"] is False
     assert caps["pageindex"] is False  # parrot is not installed in this venv
     assert caps["graphindex"] is False
 
