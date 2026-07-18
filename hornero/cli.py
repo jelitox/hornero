@@ -288,6 +288,51 @@ def build_parser() -> argparse.ArgumentParser:
     wiki_sub = p_wiki.add_subparsers(dest="wiki_command", required=True)
     wiki_sub.add_parser("init", help="first full wiki build")
     wiki_sub.add_parser("update", help="surgical refresh scoped by the watermark")
+    p_parrot = wiki_sub.add_parser(
+        "parrot", help="ai-parrot LLM-wiki retrieval plane"
+    )
+    parrot_sub = p_parrot.add_subparsers(dest="parrot_command", required=True)
+    pp = parrot_sub.add_parser("build", help="build or refresh the plane")
+    pp.add_argument("--force", action="store_true")
+    pp.add_argument("--no-git", action="store_true")
+    pp.add_argument("--no-export", action="store_true")
+    pp.add_argument("--no-graph", action="store_true")
+    pp.add_argument("--quiet", "-q", action="store_true")
+    pp = parrot_sub.add_parser("upsert", help="incrementally refresh files")
+    pp.add_argument("paths", nargs="*")
+    pp.add_argument("--changed", action="store_true")
+    pp.add_argument("--quiet", "-q", action="store_true")
+    pp = parrot_sub.add_parser("query", help="query ranked wiki pages")
+    pp.add_argument("question")
+    pp.add_argument("--top-k", type=int, default=12)
+    pp.add_argument("--budget", type=int, default=2400)
+    pp.add_argument("--category", default=None)
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("page", help="read one full page")
+    pp.add_argument("page_id")
+    pp.add_argument("--max-tokens", type=int, default=None)
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("related", help="follow typed page edges")
+    pp.add_argument("page_id")
+    pp.add_argument("--rel", default=None)
+    pp.add_argument("--direction", choices=["out", "in", "both"], default="both")
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("status", help="show plane health and staleness")
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("export", help="export a human-readable wiki")
+    pp.add_argument("--output", "-o", default="docs/wiki")
+
+    p_codex = wiki_sub.add_parser(
+        "codex", help="install ai-parrot guidance and hooks for Codex"
+    )
+    codex_sub = p_codex.add_subparsers(dest="codex_command", required=True)
+    pc = codex_sub.add_parser("install", help="install the Codex integration")
+    pc.add_argument("--no-git-hook", action="store_true")
+    pc.add_argument("--no-gitignore", action="store_true")
+    codex_sub.add_parser("uninstall", help="remove managed Codex artifacts")
+    pc = codex_sub.add_parser("status", help="show Codex integration state")
+    pc.add_argument("--json", action="store_true", dest="as_json")
+    codex_sub.add_parser("hook", help=argparse.SUPPRESS)
 
     p_knowledge = sub.add_parser("knowledge", help="local code knowledge graph")
     knowledge_sub = p_knowledge.add_subparsers(dest="knowledge_command", required=True)
@@ -576,6 +621,103 @@ def _cmd_knowledge(args: argparse.Namespace, root: Path) -> int:
                 )
         return 0
     raise AssertionError("unreachable")
+
+
+def _cmd_parrot_wiki(args: argparse.Namespace, root: Path) -> int:
+    """Translate stable Hornero argv to ai-parrot's wikitoolkit CLI."""
+    from hornero.parrot_wiki import ParrotWikiError, run_toolkit
+
+    command = args.parrot_command
+    forwarded: list[str] = [command]
+    if command == "build":
+        if args.force:
+            forwarded.append("--force")
+        if args.no_git:
+            forwarded.append("--no-git")
+        if args.no_export:
+            forwarded.append("--no-export")
+        if args.no_graph:
+            forwarded.append("--no-graph")
+        if args.quiet:
+            forwarded.append("--quiet")
+    elif command == "upsert":
+        forwarded.extend(args.paths)
+        if args.changed:
+            forwarded.append("--changed")
+        if args.quiet:
+            forwarded.append("--quiet")
+    elif command == "query":
+        forwarded.extend(
+            ["--top-k", str(args.top_k), "--budget", str(args.budget)]
+        )
+        if args.category:
+            forwarded.extend(["--category", args.category])
+        if args.as_json:
+            forwarded.append("--json")
+        forwarded.extend(["--", args.question])
+    elif command == "page":
+        if args.max_tokens is not None:
+            forwarded.extend(["--max-tokens", str(args.max_tokens)])
+        if args.as_json:
+            forwarded.append("--json")
+        forwarded.extend(["--", args.page_id])
+    elif command == "related":
+        forwarded.extend(["--direction", args.direction])
+        if args.rel:
+            forwarded.extend(["--rel", args.rel])
+        if args.as_json:
+            forwarded.append("--json")
+        forwarded.extend(["--", args.page_id])
+    elif command == "status" and args.as_json:
+        forwarded.append("--json")
+    elif command == "export":
+        forwarded.extend(["--output", args.output])
+    try:
+        return run_toolkit(root, forwarded)
+    except ParrotWikiError as exc:
+        print(f"parrot wiki failed: {exc}", file=sys.stderr)
+        return 2
+
+
+def _cmd_codex_wiki(args: argparse.Namespace, root: Path) -> int:
+    from hornero.parrot_wiki import (
+        ParrotWikiError,
+        install_codex_integration,
+        integration_status,
+        run_codex_hook,
+        uninstall_codex_integration,
+    )
+
+    if args.codex_command == "hook":
+        return run_codex_hook()
+    try:
+        if args.codex_command == "install":
+            actions = install_codex_integration(
+                root,
+                git_hook=not args.no_git_hook,
+                gitignore=not args.no_gitignore,
+            )
+            for action in actions:
+                print(action)
+            print(
+                "Codex project hooks require a trusted repository; review/enable "
+                "them with /hooks in Codex."
+            )
+            return 0
+        if args.codex_command == "uninstall":
+            for action in uninstall_codex_integration(root):
+                print(action)
+            return 0
+        status = integration_status(root)
+        if args.as_json:
+            print(json.dumps(status, indent=2, sort_keys=True))
+        else:
+            for key, value in status.items():
+                print(f"{key.replace('_', ' '):<24} {'yes' if value else 'no'}")
+        return 0
+    except ParrotWikiError as exc:
+        print(f"codex wiki integration failed: {exc}", file=sys.stderr)
+        return 2
 
 
 def _cmd_sdd(args: argparse.Namespace, root: Path) -> int:
@@ -1252,6 +1394,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"scribe failed: {exc}", file=sys.stderr)
             return 2
     if args.command == "wiki":
+        if args.wiki_command == "parrot":
+            return _cmd_parrot_wiki(args, root)
+        if args.wiki_command == "codex":
+            return _cmd_codex_wiki(args, root)
         from hornero.llm import LLMError, model_name, resolve_llm
         from hornero.wiki import WikiError, wiki_init, wiki_update
 

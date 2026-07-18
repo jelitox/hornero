@@ -97,6 +97,14 @@ python -m venv .venv && source .venv/bin/activate
 uv pip install -e .            # or: pip install -e .
 ```
 
+For ai-parrot's LLM-wiki knowledge plane and native Codex integration:
+
+```bash
+pip install 'hornero[knowledge]'
+hornero wiki codex install
+hornero wiki parrot build
+```
+
 ## Quickstart
 
 ```bash
@@ -162,6 +170,8 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 | `hornero sdd sync --workspace DIR` | Pull-sync every child repo carrying `.hornero/sdd.lock` |
 | `hornero sdd hold\|unhold\|pin FILE` | Per-file sync policy |
 | `hornero wiki init\|update` | Agent-facing living wiki (watermark-scoped, no-op-disciplined) |
+| `hornero wiki parrot build\|upsert\|query\|page\|related\|status\|export` | Operate ai-parrot's local LLM-wiki plane |
+| `hornero wiki codex install\|status\|uninstall` | Manage query-first Codex instructions, skill and lifecycle hook |
 | `hornero runs list\|show\|adopt\|prune` | Flight-recorder traces of every dispatch |
 | `hornero scribe RUN [--force]` | Distill a trace into a Decision Record (verified citations) |
 
@@ -185,6 +195,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 - [Deployment guide](docs/DEPLOYMENT.md) — adopting hornero in your repos, CI, multi-repo fanout
 - [PyPI release runbook](docs/RELEASING.md) — trusted automatic publishing from master
 - [Changelog guide](docs/CHANGELOGS.md) — fragments, PR policy and PyPI projection
+- [ai-parrot LLM-wiki guide](docs/PARROT_WIKI.md) — knowledge bridge and Codex integration
 - [Changelog](CHANGELOG.md)
 - [Visual artefacts](docs/artefacts/) — architecture diagram, infographic, cheatsheet, interactive onboarding (English + Spanish)
 

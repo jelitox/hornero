@@ -1,0 +1,19 @@
+{
+  "feature": "parrot-wiki-codex",
+  "feature_id": "SPEC-009",
+  "spec": "sdd/specs/SPEC-009-parrot-wiki-codex.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-17",
+  "completed_at": "2026-07-17",
+  "tasks": [
+    {
+      "id": "TASK-078",
+      "slug": "parrot-wiki-codex",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-077"],
+      "file": "sdd/tasks/completed/TASK-078-parrot-wiki-codex.md"
+    }
+  ]
+}

@@ -28,6 +28,7 @@ Changelog = "https://github.com/jelitox/hornero/blob/master/CHANGELOG.md"
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "ruff", "mypy", "types-pyyaml"]
 documents = ["pypdf>=4"]
+knowledge = ["ai-parrot>=0.25.21,<0.26"]
 
 [project.scripts]
 hornero = "hornero.cli:main"
