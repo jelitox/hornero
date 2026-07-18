@@ -22,6 +22,8 @@ classifiers = [
 Homepage = "https://github.com/jelitox/hornero"
 Issues = "https://github.com/jelitox/hornero/issues"
 Repository = "https://github.com/jelitox/hornero"
+Changelog = "https://github.com/jelitox/hornero/blob/master/CHANGELOG.md"
+"Release notes" = "https://github.com/jelitox/hornero/releases"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "ruff", "mypy", "types-pyyaml"]

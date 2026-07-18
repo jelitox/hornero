@@ -63,16 +63,17 @@ def test_next_run_id_monotonic(tmp_path):
 
 
 def test_next_run_id_is_unique_across_concurrent_connections(tmp_path):
-    db = tmp_path / "l.db"
+    for attempt in range(3):
+        db = tmp_path / f"l-{attempt}.db"
 
-    def reserve(_):
-        with Ledger(db) as led:
-            return led.next_run_id()
+        def reserve(_, database=db):
+            with Ledger(database) as led:
+                return led.next_run_id()
 
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        ids = list(pool.map(reserve, range(24)))
-    assert len(ids) == len(set(ids)) == 24
-    assert {int(value.removeprefix("r-")) for value in ids} == set(range(1, 25))
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            ids = list(pool.map(reserve, range(24)))
+        assert len(ids) == len(set(ids)) == 24
+        assert {int(value.removeprefix("r-")) for value in ids} == set(range(1, 25))
 
 
 def test_delta_decision_and_outcome_are_distinct(tmp_path):

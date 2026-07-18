@@ -41,8 +41,8 @@ SemVer require deterministic, unique release identifiers.
 
 - A failed gate never reaches PyPI.
 - Existing PyPI files are never overwritten or silently skipped.
-- Concurrent publishing is serialized and an in-progress upload is not
-  cancelled by a newer merge.
+- Concurrent runs use distinct immutable package filenames and no merge
+  cancels another merge's pending publication.
 - The workflow cannot write repository contents or publish from pull-request
   code before it reaches master.
 

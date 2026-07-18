@@ -10,6 +10,7 @@ in here reads the wall clock.
 
 import json
 import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 
@@ -139,13 +140,25 @@ CREATE TABLE IF NOT EXISTS runtime_webhooks (
 """
 
 
+def _enable_wal(connection: sqlite3.Connection) -> None:
+    """Enable WAL despite concurrent first-open races on a new database."""
+    for attempt in range(10):
+        try:
+            connection.execute("PRAGMA journal_mode=WAL")
+            return
+        except sqlite3.OperationalError as exc:
+            if "locked" not in str(exc).lower() or attempt == 9:
+                raise
+            time.sleep(0.01 * (attempt + 1))
+
+
 class Ledger:
     def __init__(self, path: Path) -> None:
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(path, timeout=30)
         self._conn.row_factory = sqlite3.Row
-        self._conn.execute("PRAGMA journal_mode=WAL")
+        _enable_wal(self._conn)
         self._conn.executescript(_SCHEMA)
         columns = {
             str(row["name"])

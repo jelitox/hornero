@@ -8,10 +8,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Validated per-PR changelog fragments, an enforceable PR policy, direct PyPI
+  metadata links, and build-specific release summaries in the package
+  description.
+- Independent immutable publication runs so rapid merges cannot cancel an
+  intermediate change summary.
 - Automatic wheel and source-distribution publication after every successful
   push to master, using immutable PEP 440 post-release versions, PyPI Trusted
   Publishing, PEP 740 attestations, installed-wheel smoke tests, least-
   privilege jobs and commit-pinned GitHub Actions.
+
+### Fixed
+
+- Concurrent first-open ledger connections retry SQLite WAL activation instead
+  of failing intermittently with `database is locked`.
 
 ## [0.4.0] — 2026-07-16
 

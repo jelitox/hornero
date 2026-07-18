@@ -4,6 +4,11 @@ Hornero publishes a wheel and source distribution after every successful push
 to master, including pull-request merges. The workflow is
 .github/workflows/publish-pypi.yml.
 
+Before building, CI projects the fragments changed by the push into the marked
+release-notes block in the package README. This makes the exact post-release
+delta visible on PyPI without modifying the committed README. See
+`docs/CHANGELOGS.md` for fragment policy and stable-release consolidation.
+
 ## One-time PyPI configuration
 
 In the hornero project on PyPI, open **Manage > Publishing**, add a GitHub
@@ -46,12 +51,14 @@ The build job has read-only repository access and:
 3. builds the wheel and source distribution;
 4. validates metadata with Twine;
 5. installs the wheel in a clean virtual environment and runs the CLI;
-6. uploads the distributions as a seven-day GitHub artifact.
+6. projects build-specific release notes into the PyPI description;
+7. uploads the distributions as a seven-day GitHub artifact.
 
 Only the separate publish job receives id-token: write. It downloads the
 validated artifact and publishes it using PyPI Trusted Publishing with default
-PEP 740 attestations. Concurrent publication runs are serialized and never
-cancelled midway.
+PEP 740 attestations. Each run has a distinct immutable version, so concurrent
+merges retain independent publication runs instead of cancelling pending
+changes.
 
 Use **Actions > Publish Python package to PyPI > Run workflow** to retry or
 perform a controlled manual publication. A rerun receives a new post-release
