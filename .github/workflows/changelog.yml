@@ -1,0 +1,37 @@
+name: Changelog policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate changelog fragments
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Validate all fragments
+        run: python scripts/changelog.py validate
+
+      - name: Require a fragment for user-visible changes
+        if: >-
+          github.actor != 'dependabot[bot]' &&
+          !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+        run: >-
+          python scripts/changelog.py validate
+          --base-ref "${{ github.event.pull_request.base.sha }}"
+          --require-new

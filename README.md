@@ -8,6 +8,14 @@ needs a server, a database service, or a SaaS.
 > tool: hornero is developed with the same spec-driven workflow it implements
 > (fully self-hosting).
 
+<!-- pypi-release-notes:start -->
+## Latest changes
+
+See the [changelog](CHANGELOG.md) for released and upcoming changes. Published
+packages replace this block with the exact change set for that immutable PyPI
+version.
+<!-- pypi-release-notes:end -->
+
 ## What it does
 
 ```
@@ -176,6 +184,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 - [Development guide](docs/DEVELOPMENT.md) — setup, architecture, the self-hosted SDD workflow
 - [Deployment guide](docs/DEPLOYMENT.md) — adopting hornero in your repos, CI, multi-repo fanout
 - [PyPI release runbook](docs/RELEASING.md) — trusted automatic publishing from master
+- [Changelog guide](docs/CHANGELOGS.md) — fragments, PR policy and PyPI projection
 - [Changelog](CHANGELOG.md)
 - [Visual artefacts](docs/artefacts/) — architecture diagram, infographic, cheatsheet, interactive onboarding (English + Spanish)
 

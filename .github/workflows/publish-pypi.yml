@@ -6,10 +6,6 @@ on:
       - master
   workflow_dispatch:
 
-concurrency:
-  group: publish-pypi
-  cancel-in-progress: false
-
 permissions:
   contents: read
 
@@ -24,6 +20,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python
@@ -56,6 +53,19 @@ jobs:
             --write)"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Project release notes into the PyPI description
+        env:
+          AFTER_SHA: ${{ github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          REPOSITORY_URL: https://github.com/${{ github.repository }}
+        run: |
+          python scripts/changelog.py prepare-pypi \
+            --version "$RELEASE_VERSION" \
+            --before "$BEFORE_SHA" \
+            --after "$AFTER_SHA" \
+            --repository-url "$REPOSITORY_URL" \
+            --write
 
       - name: Build wheel and source distribution
         run: python -m build
