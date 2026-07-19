@@ -8,6 +8,8 @@ needs a server, a database service, or a SaaS.
 > tool: hornero is developed with the same spec-driven workflow it implements
 > (fully self-hosting).
 
+![AI Product Loop Flowchart](docs/images/AI_Product_Loop_Flowchart.png)
+
 <!-- pypi-release-notes:start -->
 ## Latest changes
 
@@ -97,11 +99,13 @@ python -m venv .venv && source .venv/bin/activate
 uv pip install -e .            # or: pip install -e .
 ```
 
-For ai-parrot's LLM-wiki knowledge plane and native Codex integration:
+For ai-parrot's LLM-wiki knowledge plane and native coding-agent integration:
 
 ```bash
 pip install 'hornero[knowledge]'
 hornero wiki codex install
+hornero wiki claude install        # Claude Code
+hornero wiki gemini install        # Gemini CLI
 hornero wiki parrot build
 ```
 
@@ -172,6 +176,8 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 | `hornero wiki init\|update` | Agent-facing living wiki (watermark-scoped, no-op-disciplined) |
 | `hornero wiki parrot build\|upsert\|query\|page\|related\|status\|export` | Operate ai-parrot's local LLM-wiki plane |
 | `hornero wiki codex install\|status\|uninstall` | Manage query-first Codex instructions, skill and lifecycle hook |
+| `hornero wiki claude install\|status\|uninstall` | Manage query-first Claude Code instructions, skill and lifecycle hook |
+| `hornero wiki gemini install\|status\|uninstall` | Manage query-first Gemini CLI instructions, skill and lifecycle hook |
 | `hornero runs list\|show\|adopt\|prune` | Flight-recorder traces of every dispatch |
 | `hornero scribe RUN [--force]` | Distill a trace into a Decision Record (verified citations) |
 
@@ -190,12 +196,14 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 
 ## Documentation
 
+- [Workflow cookbook](docs/WORKFLOWS.md) — reproducible examples from project creation through operations
+- [Video script](docs/VIDEO_SCRIPT.md) — narrated end-to-end demonstration plan
 - [Usage guide](docs/USAGE.md) — the full loop, configuration, SDD toolkit sync
 - [Development guide](docs/DEVELOPMENT.md) — setup, architecture, the self-hosted SDD workflow
 - [Deployment guide](docs/DEPLOYMENT.md) — adopting hornero in your repos, CI, multi-repo fanout
 - [PyPI release runbook](docs/RELEASING.md) — trusted automatic publishing from master
 - [Changelog guide](docs/CHANGELOGS.md) — fragments, PR policy and PyPI projection
-- [ai-parrot LLM-wiki guide](docs/PARROT_WIKI.md) — knowledge bridge and Codex integration
+- [ai-parrot LLM-wiki guide](docs/PARROT_WIKI.md) — knowledge bridge for Codex, Claude Code and Gemini CLI
 - [Changelog](CHANGELOG.md)
 - [Visual artefacts](docs/artefacts/) — architecture diagram, infographic, cheatsheet, interactive onboarding (English + Spanish)
 
