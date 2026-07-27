@@ -173,6 +173,14 @@ def _parse_spec(root: Path, page: PageLike, build: SemanticBuild) -> None:
             source_id, requirement_id, "supports", "frontmatter.sources"
         ), source_path=page.path, source_hash=page.sha256, origin="spec")
 
+    for dependency in meta.get("depends_on", []) or []:
+        dependency_id = str(dependency)
+        if _SPEC.fullmatch(dependency_id):
+            _add_relation(build, Relation(
+                requirement_id, f"requirement:{dependency_id}", "depends_on",
+                "frontmatter.depends_on",
+            ), source_path=page.path, source_hash=page.sha256, origin="spec")
+
     for superseded in meta.get("supersedes", []) or []:
         superseded_id = str(superseded)
         if _SPEC.fullmatch(superseded_id):
@@ -326,6 +334,26 @@ def _parse_ledger(root: Path, build: SemanticBuild) -> None:
             "SELECT id, finding_id, rule_id, rating, notes, created_at "
             "FROM runtime_feedback ORDER BY id"
         ).fetchall()
+        advisory_runs = conn.execute(
+            "SELECT run_id, spec_id, mode, status, brief_hash, request_json, "
+            "result_json, artifact_path, created_at FROM advisory_runs "
+            "ORDER BY run_id"
+        ).fetchall()
+        advisory_findings = conn.execute(
+            "SELECT finding_id, run_id, provider, summary, severity, "
+            "disposition, reason, payload_json FROM advisory_findings "
+            "ORDER BY finding_id"
+        ).fetchall()
+        mockup_runs = conn.execute(
+            "SELECT run_id, spec_id, status, provider, parent_run_id, "
+            "manifest_path, request_json, result_json, created_at "
+            "FROM mockup_runs ORDER BY run_id"
+        ).fetchall()
+        visual_artifacts = conn.execute(
+            "SELECT artifact_id, run_id, view_name, path, sha256, media_type, "
+            "width, height, bytes, promoted_path FROM visual_artifacts "
+            "ORDER BY artifact_id"
+        ).fetchall()
     except sqlite3.DatabaseError:
         return
     finally:
@@ -384,6 +412,162 @@ def _parse_ledger(root: Path, build: SemanticBuild) -> None:
             f"rating={row['rating']}",
         ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
             origin="runtime-ledger")
+    for row in advisory_runs:
+        run_id = str(row["run_id"])
+        entity_id = f"advisory_run:{run_id}"
+        result = json.loads(row["result_json"])
+        request = json.loads(row["request_json"])
+        _add_entity(build, Entity(
+            entity_id, "advisory_run", run_id, str(row["status"]),
+            {
+                "spec_id": row["spec_id"], "mode": row["mode"],
+                "status": row["status"], "brief_hash": row["brief_hash"],
+                "artifact_path": row["artifact_path"],
+            },
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="advisory-ledger", locator=f"advisory_runs:{run_id}")
+        _add_relation(build, Relation(
+            f"requirement:{row['spec_id']}", entity_id, "requested",
+            str(row["mode"]),
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="advisory-ledger")
+        for index, evidence in enumerate(request.get("evidence", []), start=1):
+            if not isinstance(evidence, dict):
+                continue
+            digest = str(evidence.get("sha256") or "")[:20]
+            evidence_id = f"advisory_evidence:{run_id}:{digest or index}"
+            _add_entity(build, Entity(
+                evidence_id, "evidence",
+                str(evidence.get("locator") or f"Evidence {index}"),
+                str(evidence.get("content") or "")[:300],
+                {"sha256": evidence.get("sha256"), "locator": evidence.get("locator")},
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="advisory-ledger")
+            _add_relation(build, Relation(
+                entity_id, evidence_id, "grounded_by",
+                str(evidence.get("locator") or ""),
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="advisory-ledger")
+        for provider in result.get("provider_runs", []):
+            if not isinstance(provider, dict):
+                continue
+            provider_name = str(provider.get("provider") or "unknown")
+            provider_id = f"provider_run:{run_id}:{provider_name}"
+            _add_entity(build, Entity(
+                provider_id, "provider_run", provider_name,
+                str(provider.get("status") or ""),
+                provider,
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="advisory-ledger")
+            _add_relation(build, Relation(
+                entity_id, provider_id, "has_perspective", provider_name,
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="advisory-ledger")
+        synthesis = result.get("synthesis")
+        if isinstance(synthesis, dict) and row["status"] == "completed":
+            synthesis_id = f"advisory_synthesis:{run_id}"
+            _add_entity(build, Entity(
+                synthesis_id, "synthesis", f"Synthesis {run_id}",
+                str(synthesis.get("summary") or ""), synthesis,
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="advisory-ledger")
+            _add_relation(build, Relation(
+                entity_id, synthesis_id, "summarized_by", run_id,
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="advisory-ledger")
+    for row in advisory_findings:
+        finding_id = f"advisory_finding:{row['finding_id']}"
+        payload = json.loads(row["payload_json"])
+        _add_entity(build, Entity(
+            finding_id, "advisory_finding", str(row["finding_id"]),
+            str(row["summary"]), payload,
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="advisory-ledger")
+        provider_id = f"provider_run:{row['run_id']}:{row['provider']}"
+        _add_relation(build, Relation(
+            provider_id, finding_id, "reported", str(row["severity"]),
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="advisory-ledger")
+        disposition_id = f"disposition:{row['run_id']}:{row['finding_id']}"
+        _add_entity(build, Entity(
+            disposition_id, "disposition", str(row["disposition"]),
+            str(row["reason"]),
+            {"disposition": row["disposition"], "reason": row["reason"]},
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="advisory-ledger")
+        _add_relation(build, Relation(
+            finding_id, disposition_id, "disposed_as", str(row["reason"]),
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="advisory-ledger")
+    for row in mockup_runs:
+        run_id = str(row["run_id"])
+        entity_id = f"mockup_run:{run_id}"
+        result = json.loads(row["result_json"])
+        _add_entity(build, Entity(
+            entity_id, "mockup_run", run_id, str(row["status"]),
+            {
+                "provider": row["provider"], "manifest_path": row["manifest_path"],
+                "parent_run_id": row["parent_run_id"], "status": row["status"],
+            },
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="mockup-ledger", locator=f"mockup_runs:{run_id}")
+        _add_relation(build, Relation(
+            f"requirement:{row['spec_id']}", entity_id, "requested", "mockup",
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="mockup-ledger")
+        provider_id = f"provider_run:{run_id}:{row['provider']}"
+        _add_entity(build, Entity(
+            provider_id, "provider_run", str(row["provider"]),
+            str(row["status"]), {"session_id": result.get("session_id")},
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="mockup-ledger")
+        _add_relation(build, Relation(
+            entity_id, provider_id, "produced_by", str(row["provider"]),
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="mockup-ledger")
+        reference = result.get("reference")
+        if isinstance(reference, dict) and reference.get("sha256"):
+            reference_id = f"reference_image:{str(reference['sha256'])[:20]}"
+            _add_entity(build, Entity(
+                reference_id, "reference_image", "Reference image",
+                str(reference.get("source_path") or ""), reference,
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="mockup-ledger")
+            _add_relation(build, Relation(
+                entity_id, reference_id, "uses_reference",
+                str(reference.get("source_path") or ""),
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="mockup-ledger")
+        if row["parent_run_id"]:
+            _add_relation(build, Relation(
+                entity_id, f"mockup_run:{row['parent_run_id']}", "refines",
+                str(row["parent_run_id"]),
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="mockup-ledger")
+    for row in visual_artifacts:
+        artifact_id = f"visual_artifact:{row['artifact_id']}"
+        _add_entity(build, Entity(
+            artifact_id, "visual_artifact", str(row["view_name"]),
+            str(row["path"]), dict(row),
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="mockup-ledger")
+        _add_relation(build, Relation(
+            f"mockup_run:{row['run_id']}", artifact_id, "produced",
+            str(row["view_name"]),
+        ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+            origin="mockup-ledger")
+        if row["promoted_path"]:
+            promoted_id = f"repository_artifact:{row['artifact_id']}"
+            _add_entity(build, Entity(
+                promoted_id, "repository_artifact", str(row["view_name"]),
+                str(row["promoted_path"]), {"path": row["promoted_path"]},
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="mockup-ledger")
+            _add_relation(build, Relation(
+                artifact_id, promoted_id, "promoted_as",
+                str(row["promoted_path"]),
+            ), source_path=".hornero/ledger.db", source_hash=_row_hash(row),
+                origin="mockup-ledger")
 
 
 def derive(root: Path, pages: Sequence[Any]) -> SemanticBuild:

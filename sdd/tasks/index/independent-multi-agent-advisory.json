@@ -1,0 +1,29 @@
+{
+  "feature": "independent-multi-agent-advisory",
+  "feature_id": "SPEC-011",
+  "spec": "sdd/specs/SPEC-011-independent-multi-agent-advisory.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-26",
+  "completed_at": "2026-07-26",
+  "tasks": [
+    {
+      "id": "TASK-079",
+      "slug": "advisory-grounding-protocol",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-078"],
+      "file": "sdd/tasks/completed/TASK-079-advisory-grounding-protocol.md",
+      "files": ["hornero/agent_services.py", "hornero/config.py"]
+    },
+    {
+      "id": "TASK-080",
+      "slug": "advisory-ledger-graph-cli",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-079"],
+      "file": "sdd/tasks/completed/TASK-080-advisory-ledger-graph-cli.md",
+      "files": ["hornero/collaboration.py", "hornero/cli.py", "hornero/memory/ledger.py", "hornero/memory/semantic.py"]
+    }
+  ]
+}

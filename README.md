@@ -88,6 +88,12 @@ version.
 - **Autonomous runtime**: signed webhook/schedule events, resource sandbox,
   budgets, retries, risk approvals, provider-neutral PR creation, metrics and
   bounded feedback learning. It never merges a branch.
+- **Independent perspectives**: ground one neutral brief in specs, decisions
+  and diffs, fan it out concurrently through Multicoders, preserve every
+  provider opinion and require explicit finding dispositions.
+- **Grounded mockups**: edit a real product screenshot through Codex image
+  generation, validate and hash each named PNG view, retain refinement lineage
+  and promote only an explicitly reviewed artifact.
 
 ## Install
 
@@ -164,6 +170,9 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 | `hornero status` | Spec counts by state, pending inbox, index health |
 | `hornero reconcile [--dry-run]` | Poll signals → evidence-verified deltas → HITL → apply |
 | `hornero build [SPEC-ID ...] [--backend mock\|cli]` | Approved specs → briefs → dispatch |
+| `hornero consult review\|brainstorm\|research\|design-opinion` | Run independent read-only provider perspectives with quorum and audit |
+| `hornero consult show\|triage\|resume` | Inspect, dispose or continue advisory findings |
+| `hornero mockup create\|show\|refine\|deliver\|promote` | Manage screenshot-grounded visual artifacts and HITL promotion |
 | `hornero reindex` | Rebuild `.hornero/knowledge/`: token index + code graph DB + `knowledge-graph.html` |
 | `hornero knowledge query\|page\|related\|entity\|relations\|status` | Query file and semantic graph surfaces |
 | `hornero report [--only NAME]` | Regenerate the HTML reports |
@@ -198,6 +207,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 
 - [Workflow cookbook](docs/WORKFLOWS.md) — reproducible examples from project creation through operations
 - [Video script](docs/VIDEO_SCRIPT.md) — narrated end-to-end demonstration plan
+- [Independent advisory and grounded mockups](docs/COLLABORATION.md) — provider bridge, safety boundaries and commands
 - [Usage guide](docs/USAGE.md) — the full loop, configuration, SDD toolkit sync
 - [Development guide](docs/DEVELOPMENT.md) — setup, architecture, the self-hosted SDD workflow
 - [Deployment guide](docs/DEPLOYMENT.md) — adopting hornero in your repos, CI, multi-repo fanout
