@@ -29,6 +29,13 @@ dispatch:
 criterion_allowlist: [pytest, ruff, mypy, python]
 models: {}
 providers: {}
+multicoders:
+  command: []                 # e.g. [python, -m, multicoders]
+  providers: [codex, claude, gemini]
+  minimum_quorum: 2
+  timeout_seconds: 600
+  max_context_bytes: 200000
+  max_views: 4
 autonomy:
   enabled: false              # explicit opt-in; isolated branches only
   max_changes: 1
@@ -265,6 +272,79 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("build", help="approved specs -> briefs -> dispatch")
     p.add_argument("spec_ids", nargs="*")
     p.add_argument("--backend", choices=["cli", "mock"])
+    p_consult = sub.add_parser(
+        "consult", help="independent multi-provider advisory runs"
+    )
+    consult_sub = p_consult.add_subparsers(
+        dest="consult_command", required=True
+    )
+    for consult_mode in ("review", "brainstorm", "research", "design-opinion"):
+        pc = consult_sub.add_parser(
+            consult_mode, help=f"run an independent {consult_mode} advisory"
+        )
+        pc.add_argument("--spec", required=True)
+        pc.add_argument("--question", required=consult_mode != "review")
+        pc.add_argument("--providers", default=None, help="comma-separated providers")
+        pc.add_argument("--quorum", type=int, default=None)
+        pc.add_argument("--autonomous", action="store_true")
+        pc.add_argument("--dry-run", action="store_true")
+        pc.add_argument("--json", action="store_true", dest="as_json")
+        if consult_mode == "review":
+            review_target = pc.add_mutually_exclusive_group()
+            review_target.add_argument("--uncommitted", action="store_true")
+            review_target.add_argument("--base")
+            review_target.add_argument("--commit")
+    pc = consult_sub.add_parser("show", help="show a recorded advisory")
+    pc.add_argument("run_id")
+    pc.add_argument("--json", action="store_true", dest="as_json")
+    pc = consult_sub.add_parser("triage", help="dispose one advisory finding")
+    pc.add_argument("run_id")
+    pc.add_argument("finding_id")
+    pc.add_argument("disposition", choices=["CONFIRM", "REJECT", "ESCALATE"])
+    pc.add_argument("--reason", required=True)
+    pc = consult_sub.add_parser("resume", help="continue the last Codex session")
+    pc.add_argument("run_id")
+    pc.add_argument("--provider", choices=["codex"], default="codex")
+    pc.add_argument("--question", required=True)
+    pc.add_argument("--dry-run", action="store_true")
+    pc.add_argument("--json", action="store_true", dest="as_json")
+
+    p_mockup = sub.add_parser(
+        "mockup", help="grounded visual mockup artifacts"
+    )
+    mockup_sub = p_mockup.add_subparsers(dest="mockup_command", required=True)
+    pm = mockup_sub.add_parser("create", help="generate named mockup views")
+    pm.add_argument("--spec", required=True)
+    pm.add_argument("--request", required=True)
+    pm.add_argument("--screenshot", type=Path)
+    pm.add_argument("--from-scratch", action="store_true")
+    pm.add_argument(
+        "--view", action="append", required=True,
+        help="NAME or NAME=FILENAME.png; repeat for each view",
+    )
+    pm.add_argument(
+        "--visual-language", default="Match the attached product screenshot."
+    )
+    pm.add_argument("--autonomous", action="store_true")
+    pm.add_argument("--dry-run", action="store_true")
+    pm.add_argument("--json", action="store_true", dest="as_json")
+    pm = mockup_sub.add_parser("show", help="show a mockup manifest")
+    pm.add_argument("run_id")
+    pm.add_argument("--json", action="store_true", dest="as_json")
+    pm = mockup_sub.add_parser("refine", help="refine an existing mockup session")
+    pm.add_argument("run_id")
+    pm.add_argument("--instruction", required=True)
+    pm.add_argument("--screenshot", type=Path)
+    pm.add_argument("--dry-run", action="store_true")
+    pm.add_argument("--json", action="store_true", dest="as_json")
+    pm = mockup_sub.add_parser("promote", help="promote one artifact into the repo")
+    pm.add_argument("run_id")
+    pm.add_argument("artifact_id")
+    pm.add_argument("--destination", type=Path, required=True)
+    pm = mockup_sub.add_parser("deliver", help="list locally deliverable artifacts")
+    pm.add_argument("run_id")
+    pm.add_argument("--transport", choices=["local"], default="local")
+    pm.add_argument("--json", action="store_true", dest="as_json")
     sub.add_parser("reindex", help="rebuild .hornero/knowledge/")
     p = sub.add_parser("report", help="regenerate sdd/reports/*.html")
     p.add_argument("--only")
@@ -864,6 +944,196 @@ def _cmd_runs(args: argparse.Namespace, root: Path) -> int:
     raise AssertionError("unreachable")
 
 
+def _cmd_consult(args: argparse.Namespace, root: Path) -> int:
+    from hornero.agent_services import AgentServiceError
+    from hornero.collaboration import (
+        create_advisory,
+        show_advisory,
+        triage_advisory,
+    )
+
+    try:
+        cfg = load_config(root)
+        if args.consult_command == "show":
+            result = show_advisory(root, args.run_id)
+            if result is None:
+                raise AgentServiceError(f"unknown advisory run: {args.run_id}")
+            return _print_collaboration_result(result, args.as_json)
+        if args.consult_command == "triage":
+            changed = triage_advisory(
+                root,
+                args.run_id,
+                args.finding_id,
+                args.disposition,
+                args.reason,
+            )
+            if not changed:
+                raise AgentServiceError("run or finding was not found")
+            print(
+                f"{args.finding_id}: {args.disposition} "
+                f"({args.reason.strip()})"
+            )
+            return 0
+        if args.consult_command == "resume":
+            with Ledger(root / ".hornero" / "ledger.db") as ledger:
+                rows = ledger.advisory_runs(args.run_id)
+            if not rows:
+                raise AgentServiceError(
+                    f"unknown advisory run: {args.run_id}"
+                )
+            row = rows[0]
+            prior_request = json.loads(row["request_json"])
+            result = create_advisory(
+                root,
+                cfg,
+                spec_id=str(row["spec_id"]),
+                mode=str(row["mode"]),
+                question=args.question,
+                providers=[args.provider],
+                minimum_quorum=1,
+                review_target=prior_request.get("review_target"),
+                dry_run=args.dry_run,
+                resume=True,
+            )
+            return _print_collaboration_result(result, args.as_json)
+
+        providers = (
+            [item.strip() for item in args.providers.split(",") if item.strip()]
+            if args.providers
+            else None
+        )
+        review_target: dict[str, str] | None = None
+        if args.consult_command == "review":
+            if args.base:
+                review_target = {"kind": "base", "value": args.base}
+            elif args.commit:
+                review_target = {"kind": "commit", "value": args.commit}
+            elif args.uncommitted:
+                review_target = {"kind": "uncommitted", "value": ""}
+            else:
+                review_target = {"kind": "context", "value": ""}
+        question = args.question or (
+            "Identify correctness, security, maintainability and test gaps."
+        )
+        result = create_advisory(
+            root,
+            cfg,
+            spec_id=args.spec,
+            mode=args.consult_command,
+            question=question,
+            providers=providers,
+            minimum_quorum=args.quorum,
+            review_target=review_target,
+            autonomous=args.autonomous,
+            dry_run=args.dry_run,
+        )
+        return _print_collaboration_result(result, args.as_json)
+    except (AgentServiceError, ConfigError, OSError, ValueError) as exc:
+        print(f"consult {args.consult_command} failed: {exc}", file=sys.stderr)
+        return 2
+
+
+def _cmd_mockup(args: argparse.Namespace, root: Path) -> int:
+    from hornero.agent_services import AgentServiceError
+    from hornero.collaboration import (
+        create_mockup,
+        promote_mockup,
+        refine_mockup,
+        show_mockup,
+    )
+
+    try:
+        cfg = load_config(root)
+        if args.mockup_command in {"show", "deliver"}:
+            result = show_mockup(root, args.run_id)
+            if result is None:
+                raise AgentServiceError(f"unknown mockup run: {args.run_id}")
+            if args.mockup_command == "deliver":
+                result = {
+                    "run_id": args.run_id,
+                    "transport": "local",
+                    "artifacts": result.get("ledger_artifacts", []),
+                }
+            return _print_collaboration_result(result, args.as_json)
+        if args.mockup_command == "refine":
+            result = refine_mockup(
+                root,
+                cfg,
+                run_id=args.run_id,
+                instruction=args.instruction,
+                screenshot=args.screenshot,
+                dry_run=args.dry_run,
+            )
+            return _print_collaboration_result(result, args.as_json)
+        if args.mockup_command == "promote":
+            destination = promote_mockup(
+                root, args.run_id, args.artifact_id, args.destination
+            )
+            print(f"promoted: {destination.relative_to(root)}")
+            return 0
+        if args.screenshot is None and not args.from_scratch:
+            raise AgentServiceError(
+                "--screenshot is required unless --from-scratch is explicit"
+            )
+        if args.screenshot is not None and args.from_scratch:
+            raise AgentServiceError(
+                "--screenshot and --from-scratch are mutually exclusive"
+            )
+        result = create_mockup(
+            root,
+            cfg,
+            spec_id=args.spec,
+            request_text=args.request,
+            screenshot=args.screenshot,
+            views=_parse_mockup_views(args.view),
+            visual_language=args.visual_language,
+            autonomous=args.autonomous,
+            from_scratch=args.from_scratch,
+            dry_run=args.dry_run,
+        )
+        return _print_collaboration_result(result, args.as_json)
+    except (AgentServiceError, ConfigError, OSError, ValueError) as exc:
+        print(f"mockup {args.mockup_command} failed: {exc}", file=sys.stderr)
+        return 2
+
+
+def _parse_mockup_views(values: list[str]) -> list[dict[str, str]]:
+    import re
+
+    views: list[dict[str, str]] = []
+    for raw in values:
+        name, separator, explicit = raw.partition("=")
+        name = name.strip()
+        if not name:
+            raise ValueError("mockup view name must not be empty")
+        slug = re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-")
+        filename = explicit.strip() if separator else f"{slug or 'view'}.png"
+        views.append({"name": name, "filename": filename})
+    return views
+
+
+def _print_collaboration_result(result: dict[str, object], as_json: bool) -> int:
+    if as_json:
+        print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
+    else:
+        print(
+            f"{result.get('run_id', '-')}: "
+            f"{result.get('status', 'recorded')}"
+        )
+        artifacts = result.get("artifacts")
+        if isinstance(artifacts, list):
+            for item in artifacts:
+                if isinstance(item, dict):
+                    print(
+                        f"{item.get('view', 'artifact')}: "
+                        f"{item.get('path', item.get('filename', '-'))}"
+                    )
+        synthesis = result.get("synthesis")
+        if isinstance(synthesis, dict) and synthesis.get("summary"):
+            print(synthesis["summary"])
+    return 0 if result.get("status", "completed") == "completed" else 3
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     from hornero.project import ProjectRootError, discover_root, init_root
@@ -1322,6 +1592,10 @@ def main(argv: list[str] | None = None) -> int:
         from hornero.build import run_build
 
         return run_build(root, args.spec_ids, backend=args.backend)
+    if args.command == "consult":
+        return _cmd_consult(args, root)
+    if args.command == "mockup":
+        return _cmd_mockup(args, root)
     if args.command == "reindex":
         from datetime import datetime, timezone
 

@@ -1,0 +1,29 @@
+{
+  "feature": "grounded-visual-mockups",
+  "feature_id": "SPEC-012",
+  "spec": "sdd/specs/SPEC-012-grounded-visual-mockups.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-26",
+  "completed_at": "2026-07-26",
+  "tasks": [
+    {
+      "id": "TASK-081",
+      "slug": "grounded-mockup-orchestration",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-080"],
+      "file": "sdd/tasks/completed/TASK-081-grounded-mockup-orchestration.md",
+      "files": ["hornero/agent_services.py", "hornero/collaboration.py", "hornero/cli.py"]
+    },
+    {
+      "id": "TASK-082",
+      "slug": "visual-artifact-lineage",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-081"],
+      "file": "sdd/tasks/completed/TASK-082-visual-artifact-lineage.md",
+      "files": ["hornero/memory/ledger.py", "hornero/memory/semantic.py", "hornero/memory/codegraph.py"]
+    }
+  ]
+}

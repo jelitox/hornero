@@ -14,6 +14,7 @@ title: Account health API
 status: approved
 kind: new_feature
 created: 2026-07-16
+depends_on: [SPEC-100]
 sources: [sig-health-001]
 acceptance_criteria:
   - pytest tests/test_service.py -q
@@ -24,10 +25,27 @@ acceptance_criteria:
 Expose account health.
 """
 
+DEPENDENCY_SPEC = """---
+spec: SPEC-100
+title: Account platform
+status: done
+kind: new_feature
+acceptance_criteria:
+  - pytest -q
+---
+
+# Account platform
+
+Provide the account platform.
+"""
+
 
 def _repo(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     assert main(["init"]) == 0
+    (tmp_path / "sdd" / "specs" / "SPEC-100-platform.md").write_text(
+        DEPENDENCY_SPEC, encoding="utf-8"
+    )
     (tmp_path / "sdd" / "specs" / "SPEC-101-health.md").write_text(
         SPEC, encoding="utf-8"
     )
@@ -64,12 +82,20 @@ def test_semantic_graph_connects_requirement_task_code_test_and_control(
     report = (root / "sdd" / "reports" / "knowledge-graph.html").read_text()
     assert "semantic entities" in report
     assert "Semantic Relations" in report
+    assert "requirement:SPEC-101" in report
+    assert "Account health API" in report
+    assert "Requirement Dependencies" in report
     requirement = codegraph.get_entity(root, "requirement:SPEC-101")
     assert requirement and requirement["kind"] == "requirement"
     assert requirement["provenance"][0]["source_path"].endswith("SPEC-101-health.md")
 
     req_links = codegraph.semantic_related(root, "requirement:SPEC-101")
     assert any(row["rel"] == "has_criterion" for row in req_links)
+    assert any(
+        row["rel"] == "depends_on"
+        and row["entity_id"] == "requirement:SPEC-100"
+        for row in req_links
+    )
     assert any(row["entity_id"] == "task:TASK-901" for row in req_links)
     task_links = codegraph.semantic_related(root, "task:TASK-901", direction="out")
     assert any(row["entity_id"] == "file:src/account/service.py" for row in task_links)

@@ -809,6 +809,8 @@ def write_graph_html(root: Path) -> Path:
     edge_rows: list[str] = []
     entity_rows: list[str] = []
     relation_rows: list[str] = []
+    requirement_rows: list[str] = []
+    dependency_rows: list[str] = []
     if st.get("built"):
         conn = _connect(db_path(root))
         try:
@@ -824,6 +826,14 @@ def write_graph_html(root: Path) -> Path:
             ).fetchall()
             relations = conn.execute(
                 "SELECT rel, COUNT(*) n FROM relations GROUP BY rel ORDER BY rel"
+            ).fetchall()
+            requirements = conn.execute(
+                "SELECT entity_id, title, summary, properties_json FROM entities "
+                "WHERE kind='requirement' ORDER BY entity_id"
+            ).fetchall()
+            dependencies = conn.execute(
+                "SELECT src, dst FROM relations WHERE rel='depends_on' "
+                "ORDER BY src, dst"
             ).fetchall()
         finally:
             conn.close()
@@ -847,6 +857,27 @@ def write_graph_html(root: Path) -> Path:
         for row in relations:
             relation_rows.append(
                 f"<tr><td>{html.escape(row['rel'])}</td><td>{int(row['n'])}</td></tr>"
+            )
+        for row in requirements:
+            try:
+                properties = json.loads(row["properties_json"])
+            except (json.JSONDecodeError, TypeError):
+                properties = {}
+            status = properties.get("status", "") if isinstance(properties, dict) else ""
+            requirement_rows.append(
+                "<tr>"
+                f"<td><code>{html.escape(row['entity_id'])}</code></td>"
+                f"<td>{html.escape(str(status))}</td>"
+                f"<td>{html.escape(row['title'])}</td>"
+                f"<td>{html.escape(row['summary'])}</td>"
+                "</tr>"
+            )
+        for row in dependencies:
+            dependency_rows.append(
+                "<tr>"
+                f"<td><code>{html.escape(row['src'])}</code></td>"
+                f"<td><code>{html.escape(row['dst'])}</code></td>"
+                "</tr>"
             )
     def _as_int(value: object) -> int:
         return value if isinstance(value, int) else 0
@@ -890,6 +921,12 @@ def write_graph_html(root: Path) -> Path:
         + "".join(entity_rows)
         + "</table><h2>Semantic Relations</h2><table><tr><th>Relation</th><th>Count</th></tr>"
         + "".join(relation_rows)
+        + "</table><h2>Requirements</h2><table><tr><th>ID</th><th>Status</th>"
+        "<th>Title</th><th>Summary</th></tr>"
+        + "".join(requirement_rows)
+        + "</table><h2>Requirement Dependencies</h2><table><tr><th>Requirement</th>"
+        "<th>Depends on</th></tr>"
+        + "".join(dependency_rows)
         + "</table><h2>Page Sample</h2><table><tr><th>ID</th><th>Category</th>"
         "<th>Summary</th><th>Tokens</th></tr>"
         + "".join(rows)

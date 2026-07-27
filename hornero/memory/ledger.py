@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -137,6 +137,54 @@ CREATE TABLE IF NOT EXISTS runtime_webhooks (
     delivery_id TEXT PRIMARY KEY,
     event_id    TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS advisory_runs (
+    run_id       TEXT PRIMARY KEY,
+    spec_id      TEXT NOT NULL,
+    mode         TEXT NOT NULL,
+    status       TEXT NOT NULL,
+    brief_hash   TEXT,
+    request_json TEXT NOT NULL,
+    result_json  TEXT NOT NULL,
+    artifact_path TEXT NOT NULL,
+    created_at   REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS advisory_findings (
+    finding_id   TEXT PRIMARY KEY,
+    run_id       TEXT NOT NULL,
+    provider     TEXT NOT NULL,
+    summary      TEXT NOT NULL,
+    severity     TEXT NOT NULL,
+    disposition  TEXT NOT NULL,
+    reason       TEXT NOT NULL,
+    payload_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_advisory_findings_run
+ON advisory_findings(run_id);
+CREATE TABLE IF NOT EXISTS mockup_runs (
+    run_id       TEXT PRIMARY KEY,
+    spec_id      TEXT NOT NULL,
+    status       TEXT NOT NULL,
+    provider     TEXT NOT NULL,
+    parent_run_id TEXT,
+    manifest_path TEXT NOT NULL,
+    request_json TEXT NOT NULL,
+    result_json  TEXT NOT NULL,
+    created_at   REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS visual_artifacts (
+    artifact_id  TEXT PRIMARY KEY,
+    run_id       TEXT NOT NULL,
+    view_name    TEXT NOT NULL,
+    path         TEXT NOT NULL,
+    sha256       TEXT NOT NULL,
+    media_type   TEXT NOT NULL,
+    width        INTEGER NOT NULL,
+    height       INTEGER NOT NULL,
+    bytes        INTEGER NOT NULL,
+    promoted_path TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_visual_artifacts_run
+ON visual_artifacts(run_id);
 """
 
 
@@ -335,6 +383,194 @@ class Ledger:
             (run_id, finding_id, status, branch, json.dumps(details), created_at),
         )
         self._conn.commit()
+
+    def record_advisory_run(
+        self,
+        run_id: str,
+        *,
+        spec_id: str,
+        mode: str,
+        status: str,
+        brief_hash: str | None,
+        request: dict[str, Any],
+        result: dict[str, Any],
+        artifact_path: str,
+        created_at: float,
+    ) -> None:
+        self._conn.execute(
+            "INSERT OR REPLACE INTO advisory_runs "
+            "(run_id, spec_id, mode, status, brief_hash, request_json, "
+            "result_json, artifact_path, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            (
+                run_id, spec_id, mode, status, brief_hash,
+                json.dumps(request, sort_keys=True, ensure_ascii=False),
+                json.dumps(result, sort_keys=True, ensure_ascii=False),
+                artifact_path, created_at,
+            ),
+        )
+        synthesis = result.get("synthesis", {})
+        findings = synthesis.get("findings", []) if isinstance(synthesis, dict) else []
+        if isinstance(findings, list):
+            for raw in findings:
+                if not isinstance(raw, dict) or not raw.get("finding_id"):
+                    continue
+                self._conn.execute(
+                    "INSERT OR REPLACE INTO advisory_findings "
+                    "(finding_id, run_id, provider, summary, severity, "
+                    "disposition, reason, payload_json) VALUES (?,?,?,?,?,?,?,?)",
+                    (
+                        str(raw["finding_id"]), run_id,
+                        str(raw.get("provider") or ""),
+                        str(raw.get("summary") or ""),
+                        str(raw.get("severity") or "unknown"),
+                        str(raw.get("disposition") or "ESCALATE"),
+                        str(raw.get("disposition_reason") or ""),
+                        json.dumps(raw, sort_keys=True, ensure_ascii=False),
+                    ),
+                )
+        self._conn.commit()
+
+    def advisory_runs(self, run_id: str | None = None) -> list[dict[str, Any]]:
+        query = "SELECT * FROM advisory_runs"
+        args: tuple[Any, ...] = ()
+        if run_id is not None:
+            query += " WHERE run_id=?"
+            args = (run_id,)
+        rows = self._conn.execute(query + " ORDER BY created_at, run_id", args)
+        return [dict(row) for row in rows]
+
+    def advisory_findings(self, run_id: str) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT * FROM advisory_findings WHERE run_id=? ORDER BY finding_id",
+            (run_id,),
+        )
+        return [dict(row) for row in rows]
+
+    def triage_advisory_finding(
+        self,
+        run_id: str,
+        finding_id: str,
+        disposition: str,
+        reason: str,
+    ) -> bool:
+        if disposition not in {"CONFIRM", "REJECT", "ESCALATE"}:
+            raise ValueError(f"invalid disposition: {disposition}")
+        if not reason.strip():
+            raise ValueError("triage reason must not be empty")
+        row = self._conn.execute(
+            "SELECT payload_json FROM advisory_findings "
+            "WHERE run_id=? AND finding_id=?",
+            (run_id, finding_id),
+        ).fetchone()
+        if row is None:
+            return False
+        payload = json.loads(row["payload_json"])
+        payload["disposition"] = disposition
+        payload["disposition_reason"] = reason.strip()
+        self._conn.execute(
+            "UPDATE advisory_findings SET disposition=?, reason=?, payload_json=? "
+            "WHERE run_id=? AND finding_id=?",
+            (
+                disposition, reason.strip(),
+                json.dumps(payload, sort_keys=True, ensure_ascii=False),
+                run_id, finding_id,
+            ),
+        )
+        run = self._conn.execute(
+            "SELECT result_json FROM advisory_runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+        if run is not None:
+            result = json.loads(run["result_json"])
+            findings = result.get("synthesis", {}).get("findings", [])
+            for finding in findings:
+                if isinstance(finding, dict) and finding.get("finding_id") == finding_id:
+                    finding["disposition"] = disposition
+                    finding["disposition_reason"] = reason.strip()
+            self._conn.execute(
+                "UPDATE advisory_runs SET result_json=? WHERE run_id=?",
+                (
+                    json.dumps(result, sort_keys=True, ensure_ascii=False),
+                    run_id,
+                ),
+            )
+        self._conn.commit()
+        return True
+
+    def record_mockup_run(
+        self,
+        run_id: str,
+        *,
+        spec_id: str,
+        status: str,
+        provider: str,
+        parent_run_id: str | None,
+        manifest_path: str,
+        request: dict[str, Any],
+        result: dict[str, Any],
+        created_at: float,
+    ) -> None:
+        self._conn.execute(
+            "INSERT OR REPLACE INTO mockup_runs "
+            "(run_id, spec_id, status, provider, parent_run_id, manifest_path, "
+            "request_json, result_json, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            (
+                run_id, spec_id, status, provider, parent_run_id, manifest_path,
+                json.dumps(request, sort_keys=True, ensure_ascii=False),
+                json.dumps(result, sort_keys=True, ensure_ascii=False),
+                created_at,
+            ),
+        )
+        artifacts = result.get("artifacts", [])
+        if isinstance(artifacts, list):
+            for raw in artifacts:
+                if not isinstance(raw, dict):
+                    continue
+                digest = str(raw.get("sha256") or "")
+                view_name = str(raw.get("view") or "")
+                if not digest or not view_name:
+                    continue
+                artifact_id = f"visual-{digest[:20]}"
+                self._conn.execute(
+                    "INSERT OR REPLACE INTO visual_artifacts "
+                    "(artifact_id, run_id, view_name, path, sha256, media_type, "
+                    "width, height, bytes, promoted_path) VALUES (?,?,?,?,?,?,?,?,?,"
+                    "COALESCE((SELECT promoted_path FROM visual_artifacts "
+                    "WHERE artifact_id=?), NULL))",
+                    (
+                        artifact_id, run_id, view_name, str(raw.get("path") or ""),
+                        digest, str(raw.get("media_type") or "image/png"),
+                        int(raw.get("width") or 0), int(raw.get("height") or 0),
+                        int(raw.get("bytes") or 0), artifact_id,
+                    ),
+                )
+        self._conn.commit()
+
+    def mockup_runs(self, run_id: str | None = None) -> list[dict[str, Any]]:
+        query = "SELECT * FROM mockup_runs"
+        args: tuple[Any, ...] = ()
+        if run_id is not None:
+            query += " WHERE run_id=?"
+            args = (run_id,)
+        rows = self._conn.execute(query + " ORDER BY created_at, run_id", args)
+        return [dict(row) for row in rows]
+
+    def visual_artifacts(self, run_id: str) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT * FROM visual_artifacts WHERE run_id=? ORDER BY view_name",
+            (run_id,),
+        )
+        return [dict(row) for row in rows]
+
+    def promote_visual_artifact(
+        self, run_id: str, artifact_id: str, promoted_path: str,
+    ) -> bool:
+        cursor = self._conn.execute(
+            "UPDATE visual_artifacts SET promoted_path=? "
+            "WHERE run_id=? AND artifact_id=?",
+            (promoted_path, run_id, artifact_id),
+        )
+        self._conn.commit()
+        return cursor.rowcount == 1
 
     def improvements(self, finding_id: str | None = None) -> list[dict[str, Any]]:
         query = "SELECT * FROM improvement_runs"

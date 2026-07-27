@@ -48,6 +48,18 @@ class AutonomyConfig:
 
 
 @dataclass
+class MulticodersConfig:
+    command: list[str] = field(default_factory=list)
+    providers: list[str] = field(
+        default_factory=lambda: ["codex", "claude", "gemini"]
+    )
+    minimum_quorum: int = 2
+    timeout_seconds: float = 600.0
+    max_context_bytes: int = 200_000
+    max_views: int = 4
+
+
+@dataclass
 class HorneroConfig:
     signal_source: str = "inbox"
     signal_sources: list[str] = field(default_factory=list)  # [] => [signal_source]
@@ -59,14 +71,15 @@ class HorneroConfig:
     models: dict[str, str] = field(default_factory=dict)
     providers: dict[str, ProviderConfig] = field(default_factory=dict)
     autonomy: AutonomyConfig = field(default_factory=AutonomyConfig)
+    multicoders: MulticodersConfig = field(default_factory=MulticodersConfig)
     sdd_upstream: str = ""  # toolkit source (git URL or local path); "" = unset
     sdd_ref: str = "main"
 
 
 _TOP_KEYS = {
     "signal_source", "signal_sources", "tracker", "dispatch",
-    "criterion_allowlist", "models", "providers", "autonomy", "sdd_upstream",
-    "sdd_ref",
+    "criterion_allowlist", "models", "providers", "autonomy", "multicoders",
+    "sdd_upstream", "sdd_ref",
 }
 _DISPATCH_KEYS = {
     "backend_order", "cli_command", "timeout_seconds", "max_output_bytes",
@@ -78,6 +91,10 @@ _PROVIDER_KEYS = {
 _AUTONOMY_KEYS = {
     "enabled", "max_changes", "allowed_risk", "gates", "require_clean_worktree",
     "sandbox_command", "require_sandbox",
+}
+_MULTICODERS_KEYS = {
+    "command", "providers", "minimum_quorum", "timeout_seconds",
+    "max_context_bytes", "max_views",
 }
 _BACKENDS = {"mock", "cli", "api"}
 _SIGNAL_SOURCES = {"inbox", "git"}
@@ -260,6 +277,41 @@ def load_config(root: Path) -> HorneroConfig:
         if cfg.autonomy.require_sandbox and not cfg.autonomy.sandbox_command:
             raise ConfigError(
                 "'autonomy.sandbox_command' is required when require_sandbox is true"
+            )
+    if "multicoders" in data:
+        raw = _mapping(data["multicoders"], "multicoders")
+        unknown_multicoders = set(raw) - _MULTICODERS_KEYS
+        if unknown_multicoders:
+            raise ConfigError(
+                f"multicoders: unknown keys: {sorted(unknown_multicoders)}"
+            )
+        if "command" in raw:
+            cfg.multicoders.command = _string_list(
+                raw["command"], "multicoders.command"
+            )
+        if "providers" in raw:
+            cfg.multicoders.providers = _string_list(
+                raw["providers"], "multicoders.providers"
+            )
+            if not cfg.multicoders.providers:
+                raise ConfigError("'multicoders.providers' must not be empty")
+        for field_name in ("minimum_quorum", "max_context_bytes", "max_views"):
+            if field_name in raw:
+                value = _nonnegative_int(
+                    raw[field_name], f"multicoders.{field_name}"
+                )
+                if value == 0:
+                    raise ConfigError(
+                        f"'multicoders.{field_name}' must be positive"
+                    )
+                setattr(cfg.multicoders, field_name, value)
+        if cfg.multicoders.minimum_quorum > len(cfg.multicoders.providers):
+            raise ConfigError(
+                "'multicoders.minimum_quorum' exceeds provider count"
+            )
+        if "timeout_seconds" in raw:
+            cfg.multicoders.timeout_seconds = _positive_number(
+                raw["timeout_seconds"], "multicoders.timeout_seconds"
             )
     if "sdd_upstream" in data:
         cfg.sdd_upstream = _string(
