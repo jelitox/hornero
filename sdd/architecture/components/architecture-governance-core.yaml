@@ -1,0 +1,17 @@
+schema: hornero.architecture.component/v1
+id: architecture-governance-core
+title: Universal architecture governance core
+description: Corpus, profiles, reuse resolver, preflight and fitness functions.
+provides:
+  - architecture-governance
+interfaces:
+  - architecture-cli-v1
+lifecycle: invocation-scoped
+resources: []
+owner: hornero-maintainers
+status: active
+evidence:
+  - path: hornero/architecture/corpus.py
+    locator: ArchitectureCorpus
+  - path: hornero/architecture/governance.py
+    locator: check_architecture

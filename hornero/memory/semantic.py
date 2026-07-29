@@ -212,6 +212,276 @@ def _parse_spec(root: Path, page: PageLike, build: SemanticBuild) -> None:
             criterion_id, control_id, "enforced_by", criterion
         ), source_path=page.path, source_hash=page.sha256, origin="criterion")
 
+    architecture = meta.get("architecture")
+    if isinstance(architecture, dict):
+        relation_fields = {
+            "requests": ("capability", "requests"),
+            "domains": ("domain", "affects"),
+            "reuses": ("component", "plans_to_reuse"),
+            "extends": ("component", "plans_to_extend"),
+            "introduces": ("component", "introduces"),
+            "decisions": ("decision", "constrained_by"),
+        }
+        for field_name, (kind, relation_name) in relation_fields.items():
+            values = architecture.get(field_name) or []
+            if not isinstance(values, list):
+                continue
+            for value in values:
+                target = f"architecture:{kind}:{value}"
+                _add_relation(build, Relation(
+                    requirement_id, target, relation_name,
+                    f"frontmatter.architecture.{field_name}",
+                ), source_path=page.path, source_hash=page.sha256, origin="spec")
+
+
+def _parse_architecture_record(
+    root: Path, page: PageLike, build: SemanticBuild
+) -> None:
+    """Project explicit architecture records into the semantic graph."""
+    path = root / page.path
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return
+    if not isinstance(raw, dict):
+        return
+    schema = str(raw.get("schema") or "")
+    prefix = "hornero.architecture."
+    if not schema.startswith(prefix) or not schema.endswith("/v1"):
+        return
+    kind = schema[len(prefix):-len("/v1")]
+    if kind in {"inventory", "context", "result", "delta", "layout"}:
+        return
+    if kind == "project":
+        project = raw.get("project")
+        if not isinstance(project, dict) or not project.get("id"):
+            return
+        project_id = f"architecture:system:{project['id']}"
+        _add_entity(build, Entity(
+            project_id, "system", str(project["id"]),
+            "Architecture-governed software system",
+            {"schema": schema, "path": page.path},
+        ), source_path=page.path, source_hash=page.sha256,
+            origin="architecture-record", locator="project.id")
+        raw_stack = raw.get("stack")
+        stack: dict[Any, Any] = raw_stack if isinstance(raw_stack, dict) else {}
+        profile_names = [
+            *(project.get("archetypes") or []),
+            *(stack.get("languages") or []),
+            *(stack.get("frameworks") or []),
+            *(raw.get("profiles") or []),
+        ]
+        for profile_name in profile_names:
+            profile_id = f"architecture:profile:{profile_name}"
+            _add_entity(build, Entity(
+                profile_id, "profile", str(profile_name),
+                "Active architecture profile", {"name": str(profile_name)},
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record", locator="profiles")
+            _add_relation(build, Relation(
+                project_id, profile_id, "uses_profile", "project manifest",
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record")
+        return
+    record_id = str(raw.get("id") or "")
+    if not record_id:
+        return
+    entity_id = f"architecture:{kind}:{record_id}"
+    _add_entity(build, Entity(
+        entity_id, kind, str(raw.get("title") or record_id),
+        str(raw.get("description") or raw.get("statement") or "")[:300],
+        {
+            "owner": raw.get("owner"),
+            "status": raw.get("status", "active"),
+            "authority": raw.get("authority", "record"),
+            "path": page.path,
+        },
+    ), source_path=page.path, source_hash=page.sha256,
+        origin="architecture-record", locator="id")
+    owner = raw.get("owner")
+    if owner:
+        owner_id = f"architecture:owner:{owner}"
+        _add_entity(build, Entity(
+            owner_id, "owner", str(owner), "Architecture owner",
+            {"owner": str(owner)},
+        ), source_path=page.path, source_hash=page.sha256,
+            origin="architecture-record", locator="owner")
+        _add_relation(build, Relation(
+            entity_id, owner_id, "owned_by", "owner",
+        ), source_path=page.path, source_hash=page.sha256,
+            origin="architecture-record")
+    if kind == "component":
+        for capability in raw.get("provides", []) or []:
+            _add_relation(build, Relation(
+                entity_id, f"architecture:capability:{capability}", "provides",
+                "provides",
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record")
+        for interface in raw.get("interfaces", []) or []:
+            _add_relation(build, Relation(
+                entity_id, f"architecture:interface:{interface}", "exposes",
+                "interfaces",
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record")
+        for resource in raw.get("resources", []) or []:
+            resource_id = (
+                str(resource.get("id"))
+                if isinstance(resource, dict) else str(resource)
+            )
+            target = f"architecture:resource:{resource_id}"
+            _add_entity(build, Entity(
+                target, "resource", resource_id, "Component resource",
+                resource if isinstance(resource, dict) else {"id": resource_id},
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record", locator="resources")
+            _add_relation(build, Relation(
+                entity_id, target, "depends_on", "resources",
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record")
+    if kind == "capability":
+        for provider in raw.get("providers", []) or []:
+            component = (
+                provider.get("component") if isinstance(provider, dict) else provider
+            )
+            if component:
+                _add_relation(build, Relation(
+                    entity_id, f"architecture:component:{component}",
+                    "implemented_by", "providers",
+                ), source_path=page.path, source_hash=page.sha256,
+                    origin="architecture-record")
+    if kind == "exception" and raw.get("waives"):
+        rule_id = str(raw["waives"])
+        target = f"architecture:rule:{rule_id}"
+        _add_entity(build, Entity(
+            target, "rule", rule_id, "Architecture fitness rule",
+            {"id": rule_id},
+        ), source_path=page.path, source_hash=page.sha256,
+            origin="architecture-record", locator="waives")
+        _add_relation(build, Relation(
+            entity_id, target, "waives", "waives",
+        ), source_path=page.path, source_hash=page.sha256,
+            origin="architecture-record")
+    evidence = raw.get("evidence") or []
+    if isinstance(evidence, list):
+        for index, item in enumerate(evidence):
+            if not isinstance(item, dict) or not item.get("path"):
+                continue
+            locator = str(item.get("locator") or "")
+            evidence_path = str(item["path"])
+            evidence_id = (
+                "architecture:evidence:"
+                + hashlib.sha256(
+                    f"{evidence_path}\0{locator}".encode()
+                ).hexdigest()[:20]
+            )
+            _add_entity(build, Entity(
+                evidence_id, "evidence", evidence_path, locator,
+                {"path": evidence_path, "locator": locator},
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record", locator=f"evidence[{index}]")
+            _add_relation(build, Relation(
+                entity_id, evidence_id, "supported_by", locator,
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record")
+            _add_relation(build, Relation(
+                evidence_id, f"file:{evidence_path}", "locates", locator,
+            ), source_path=page.path, source_hash=page.sha256,
+                origin="architecture-record")
+
+
+def _parse_architecture_governance(root: Path, build: SemanticBuild) -> None:
+    """Project deterministic fitness findings and planned deltas."""
+    from hornero.architecture.corpus import architecture_root
+
+    project_path = architecture_root(root) / "project.yaml"
+    if not project_path.is_file():
+        return
+    source_path = project_path.relative_to(root).as_posix()
+    source_hash = _sha(project_path)
+    try:
+        from hornero.architecture.governance import (
+            architecture_diff,
+            check_architecture,
+            declaration_from_spec,
+        )
+        from hornero.lifecycle import SpecCorpus
+
+        report = check_architecture(root, all_specs=True)
+        specs = SpecCorpus(root / "sdd" / "specs")
+    except (OSError, ValueError):
+        return
+    for finding in report.findings:
+        finding_id = f"architecture_finding:{finding.finding_id}"
+        _add_entity(build, Entity(
+            finding_id, "fitness_finding", finding.code, finding.message,
+            finding.to_dict(),
+        ), source_path=source_path, source_hash=source_hash,
+            origin="architecture-fitness", locator=finding.subject,
+            confidence=1.0)
+        if finding.rule_id:
+            rule_id = f"architecture:rule:{finding.rule_id}"
+            _add_entity(build, Entity(
+                rule_id, "architecture_rule", finding.rule_id,
+                finding.remediation, {"profile": finding.profile},
+            ), source_path=source_path, source_hash=source_hash,
+                origin="architecture-fitness", locator=finding.rule_id)
+            _add_relation(build, Relation(
+                finding_id, rule_id, "violates", finding.code,
+            ), source_path=source_path, source_hash=source_hash,
+                origin="architecture-fitness")
+        subject = finding.subject
+        if subject.startswith("SPEC-"):
+            subject = f"requirement:{subject}"
+        _add_relation(build, Relation(
+            finding_id, subject, "affects", finding.code,
+        ), source_path=source_path, source_hash=source_hash,
+            origin="architecture-fitness")
+        for index, evidence_path in enumerate(finding.evidence):
+            evidence_id = (
+                "architecture:fitness_evidence:"
+                + hashlib.sha256(evidence_path.encode()).hexdigest()[:20]
+            )
+            _add_entity(build, Entity(
+                evidence_id, "evidence", evidence_path, finding.message,
+                {"path": evidence_path},
+            ), source_path=source_path, source_hash=source_hash,
+                origin="architecture-fitness", locator=f"evidence[{index}]")
+            _add_relation(build, Relation(
+                finding_id, evidence_id, "supported_by", evidence_path,
+            ), source_path=source_path, source_hash=source_hash,
+                origin="architecture-fitness")
+    for doc in specs.docs:
+        try:
+            declaration = declaration_from_spec(doc)
+            if declaration is None:
+                continue
+            delta = architecture_diff(root, spec_id=doc.spec_id)
+        except ValueError:
+            continue
+        delta_id = f"architecture_delta:{doc.spec_id}"
+        _add_entity(build, Entity(
+            delta_id, "architecture_delta", f"{doc.spec_id} architecture delta",
+            f"{len(delta['deviations'])} deviation(s)", delta,
+        ), source_path=doc.path.relative_to(root).as_posix(),
+            source_hash=_sha(doc.path), origin="architecture-delta",
+            locator="frontmatter.architecture")
+        _add_relation(build, Relation(
+            delta_id, f"requirement:{doc.spec_id}", "deviates_from",
+            "frontmatter.architecture",
+        ), source_path=doc.path.relative_to(root).as_posix(),
+            source_hash=_sha(doc.path), origin="architecture-delta")
+        for relation_name, component_ids in (
+            ("reused", declaration.reuses),
+            ("extended", declaration.extends),
+            ("introduced", declaration.introduces),
+        ):
+            for component_id in component_ids:
+                _add_relation(build, Relation(
+                    delta_id, f"architecture:component:{component_id}",
+                    relation_name, "frontmatter.architecture",
+                ), source_path=doc.path.relative_to(root).as_posix(),
+                    source_hash=_sha(doc.path), origin="architecture-delta")
+
 
 def _parse_task_index(root: Path, page: PageLike, build: SemanticBuild) -> None:
     try:
@@ -587,6 +857,8 @@ def derive(root: Path, pages: Sequence[Any]) -> SemanticBuild:
             _parse_task_index(root, page, build)
         if page.path.startswith("sdd/decisions/") and Path(page.path).name.startswith(("ADR-", "DR-")):
             _parse_decision(root, page, build)
+        if page.path.endswith((".yaml", ".yml")):
+            _parse_architecture_record(root, page, build)
         if page.path.startswith("sdd/findings/") and Path(page.path).name.startswith("FIND-"):
             _parse_finding(root, page, build)
         if page.path.endswith((".py", ".pyi")):
@@ -603,6 +875,7 @@ def derive(root: Path, pages: Sequence[Any]) -> SemanticBuild:
                 ), source_path=page.path, source_hash=page.sha256, origin="python-import")
 
     _parse_ledger(root, build)
+    _parse_architecture_governance(root, build)
 
     entities = {entity.entity_id: entity for entity in build.entities}
     build.entities = sorted(entities.values(), key=lambda item: item.entity_id)

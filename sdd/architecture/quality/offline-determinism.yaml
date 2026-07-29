@@ -1,0 +1,9 @@
+schema: hornero.architecture.quality/v1
+id: offline-determinism
+title: Offline deterministic governance
+description: Default architecture checks use repository evidence and stable ordering.
+metrics:
+  network_calls: 0
+  stable_output: required
+owner: hornero-maintainers
+status: active

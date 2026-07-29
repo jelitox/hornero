@@ -1,0 +1,12 @@
+schema: hornero.architecture.capability/v1
+id: architecture-governance
+title: Govern architecture and capability reuse
+description: Discover reusable components and validate architecture-aligned specs.
+domain: developer-experience
+interfaces:
+  - architecture-cli-v1
+providers:
+  - component: architecture-governance-core
+    mode: reuse
+owner: hornero-maintainers
+status: active

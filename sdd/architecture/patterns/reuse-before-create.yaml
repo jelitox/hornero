@@ -1,0 +1,7 @@
+schema: hornero.architecture.constraint/v1
+id: reuse-before-create
+title: Resolve reuse before creating a component
+statement: A governed spec must evaluate registered capability providers before introducing a new component.
+severity: blocking
+owner: hornero-maintainers
+status: active

@@ -1,0 +1,15 @@
+schema: hornero.architecture.project/v1
+project:
+  id: hornero
+  archetypes:
+    - monolith
+    - library
+stack:
+  languages:
+    - python
+  frameworks: []
+profiles:
+  - core
+governance:
+  mode: advisory
+  legacy_policy: warn

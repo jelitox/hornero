@@ -185,6 +185,25 @@ Both `reconcile` and non-empty `build` validate the existing graph before
 making decisions. A stale or corrupt graph blocks with instructions to run
 `hornero validate --repair`; this preflight never silently mutates knowledge.
 
+### Architecture-aware builds
+
+Projects with an initialized architecture corpus get an additional
+Definition-of-Ready gate:
+
+```bash
+hornero architecture init --profile monolith --profile python
+hornero architecture resolve persistent-user-preferences
+hornero spec preflight SPEC-123
+hornero architecture check --all --offline
+```
+
+The build brief carries a bounded, hashed architecture context with reuse
+candidates, constraints and quality budgets. After dispatch, the actual
+architecture delta is written beside the run trace; unexplained deviations
+move the spec to `needs_human`. See
+[`ARCHITECTURE_GOVERNANCE.md`](ARCHITECTURE_GOVERNANCE.md) for record schemas,
+profiles and brownfield adoption.
+
 ## 7. Memory
 
 ```bash

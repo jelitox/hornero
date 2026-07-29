@@ -28,6 +28,7 @@ class GroundedContext:
     evidence: tuple[dict[str, str], ...]
     constraints: tuple[dict[str, str], ...]
     product_context: str
+    architecture_context: dict[str, Any] | None = None
 
 
 ProtocolRunner = Callable[..., dict[str, Any]]
@@ -77,12 +78,25 @@ def collect_grounded_context(
         if diff:
             evidence.append(_evidence(_review_locator(review_target), diff))
 
+    architecture_context = None
+    from hornero.architecture.corpus import architecture_root
+
+    if (architecture_root(root) / "project.yaml").is_file():
+        from hornero.architecture.governance import (
+            build_context,
+            declaration_from_spec,
+        )
+
+        if declaration_from_spec(doc) is not None:
+            architecture_context = build_context(root, spec_id)
+
     return GroundedContext(
         spec_id=spec_id,
         requirement=doc.body.strip(),
         evidence=tuple(evidence),
         constraints=tuple(constraints),
         product_context=_product_context(root),
+        architecture_context=architecture_context,
     )
 
 
@@ -111,6 +125,7 @@ def build_advisory_request(
         "resume": resume,
         "evidence": list(context.evidence),
         "constraints": list(context.constraints),
+        "architecture_context": context.architecture_context,
         "review_target": review_target or {"kind": "context", "value": ""},
     }
 
@@ -134,6 +149,7 @@ def build_mockup_request(
         "screenshot": str(screenshot.resolve()) if screenshot else "",
         "views": views,
         "constraints": list(context.constraints),
+        "architecture_context": context.architecture_context,
         "product_context": context.product_context,
         "visual_language": visual_language,
         "provider": "codex",
@@ -179,6 +195,23 @@ def invoke_multicoders(
         run_dir=run_dir,
         dry_run=dry_run,
     )
+    architecture_context = safe_request.get("architecture_context")
+    architecture_result = result.get("architecture_result")
+    if architecture_result is not None and isinstance(architecture_context, dict):
+        from hornero.architecture.model import ArchitectureError
+        from hornero.architecture.protocol import validate_result
+
+        try:
+            validate_result(
+                architecture_result,
+                expected_context_hash=str(
+                    architecture_context.get("context_hash") or ""
+                ),
+            )
+        except ArchitectureError as exc:
+            raise AgentServiceError(
+                f"Multicoders architecture result rejected: {exc}"
+            ) from exc
     output_path.write_text(
         redact(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
         + "\n",

@@ -1,0 +1,67 @@
+{
+  "feature": "universal-architecture-governance",
+  "feature_id": "SPEC-013",
+  "spec": "sdd/specs/SPEC-013-universal-architecture-reuse-governance.md",
+  "type": "feature",
+  "base_branch": "master",
+  "created_at": "2026-07-29",
+  "completed_at": "2026-07-29",
+  "tasks": [
+    {
+      "id": "TASK-083",
+      "slug": "architecture-model-corpus",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-080"],
+      "files": [
+        "hornero/architecture/model.py",
+        "hornero/architecture/corpus.py"
+      ]
+    },
+    {
+      "id": "TASK-084",
+      "slug": "profiles-reuse-resolution",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-083"],
+      "files": [
+        "hornero/architecture/profiles.py",
+        "hornero/architecture/governance.py"
+      ]
+    },
+    {
+      "id": "TASK-085",
+      "slug": "spec-preflight-fitness-delta",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-084"],
+      "files": [
+        "hornero/architecture/governance.py",
+        "hornero/architecture/protocol.py"
+      ]
+    },
+    {
+      "id": "TASK-086",
+      "slug": "architecture-cli-graph",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-085"],
+      "files": [
+        "hornero/architecture/cli.py",
+        "hornero/cli.py",
+        "hornero/memory/semantic.py"
+      ]
+    },
+    {
+      "id": "TASK-087",
+      "slug": "architecture-docs-tests",
+      "status": "done",
+      "priority": "high",
+      "depends_on": ["TASK-086"],
+      "files": [
+        "docs/ARCHITECTURE_GOVERNANCE.md",
+        "tests/test_architecture.py"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+schema: hornero.architecture.domain/v1
+id: developer-experience
+title: Developer experience
+description: Repository-native workflows used to understand and evolve software.
+owner: hornero-maintainers
+status: active

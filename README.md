@@ -170,6 +170,8 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 | `hornero status` | Spec counts by state, pending inbox, index health |
 | `hornero reconcile [--dry-run]` | Poll signals → evidence-verified deltas → HITL → apply |
 | `hornero build [SPEC-ID ...] [--backend mock\|cli]` | Approved specs → briefs → dispatch |
+| `hornero architecture init\|inventory\|query\|explain\|resolve\|check\|diff` | Discover reusable capabilities and enforce profile-scoped architecture |
+| `hornero spec preflight SPEC-ID` | Validate architecture Definition of Ready before build |
 | `hornero consult review\|brainstorm\|research\|design-opinion` | Run independent read-only provider perspectives with quorum and audit |
 | `hornero consult show\|triage\|resume` | Inspect, dispose or continue advisory findings |
 | `hornero mockup create\|show\|refine\|deliver\|promote` | Manage screenshot-grounded visual artifacts and HITL promotion |

@@ -6,7 +6,7 @@ environment. Core never imports an adapter; adapters are resolved from
 changing them is a spec change, not a refactor.
 """
 
-from typing import Protocol, TypedDict, runtime_checkable
+from typing import Any, NotRequired, Protocol, TypedDict, runtime_checkable
 
 
 class Signal(TypedDict):
@@ -59,6 +59,7 @@ class BuildBrief(TypedDict):
     description: str  # rendered from spec body + linked ADRs
     acceptance_criteria: list[str]
     repo_path: str
+    architecture_context: NotRequired[dict[str, Any]]
 
 
 class BuildResult(TypedDict):

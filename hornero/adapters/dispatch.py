@@ -62,7 +62,7 @@ def brief_from_spec(
         "frontmatter transitioned to `review`, and regenerated "
         "`sdd/reports/` so code + spec + reports land atomically."
     )
-    return BuildBrief(
+    brief = BuildBrief(
         spec_id=doc.spec_id,
         kind=doc.kind,
         summary=doc.title,
@@ -70,6 +70,19 @@ def brief_from_spec(
         acceptance_criteria=list(doc.acceptance_criteria),
         repo_path=repo_path,
     )
+    root = Path(repo_path)
+    from hornero.architecture.corpus import architecture_root
+    from hornero.architecture.governance import (
+        build_context,
+        declaration_from_spec,
+    )
+
+    if (
+        declaration_from_spec(doc) is not None
+        and (architecture_root(root) / "project.yaml").is_file()
+    ):
+        brief["architecture_context"] = build_context(root, doc.spec_id)
+    return brief
 
 
 class Backend(Protocol):

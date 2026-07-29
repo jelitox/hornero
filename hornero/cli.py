@@ -272,6 +272,67 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("build", help="approved specs -> briefs -> dispatch")
     p.add_argument("spec_ids", nargs="*")
     p.add_argument("--backend", choices=["cli", "mock"])
+    p_architecture = sub.add_parser(
+        "architecture", help="architecture knowledge and reuse governance"
+    )
+    architecture_sub = p_architecture.add_subparsers(
+        dest="architecture_command", required=True
+    )
+    pa = architecture_sub.add_parser(
+        "init", help="add an architecture corpus without overwriting material"
+    )
+    pa.add_argument("--profile", action="append", default=[])
+    pa.add_argument("--project-id", default=None)
+    pa.add_argument("--json", action="store_true", dest="as_json")
+    pa = architecture_sub.add_parser(
+        "inventory", help="inventory evidence into non-authoritative proposals"
+    )
+    pa.add_argument("--propose", action="store_true")
+    pa.add_argument("--json", action="store_true", dest="as_json")
+    pa = architecture_sub.add_parser("query", help="query architecture records")
+    pa.add_argument("text")
+    pa.add_argument("--json", action="store_true", dest="as_json")
+    pa = architecture_sub.add_parser("explain", help="explain one architecture entity")
+    pa.add_argument("entity_id")
+    pa.add_argument("--json", action="store_true", dest="as_json")
+    pa = architecture_sub.add_parser(
+        "resolve", help="resolve registered providers for a capability"
+    )
+    pa.add_argument("capability_id")
+    pa.add_argument("--spec", default=None)
+    pa.add_argument("--json", action="store_true", dest="as_json")
+    pa = architecture_sub.add_parser(
+        "check", help="run profile-scoped architecture fitness functions"
+    )
+    scope = pa.add_mutually_exclusive_group()
+    scope.add_argument("--spec", default=None)
+    scope.add_argument("--all", action="store_true", dest="all_specs")
+    pa.add_argument("--offline", action="store_true")
+    pa.add_argument("--json", action="store_true", dest="as_json")
+    pa = architecture_sub.add_parser(
+        "diff", help="compare planned and observed architecture"
+    )
+    pa.add_argument("--spec", default=None)
+    refs = pa.add_mutually_exclusive_group()
+    refs.add_argument("--base", default=None)
+    refs.add_argument("--commit", default=None)
+    pa.add_argument("--json", action="store_true", dest="as_json")
+    pa = architecture_sub.add_parser(
+        "exception", help="inspect bounded architecture exceptions"
+    )
+    exception_sub = pa.add_subparsers(dest="exception_command", required=True)
+    pe = exception_sub.add_parser("list", help="list architecture exceptions")
+    pe.add_argument("--json", action="store_true", dest="as_json")
+    pe = exception_sub.add_parser("show", help="show one architecture exception")
+    pe.add_argument("exception_id")
+    pe.add_argument("--json", action="store_true", dest="as_json")
+    p_spec = sub.add_parser("spec", help="spec architecture governance")
+    spec_sub = p_spec.add_subparsers(dest="spec_command", required=True)
+    ps = spec_sub.add_parser(
+        "preflight", help="evaluate architecture Definition of Ready"
+    )
+    ps.add_argument("spec_id")
+    ps.add_argument("--json", action="store_true", dest="as_json")
     p_consult = sub.add_parser(
         "consult", help="independent multi-provider advisory runs"
     )
@@ -1592,6 +1653,14 @@ def main(argv: list[str] | None = None) -> int:
         from hornero.build import run_build
 
         return run_build(root, args.spec_ids, backend=args.backend)
+    if args.command == "architecture":
+        from hornero.architecture.cli import run
+
+        return run(args, root)
+    if args.command == "spec":
+        from hornero.architecture.cli import run_spec
+
+        return run_spec(args, root)
     if args.command == "consult":
         return _cmd_consult(args, root)
     if args.command == "mockup":

@@ -1,0 +1,11 @@
+schema: hornero.architecture.interface/v1
+id: architecture-cli-v1
+title: Architecture governance CLI
+description: Additive commands for inventory, discovery, resolution and validation.
+transport: cli
+version: v1
+owner: hornero-maintainers
+status: active
+evidence:
+  - path: hornero/architecture/cli.py
+    locator: run

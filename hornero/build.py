@@ -8,6 +8,7 @@ after, through the tracker, so a crash mid-dispatch leaves an honest
 ``building`` visible in ``hornero status``.
 """
 
+import json
 import time
 from collections.abc import Callable
 from datetime import date
@@ -87,6 +88,24 @@ def run_build(
         )
         return 1
 
+    from hornero.architecture.corpus import architecture_root
+
+    architecture_enabled = (
+        architecture_root(root) / "project.yaml"
+    ).is_file()
+    if architecture_enabled:
+        from hornero.architecture.governance import check_architecture
+
+        for spec_id in targets:
+            architecture_report = check_architecture(root, spec_id=spec_id)
+            if architecture_report.blocking:
+                echo(
+                    f"architecture preflight failed for {spec_id}: "
+                    f"{architecture_report.blocking} blocking finding(s); "
+                    f"run 'hornero spec preflight {spec_id}'"
+                )
+                return 1
+
     backend_order = [backend] if backend else cfg.dispatch.backend_order
     dispatcher = MulticodersDispatch(
         backend_order, root, cli_command=cfg.dispatch.cli_command,
@@ -151,9 +170,37 @@ def run_build(
                 echo(f"hint: 'hornero scribe {run_ref}' distills this trace "
                      "into a decision record (set models.scribe)")
             if result["status"] == "completed":
-                tracker.transition(spec_id, "review")
-                tracker.comment(spec_id, f"PR opened: {result['pr_url']}")
-                echo(f"{spec_id}: completed -> review ({result['pr_url']})")
+                deviations: list[dict[str, str]] = []
+                if architecture_enabled:
+                    from hornero.architecture.governance import architecture_diff
+
+                    delta = architecture_diff(root, spec_id=spec_id)
+                    delta_path = (
+                        root / ".hornero" / "runs" / run_ref
+                        / "architecture-delta.json"
+                    )
+                    delta_path.parent.mkdir(parents=True, exist_ok=True)
+                    delta_path.write_text(
+                        json.dumps(delta, indent=2, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                    )
+                    deviations = delta["deviations"]
+                if deviations:
+                    failures += 1
+                    tracker.transition(spec_id, "needs_human")
+                    tracker.comment(
+                        spec_id,
+                        f"architecture delta has {len(deviations)} deviation(s); "
+                        f"see {delta_path.relative_to(root)}",
+                    )
+                    echo(
+                        f"{spec_id}: architecture deviations -> needs_human "
+                        f"(delta: {delta_path.relative_to(root)})"
+                    )
+                else:
+                    tracker.transition(spec_id, "review")
+                    tracker.comment(spec_id, f"PR opened: {result['pr_url']}")
+                    echo(f"{spec_id}: completed -> review ({result['pr_url']})")
             else:
                 failures += 1
                 tracker.transition(spec_id, "needs_human")
