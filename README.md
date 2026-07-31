@@ -186,6 +186,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 | `hornero sdd hold\|unhold\|pin FILE` | Per-file sync policy |
 | `hornero wiki init\|update` | Agent-facing living wiki (watermark-scoped, no-op-disciplined) |
 | `hornero wiki parrot build\|upsert\|query\|page\|related\|status\|export` | Operate ai-parrot's local LLM-wiki plane |
+| `hornero wiki parrot remember\|note\|link\|memories\|audit\|ground` | Author, audit and ground persistent ai-parrot knowledge |
 | `hornero wiki codex install\|status\|uninstall` | Manage query-first Codex instructions, skill and lifecycle hook |
 | `hornero wiki claude install\|status\|uninstall` | Manage query-first Claude Code instructions, skill and lifecycle hook |
 | `hornero wiki gemini install\|status\|uninstall` | Manage query-first Gemini CLI instructions, skill and lifecycle hook |

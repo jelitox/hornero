@@ -1,0 +1,1 @@
+Native ai-parrot LLM-wiki integrations for Claude Code and Gemini CLI, with agent-specific instructions, skills, non-blocking context hooks and a shared incremental git hook alongside Codex. The bridge now requires ai-parrot 0.25.29 and exposes persistent memory authoring, audit and claim-grounding commands.
