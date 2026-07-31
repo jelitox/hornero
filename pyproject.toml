@@ -26,7 +26,7 @@ Changelog = "https://github.com/jelitox/hornero/blob/master/CHANGELOG.md"
 "Release notes" = "https://github.com/jelitox/hornero/releases"
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-asyncio", "ruff", "mypy", "types-pyyaml"]
+dev = ["pytest", "pytest-asyncio", "ruff>=0.15.22,<0.16", "mypy", "types-pyyaml"]
 documents = ["pypdf>=4"]
 knowledge = ["ai-parrot>=0.25.21,<0.26"]
 
