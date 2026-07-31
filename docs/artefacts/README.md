@@ -15,3 +15,6 @@ capturalas como imagen. Cada pieza está en **inglés y español**.
 All eight pages share one visual identity: dark terminal ground, clay accent
 (the ovenbird builds with mud), monospace voice; green is reserved for
 verified/gate semantics and amber for human-decision moments.
+
+Use [`../INFOGRAPHIC_CHEATSHEET.md`](../INFOGRAPHIC_CHEATSHEET.md) as the
+graph-derived content source for the next cheatsheet and infographic refresh.

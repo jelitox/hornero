@@ -210,6 +210,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 
 - [Workflow cookbook](docs/WORKFLOWS.md) — reproducible examples from project creation through operations
 - [Video script](docs/VIDEO_SCRIPT.md) — narrated end-to-end demonstration plan
+- [Infographic cheatsheet source](docs/INFOGRAPHIC_CHEATSHEET.md) — graph-derived command map, examples and visual brief
 - [Independent advisory and grounded mockups](docs/COLLABORATION.md) — provider bridge, safety boundaries and commands
 - [Usage guide](docs/USAGE.md) — the full loop, configuration, SDD toolkit sync
 - [Development guide](docs/DEVELOPMENT.md) — setup, architecture, the self-hosted SDD workflow
