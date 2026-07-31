@@ -462,6 +462,37 @@ def build_parser() -> argparse.ArgumentParser:
     pp.add_argument("--json", action="store_true", dest="as_json")
     pp = parrot_sub.add_parser("export", help="export a human-readable wiki")
     pp.add_argument("--output", "-o", default="docs/wiki")
+    pp = parrot_sub.add_parser("remember", help="save persistent wiki memory")
+    pp.add_argument("text")
+    pp.add_argument("--title", default=None)
+    pp.add_argument("--category", default="note")
+    pp.add_argument("--link", action="append", default=[])
+    pp.add_argument("--rel", default="references")
+    pp.add_argument("--source", default=None)
+    pp.add_argument("--by", default=None)
+    pp.add_argument("--extract", action="store_true")
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("note", help="append an attributed page note")
+    pp.add_argument("page_id")
+    pp.add_argument("text")
+    pp.add_argument("--by", default=None)
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("link", help="connect two wiki pages")
+    pp.add_argument("src")
+    pp.add_argument("dst")
+    pp.add_argument("--rel", default="references")
+    pp.add_argument("--by", default=None)
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("memories", help="list persistent wiki memories")
+    pp.add_argument("--category", default=None)
+    pp.add_argument("--limit", type=int, default=50)
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("audit", help="show wiki and graph write history")
+    pp.add_argument("--limit", type=int, default=30)
+    pp.add_argument("--json", action="store_true", dest="as_json")
+    pp = parrot_sub.add_parser("ground", help="ground a claim against the graph")
+    pp.add_argument("claim")
+    pp.add_argument("--json", action="store_true", dest="as_json")
 
     p_codex = wiki_sub.add_parser(
         "codex", help="install ai-parrot guidance and hooks for Codex"
@@ -474,6 +505,30 @@ def build_parser() -> argparse.ArgumentParser:
     pc = codex_sub.add_parser("status", help="show Codex integration state")
     pc.add_argument("--json", action="store_true", dest="as_json")
     codex_sub.add_parser("hook", help=argparse.SUPPRESS)
+
+    p_claude = wiki_sub.add_parser(
+        "claude", help="install ai-parrot guidance and hooks for Claude Code"
+    )
+    claude_sub = p_claude.add_subparsers(dest="claude_command", required=True)
+    pc = claude_sub.add_parser("install", help="install the Claude Code integration")
+    pc.add_argument("--no-git-hook", action="store_true")
+    pc.add_argument("--no-gitignore", action="store_true")
+    claude_sub.add_parser("uninstall", help="remove managed Claude artifacts")
+    pc = claude_sub.add_parser("status", help="show Claude integration state")
+    pc.add_argument("--json", action="store_true", dest="as_json")
+    claude_sub.add_parser("hook", help=argparse.SUPPRESS)
+
+    p_gemini = wiki_sub.add_parser(
+        "gemini", help="install ai-parrot guidance and hooks for Gemini CLI"
+    )
+    gemini_sub = p_gemini.add_subparsers(dest="gemini_command", required=True)
+    pg = gemini_sub.add_parser("install", help="install the Gemini CLI integration")
+    pg.add_argument("--no-git-hook", action="store_true")
+    pg.add_argument("--no-gitignore", action="store_true")
+    gemini_sub.add_parser("uninstall", help="remove managed Gemini artifacts")
+    pg = gemini_sub.add_parser("status", help="show Gemini integration state")
+    pg.add_argument("--json", action="store_true", dest="as_json")
+    gemini_sub.add_parser("hook", help=argparse.SUPPRESS)
 
     p_knowledge = sub.add_parser("knowledge", help="local code knowledge graph")
     knowledge_sub = p_knowledge.add_subparsers(dest="knowledge_command", required=True)
@@ -813,6 +868,49 @@ def _cmd_parrot_wiki(args: argparse.Namespace, root: Path) -> int:
         forwarded.append("--json")
     elif command == "export":
         forwarded.extend(["--output", args.output])
+    elif command == "remember":
+        if args.title:
+            forwarded.extend(["--title", args.title])
+        forwarded.extend(["--category", args.category])
+        for page_id in args.link:
+            forwarded.extend(["--link", page_id])
+        forwarded.extend(["--rel", args.rel])
+        if args.source:
+            forwarded.extend(["--source", args.source])
+        if args.by:
+            forwarded.extend(["--by", args.by])
+        if args.extract:
+            forwarded.append("--extract")
+        if args.as_json:
+            forwarded.append("--json")
+        forwarded.extend(["--", args.text])
+    elif command == "note":
+        if args.by:
+            forwarded.extend(["--by", args.by])
+        if args.as_json:
+            forwarded.append("--json")
+        forwarded.extend(["--", args.page_id, args.text])
+    elif command == "link":
+        forwarded.extend(["--rel", args.rel])
+        if args.by:
+            forwarded.extend(["--by", args.by])
+        if args.as_json:
+            forwarded.append("--json")
+        forwarded.extend(["--", args.src, args.dst])
+    elif command == "memories":
+        forwarded.extend(["--limit", str(args.limit)])
+        if args.category:
+            forwarded.extend(["--category", args.category])
+        if args.as_json:
+            forwarded.append("--json")
+    elif command == "audit":
+        forwarded.extend(["--limit", str(args.limit)])
+        if args.as_json:
+            forwarded.append("--json")
+    elif command == "ground":
+        if args.as_json:
+            forwarded.append("--json")
+        forwarded.extend(["--", args.claim])
     try:
         return run_toolkit(root, forwarded)
     except ParrotWikiError as exc:
@@ -858,6 +956,45 @@ def _cmd_codex_wiki(args: argparse.Namespace, root: Path) -> int:
         return 0
     except ParrotWikiError as exc:
         print(f"codex wiki integration failed: {exc}", file=sys.stderr)
+        return 2
+
+
+def _cmd_agent_wiki(
+    args: argparse.Namespace, root: Path, *, platform: str
+) -> int:
+    from hornero import parrot_wiki
+
+    command = getattr(args, f"{platform}_command")
+    if command == "hook":
+        return getattr(parrot_wiki, f"run_{platform}_hook")()
+    try:
+        if command == "install":
+            actions = getattr(parrot_wiki, f"install_{platform}_integration")(
+                root,
+                git_hook=not args.no_git_hook,
+                gitignore=not args.no_gitignore,
+            )
+            for action in actions:
+                print(action)
+            if platform == "claude":
+                print("Review project hooks with /hooks in Claude Code.")
+            else:
+                print("Review project hooks with /hooks list in Gemini CLI.")
+            return 0
+        if command == "uninstall":
+            actions = getattr(parrot_wiki, f"uninstall_{platform}_integration")(root)
+            for action in actions:
+                print(action)
+            return 0
+        status = getattr(parrot_wiki, f"{platform}_integration_status")(root)
+        if args.as_json:
+            print(json.dumps(status, indent=2, sort_keys=True))
+        else:
+            for key, value in status.items():
+                print(f"{key.replace('_', ' '):<24} {'yes' if value else 'no'}")
+        return 0
+    except parrot_wiki.ParrotWikiError as exc:
+        print(f"{platform} wiki integration failed: {exc}", file=sys.stderr)
         return 2
 
 
@@ -1741,6 +1878,8 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_parrot_wiki(args, root)
         if args.wiki_command == "codex":
             return _cmd_codex_wiki(args, root)
+        if args.wiki_command in {"claude", "gemini"}:
+            return _cmd_agent_wiki(args, root, platform=args.wiki_command)
         from hornero.llm import LLMError, model_name, resolve_llm
         from hornero.wiki import WikiError, wiki_init, wiki_update
 
