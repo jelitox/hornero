@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Universal architecture records, composable project profiles, deterministic
+  capability-reuse resolution, spec preflight, fitness checks, implementation
+  deltas, semantic-graph provenance and hashed Multicoders context contracts.
+- Native, idempotent ai-parrot LLM-wiki integrations for Claude Code and
+  Gemini CLI alongside Codex, including agent-specific instructions, skills,
+  non-blocking context hooks and a shared incremental git hook.
 - Validated per-PR changelog fragments, an enforceable PR policy, direct PyPI
   metadata links, and build-specific release summaries in the package
   description.

@@ -88,8 +88,11 @@ model, phases F2.5/F3.5/F4.5), then SPEC-003/004 for wiki and flight history,
 `SPEC-005` for the initial factory/graph/controller, `SPEC-006` for
 temporal intelligence, production stacks, assurance and autonomous operations,
 `SPEC-007` for trusted automated PyPI delivery, `SPEC-008` for changelog
-fragments and release-note visibility, and `SPEC-009` for ai-parrot's LLM-wiki
-bridge and native Codex integration.
+fragments and release-note visibility, `SPEC-009` for ai-parrot's LLM-wiki
+bridge and native Codex integration, and `SPEC-010` for equivalent Claude Code
+and Gemini CLI support. `SPEC-011` adds independent provider perspectives,
+`SPEC-012` grounded visual mockups, and `SPEC-013` the universal architecture
+corpus, capability-reuse preflight and profile-scoped fitness functions.
 **When code and spec disagree, the spec wins**;
 record the discrepancy instead of silently picking one.
 
