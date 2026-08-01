@@ -1,0 +1,1 @@
+Publish reproducible workflow documentation, an executable offline quickstart, Spanish and English zero-to-production videos, and a graph-derived command cheatsheet for building updated Hornero infographics.
