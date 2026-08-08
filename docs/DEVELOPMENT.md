@@ -56,9 +56,13 @@ hornero/
     apply.py           the ONLY writer of sdd/specs in the pipeline
   memory/
     ledger.py          SQLite audit ledger (runs, deltas, dispatches, signals)
-    codegraph.py       stdlib SQLite code graph (file/dir pages + typed edges)
+    structural.py      incremental source symbols/facts + optional Tree-sitter
+    codegraph.py       SQLite file/dir/symbol graph and typed edges
     semantic.py        requirements/tasks/code/tests/controls/finding projection
-    intelligence.py    temporal lineage, reasoning, impact and context packs
+    diffimpact.py      working-tree paths → governed graph impact
+    canvas.py          trace refs, compact steps and Mermaid run canvas
+    pyramid.py         L0–L3 memory, bounded RRF recall and proposals
+    intelligence.py    temporal lineage, reasoning and progressive context
     validate.py        graph/provenance/traceability preflight and repair
     knowledge.py       codegraph first, pageindex feature-detect, token fallback
     reindex.py         deterministic index build; graph HTML report; staleness
@@ -67,6 +71,7 @@ hornero/
     controller.py      bounded worktree execution, gates, ledger learning
   reports/
     engine.py          shared context, HTML skeleton, deterministic rendering
+    explorer.py        offline graph UI (search/layers/personas/tours)
     capabilities.py / workflows.py / traceability.py
   sdd_toolkit/
     manifest.py        upstream manifest + builtin fallback patterns
@@ -80,7 +85,7 @@ tests/                 one file per surface; fixtures inline
 sdd/                   this repo's own specs/tasks/state (self-hosting)
 ```
 
-Nine specs govern the current product. Start with
+Fourteen specs govern the current product. Start with
 `sdd/specs/SPEC-001-hornero-foundation.md`
 (ports, delta model, lifecycle, phases F1–F5) and
 `sdd/specs/SPEC-002-sdd-toolkit-sync.md` (toolkit install/sync/push, drift
@@ -91,8 +96,9 @@ temporal intelligence, production stacks, assurance and autonomous operations,
 fragments and release-note visibility, `SPEC-009` for ai-parrot's LLM-wiki
 bridge and native Codex integration, and `SPEC-010` for equivalent Claude Code
 and Gemini CLI support. `SPEC-011` adds independent provider perspectives,
-`SPEC-012` grounded visual mockups, and `SPEC-013` the universal architecture
-corpus, capability-reuse preflight and profile-scoped fitness functions.
+`SPEC-012` grounded visual mockups, `SPEC-013` the universal architecture
+corpus, capability-reuse preflight and profile-scoped fitness functions, and
+`SPEC-014` incremental structural intelligence plus governed context economy.
 **When code and spec disagree, the spec wins**;
 record the discrepancy instead of silently picking one.
 
@@ -150,3 +156,8 @@ open-source personal project.
 - Anything that could hit the network is seamed (runner injection for
   `git push`/`gh`, `block_network` fixture for reports).
 - Determinism checks compare bytes across runs.
+- Structural fixtures must exercise both fingerprint reuse and native parser
+  output; optional Tree-sitter availability may change the recorded analyzer
+  but not the common fact contract.
+- Distillation tests assert that outputs remain `status: proposed`; tests must
+  never promote persona or Skill artifacts as a side effect.

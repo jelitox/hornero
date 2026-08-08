@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Incremental multi-language structural facts with optional Tree-sitter,
+  symbol-level graph projection, a self-contained interactive explorer and
+  working-tree diff impact traced through tasks to specs and decisions.
+- In-flight symbolic canvases with exact event refs and drill-down, an L0–L3
+  project-memory pyramid, hard-budget RRF recall, progressive context packs,
+  and HITL-only Project Persona and Skill/SOP proposals.
 - Universal architecture records, composable project profiles, deterministic
   capability-reuse resolution, spec preflight, fitness checks, implementation
   deltas, semantic-graph provenance and hashed Multicoders context contracts.

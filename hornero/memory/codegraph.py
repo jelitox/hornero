@@ -25,7 +25,7 @@ from hornero.redact import redact
 
 CODE_SUFFIXES = frozenset({
     ".py", ".pyi", ".js", ".jsx", ".ts", ".tsx", ".go", ".rs", ".java",
-    ".c", ".h", ".cpp", ".hpp", ".sh", ".bash", ".sql",
+    ".c", ".h", ".cpp", ".hpp", ".sh", ".bash", ".sql", ".svelte",
 })
 DOC_SUFFIXES = frozenset({".md", ".rst", ".txt", ".vtt"})
 CONFIG_SUFFIXES = frozenset({".toml", ".yaml", ".yml", ".json", ".ini", ".cfg"})
@@ -356,6 +356,50 @@ def _import_edges(files: list[Page], all_paths: Iterable[str]) -> list[tuple[str
     return sorted(edges)
 
 
+def _structural_projection(root: Path) -> tuple[list[Page], list[tuple[str, str, str]]]:
+    """Project the optional structural JSON into graph pages and edges."""
+    from hornero.memory.structural import load_index
+
+    index = load_index(root)
+    if index is None:
+        return [], []
+    pages: list[Page] = []
+    for item in index.get("files", []):
+        if not isinstance(item, dict):
+            continue
+        path = str(item.get("path", ""))
+        digest = str(item.get("sha256", ""))
+        for symbol in item.get("symbols", []):
+            if not isinstance(symbol, dict) or not symbol.get("id"):
+                continue
+            qualified = str(symbol.get("qualified") or symbol.get("name") or "symbol")
+            kind = str(symbol.get("kind") or "symbol")
+            line = int(symbol.get("line") or 1)
+            summary = f"{kind} {qualified} defined at {path}:L{line}"
+            body = (
+                f"# {qualified}\n\n- Kind: {kind}\n- Source: {path}:L{line}\n"
+                f"- Analyzer: {item.get('analyzer', 'unknown')}\n"
+            )
+            pages.append(Page(
+                concept_id=str(symbol["id"]), path=path,
+                title=f"{path}#{qualified}", category="symbol",
+                summary=summary, body=body, token_count=_estimate_tokens(body),
+                sha256=digest,
+            ))
+    known = {page.concept_id for page in pages}
+    known.update(
+        f"file:{item.get('path')}" for item in index.get("files", [])
+        if isinstance(item, dict) and item.get("path")
+    )
+    edges = [
+        (str(edge[0]), str(edge[1]), str(edge[2]))
+        for edge in index.get("edges", [])
+        if isinstance(edge, list) and len(edge) == 3
+        and str(edge[0]) in known and str(edge[1]) in known
+    ]
+    return sorted(pages, key=lambda page: page.concept_id), sorted(set(edges))
+
+
 def scan(root: Path) -> GraphBuild:
     rels = discover_files(root)
     build = GraphBuild(sources=[root / rel for rel in rels])
@@ -367,8 +411,11 @@ def scan(root: Path) -> GraphBuild:
         else:
             file_pages.append(page)
     dir_pages, dir_edges = _dir_pages(file_pages)
-    build.pages = [*file_pages, *dir_pages]
-    build.edges = sorted({*dir_edges, *_import_edges(file_pages, rels)})
+    structural_pages, structural_edges = _structural_projection(root)
+    build.pages = [*file_pages, *dir_pages, *structural_pages]
+    build.edges = sorted({
+        *dir_edges, *_import_edges(file_pages, rels), *structural_edges,
+    })
     return build
 
 
@@ -801,6 +848,7 @@ def pack_hits(hits: Iterable[GraphHit], *, budget_tokens: int = 1200) -> tuple[s
 
 def write_graph_html(root: Path) -> Path:
     from hornero.redact import redact
+    from hornero.reports import explorer
 
     report = html_report_path(root)
     report.parent.mkdir(parents=True, exist_ok=True)
@@ -811,6 +859,8 @@ def write_graph_html(root: Path) -> Path:
     relation_rows: list[str] = []
     requirement_rows: list[str] = []
     dependency_rows: list[str] = []
+    dashboard_nodes: list[dict[str, object]] = []
+    dashboard_edges: list[dict[str, str]] = []
     if st.get("built"):
         conn = _connect(db_path(root))
         try:
@@ -834,6 +884,20 @@ def write_graph_html(root: Path) -> Path:
             dependencies = conn.execute(
                 "SELECT src, dst FROM relations WHERE rel='depends_on' "
                 "ORDER BY src, dst"
+            ).fetchall()
+            page_nodes = conn.execute(
+                "SELECT concept_id, path, title, category, summary FROM pages "
+                "ORDER BY category, concept_id LIMIT 500"
+            ).fetchall()
+            semantic_nodes = conn.execute(
+                "SELECT entity_id, kind, title, summary, properties_json FROM entities "
+                "ORDER BY kind, entity_id LIMIT 500"
+            ).fetchall()
+            page_links = conn.execute(
+                "SELECT src, dst, rel FROM edges ORDER BY rel, src, dst LIMIT 1500"
+            ).fetchall()
+            semantic_links = conn.execute(
+                "SELECT src, dst, rel FROM relations ORDER BY rel, src, dst LIMIT 1500"
             ).fetchall()
         finally:
             conn.close()
@@ -879,6 +943,33 @@ def write_graph_html(root: Path) -> Path:
                 f"<td><code>{html.escape(row['dst'])}</code></td>"
                 "</tr>"
             )
+        node_map: dict[str, dict[str, object]] = {}
+        for row in page_nodes:
+            node_map[str(row["concept_id"])] = {
+                "id": str(row["concept_id"]), "title": str(row["title"]),
+                "kind": "symbol" if str(row["concept_id"]).startswith("symbol:") else str(row["category"]),
+                "group": str(row["category"]), "summary": str(row["summary"]),
+                "source": str(row["path"]),
+            }
+        for row in semantic_nodes:
+            try:
+                properties = json.loads(row["properties_json"])
+            except (json.JSONDecodeError, TypeError):
+                properties = {}
+            entity_id = str(row["entity_id"])
+            source = str(properties.get("path", "")) if isinstance(properties, dict) else ""
+            node_map[entity_id] = {
+                "id": entity_id, "title": str(row["title"]),
+                "kind": str(row["kind"]), "group": str(row["kind"]),
+                "summary": str(row["summary"]), "source": source,
+            }
+        dashboard_nodes = [node_map[key] for key in sorted(node_map)]
+        known = set(node_map)
+        dashboard_edges = [
+            {"source": str(row["src"]), "target": str(row["dst"]), "rel": str(row["rel"])}
+            for row in [*page_links, *semantic_links]
+            if str(row["src"]) in known and str(row["dst"]) in known
+        ]
     def _as_int(value: object) -> int:
         return value if isinstance(value, int) else 0
 
@@ -899,8 +990,9 @@ def write_graph_html(root: Path) -> Path:
         "th,td{border:1px solid #d4d4d4;padding:.4rem .6rem;text-align:left;vertical-align:top}"
         "th{background:#fef3c7}code{background:#f5f5f5;padding:.1rem .3rem;border-radius:3px}"
         ".grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:.75rem}"
-        ".metric{border:1px solid #d4d4d4;padding:.75rem}.metric b{display:block;font-size:1.5rem}</style>"
-        "</head><body><h1>Hornero Knowledge Graph</h1>"
+        ".metric{border:1px solid #d4d4d4;padding:.75rem}.metric b{display:block;font-size:1.5rem}"
+        + explorer.CSS + "</style>"
+        + "</head><body><h1>Hornero Knowledge Graph</h1>"
         "<div class=\"grid\">"
         f"<div class=\"metric\"><b>{pages_n}</b>pages</div>"
         f"<div class=\"metric\"><b>{edges_n}</b>edges</div>"
@@ -910,7 +1002,8 @@ def write_graph_html(root: Path) -> Path:
         f"<div class=\"metric\"><b>{provenance_n}</b>provenance records</div>"
         f"<div class=\"metric\"><b>{'yes' if st.get('fts') else 'no'}</b>FTS5</div>"
         "</div>"
-        "<h2>Categories</h2><table><tr><th>Category</th><th>Pages</th></tr>"
+        + explorer.section(dashboard_nodes, dashboard_edges)
+        + "<h2>Categories</h2><table><tr><th>Category</th><th>Pages</th></tr>"
         + "".join(
             f"<tr><td>{html.escape(str(k))}</td><td>{_as_int(v)}</td></tr>"
             for k, v in sorted(cats.items())

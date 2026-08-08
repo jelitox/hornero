@@ -63,3 +63,17 @@ changes.
 Use **Actions > Publish Python package to PyPI > Run workflow** to retry or
 perform a controlled manual publication. A rerun receives a new post-release
 version through github.run_attempt.
+
+## Local distribution build
+
+Reproduce the non-publishing half of the pipeline before opening a release PR:
+
+```bash
+source .venv/bin/activate
+uv build
+uv run --with twine twine check --strict dist/*
+```
+
+Then install the wheel into an isolated temporary environment and smoke-test
+the packaged entry point. Do not commit `dist/`; local artifacts are ignored
+and CI rebuilds them from the reviewed commit.

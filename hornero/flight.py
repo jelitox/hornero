@@ -43,6 +43,7 @@ class TraceWriter:
         actor: str,
         clock: Callable[[], float] = time.time,
     ) -> None:
+        self.root = root
         self.run_ref = run_ref
         self.actor = actor
         self._clock = clock
@@ -69,6 +70,12 @@ class TraceWriter:
         }
         with self.path.open("a", encoding="utf-8") as fh:
             fh.write(redact(json.dumps(event, ensure_ascii=False)) + "\n")
+        # Native integration seam: compact state is refreshed while the run is
+        # active.  It is always reconstructible from the trace and never
+        # replaces the evidence layer.
+        from hornero.memory.canvas import build as build_canvas
+
+        build_canvas(self.root, self.run_ref)
         return self._seq
 
     def close(self) -> Path:

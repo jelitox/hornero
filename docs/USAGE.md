@@ -335,6 +335,8 @@ Every dispatch writes a redacted, sequenced event trace:
 hornero runs list [--spec SPEC-002]
 hornero runs show r-3-spec-002 --kind tool_use,error --range e#12:e#40
 hornero runs adopt ~/.claude/session.jsonl    # adopt a Claude Code transcript
+hornero runs canvas r-3-spec-002              # rebuild compact context layers
+hornero runs drilldown r-3-spec-002 e#12      # exact normalized evidence
 hornero runs prune --keep-days 90
 ```
 
@@ -350,6 +352,11 @@ verified against the trace — unanchorable claims are dropped and logged,
 and a trivial run yields no DR. DRs are indexed as knowledge: when a new
 signal re-proposes an approach a past DR rejected, the HITL preview shows
 `[memory] DR-NNN ...` before you decide.
+
+Each trace event also refreshes lossless refs, compact JSONL steps and a
+Mermaid canvas beneath the run directory. These layers reduce active context
+without replacing the trace; see [Structural intelligence and context
+economy](STRUCTURAL_MEMORY.md).
 
 ## 13. Continuous improvement
 
@@ -381,10 +388,15 @@ hornero knowledge history requirement:SPEC-006
 hornero knowledge analyze contradictions --json
 hornero knowledge analyze duplicates --json
 hornero knowledge impact requirement:SPEC-006 --depth 4
+hornero knowledge diff-impact --base HEAD --write-overlay
 hornero knowledge coverage
 hornero knowledge semantic-query --kind control --text security
 hornero knowledge explain finding:FIND-0123456789ab
 hornero knowledge context requirement:SPEC-006 --budget 1200
+hornero knowledge pyramid
+hornero knowledge recall 'release safety' --max-total-chars 3000
+hornero knowledge persona --trigger-every 5
+hornero knowledge distill-skills --minimum-runs 3
 hornero extract requirements.md
 ```
 
@@ -394,6 +406,10 @@ entities create immutable versions and missing entities become inactive;
 and duplicate results are deterministic candidates with scores/evidence, not
 automatic requirement decisions. `extract` requires `models.extractor` and
 persists only proposed entities whose quoted evidence exists verbatim.
+Reindex additionally builds an incremental multi-language symbol graph and an
+L0–L3 memory pyramid. `diff-impact` connects working-tree changes to governed
+artifacts; `recall` uses RRF under hard character limits. Persona and Skill
+commands only write evidence-backed proposals and never auto-promote them.
 
 ## 15. Registry, upgrades, contracts and workspaces
 

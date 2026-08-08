@@ -1,6 +1,6 @@
 [project]
 name = "hornero"
-version = "0.4.0"
+version = "0.5.0"
 description = "Repo-native product loop: signals -> living memory -> SDD specs -> dispatched builds -> reports. The ovenbird builds its own house."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -29,6 +29,7 @@ Changelog = "https://github.com/jelitox/hornero/blob/master/CHANGELOG.md"
 dev = ["pytest", "pytest-asyncio", "ruff>=0.15.22,<0.16", "mypy", "types-pyyaml"]
 documents = ["pypdf>=4"]
 knowledge = ["ai-parrot>=0.25.29,<0.26"]
+structural = ["tree-sitter-language-pack"]
 
 [project.scripts]
 hornero = "hornero.cli:main"
@@ -36,3 +37,7 @@ hornero = "hornero.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+# Demo videos stay available in GitHub but would add ~68 MiB to every sdist.
+exclude = ["/docs/videos"]
