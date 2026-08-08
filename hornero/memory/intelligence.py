@@ -279,30 +279,48 @@ def explain(root: Path, entity_id: str) -> dict[str, Any]:
 def context_pack(root: Path, entity_id: str, *, budget_tokens: int = 1200) -> dict[str, Any]:
     if budget_tokens <= 0:
         raise ValueError("context budget must be positive")
+    from hornero.memory import pyramid
+
     explanation = explain(root, entity_id)
-    candidates = [
-        json.dumps(explanation["entity"], sort_keys=True, ensure_ascii=False),
-        *(
-            json.dumps(item, sort_keys=True, ensure_ascii=False)
-            for item in explanation["impact"]["paths"]
-        ),
-    ]
+    memory = pyramid.load(root) or {"l2_scenarios": [], "l3_persona": []}
+    entity = explanation["entity"]
+    assert isinstance(entity, dict)
+    candidates: list[tuple[str, str]] = []
+    for item in memory.get("l3_persona", []):
+        candidates.append(("L3", json.dumps(item, sort_keys=True, ensure_ascii=False)))
+    candidates.append(("L2", json.dumps({
+        "entity_id": entity.get("entity_id"), "kind": entity.get("kind"),
+        "title": entity.get("title"), "summary": entity.get("summary"),
+        "properties": entity.get("properties"),
+    }, sort_keys=True, ensure_ascii=False)))
+    candidates.extend(
+        ("L1", json.dumps(item, sort_keys=True, ensure_ascii=False))
+        for item in explanation["impact"]["paths"]
+    )
+    candidates.extend(
+        ("L0", json.dumps(item, sort_keys=True, ensure_ascii=False))
+        for item in entity.get("provenance", [])
+    )
     included: list[str] = []
+    levels: dict[str, list[str]] = {"L3": [], "L2": [], "L1": [], "L0": []}
     used = 0
-    for candidate in candidates:
+    for level, candidate in candidates:
         safe = redact(candidate)
         cost = max(1, len(safe) // 4)
         if used + cost > budget_tokens:
             if not included:
                 safe = safe[: budget_tokens * 4]
                 included.append(safe)
+                levels[level].append(safe)
                 used = min(budget_tokens, max(1, len(safe) // 4))
             break
         included.append(safe)
+        levels[level].append(safe)
         used += cost
     return {
         "entity_id": entity_id, "budget_tokens": budget_tokens,
-        "used_tokens": used, "items": included,
+        "used_tokens": used, "items": included, "levels": levels,
+        "disclosure_order": ["L3", "L2", "L1", "L0"],
         "truncated": len(included) < len(candidates),
     }
 

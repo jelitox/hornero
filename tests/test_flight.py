@@ -65,8 +65,9 @@ def test_f9_gate_planted_secret_never_reaches_trace_bytes(repo, monkeypatch):
     with Ledger(repo / ".hornero" / "ledger.db") as led:
         (run,) = led.agent_runs("SPEC-002")
     trace_dir = repo / ".hornero" / "runs" / run["run_ref"]
-    for f in trace_dir.iterdir():
-        assert secret.encode() not in f.read_bytes()
+    for f in trace_dir.rglob("*"):
+        if f.is_file():
+            assert secret.encode() not in f.read_bytes()
 
 
 def test_f9_gate_show_range_returns_exact_slices(repo, capsys):

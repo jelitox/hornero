@@ -132,6 +132,8 @@ def _row_hash(row: sqlite3.Row) -> str:
 def _module_index(pages: Iterable[PageLike]) -> dict[str, str]:
     result: dict[str, str] = {}
     for page in pages:
+        if page.concept_id.startswith("symbol:"):
+            continue
         path = Path(page.path)
         if path.suffix not in (".py", ".pyi"):
             continue
@@ -846,11 +848,16 @@ def derive(root: Path, pages: Sequence[Any]) -> SemanticBuild:
     for page in pages:
         if page.concept_id.startswith("dir:"):
             continue
-        artifact_kind = "test_file" if page.path.startswith("tests/") else "artifact"
+        artifact_kind = (
+            "symbol" if page.concept_id.startswith("symbol:")
+            else "test_file" if page.path.startswith("tests/") else "artifact"
+        )
         _add_entity(build, Entity(
             page.concept_id, artifact_kind, page.title, page.summary,
             {"category": page.category, "path": page.path},
         ), source_path=page.path, source_hash=page.sha256, origin="repository")
+        if page.concept_id.startswith("symbol:"):
+            continue
         if page.path.startswith("sdd/specs/") and Path(page.path).name.startswith("SPEC-"):
             _parse_spec(root, page, build)
         if page.path.startswith("sdd/tasks/index/") and page.path.endswith(".json"):
@@ -865,7 +872,7 @@ def derive(root: Path, pages: Sequence[Any]) -> SemanticBuild:
             _parse_python_symbols(root, page, build)
 
     for page in pages:
-        if not page.path.startswith("tests/"):
+        if page.concept_id.startswith("symbol:") or not page.path.startswith("tests/"):
             continue
         for imported in page.imports:
             target = module_index.get(imported)

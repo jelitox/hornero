@@ -1,0 +1,16 @@
+{
+  "feature": "cross-pollinated-structural-memory",
+  "feature_id": "SPEC-014",
+  "spec": "sdd/specs/SPEC-014-cross-pollinated-structural-memory.md",
+  "type": "feature",
+  "base_branch": "agent/publish-workflows-and-videos",
+  "created_at": "2026-08-08",
+  "completed_at": "2026-08-08",
+  "tasks": [
+    {"id": "TASK-088", "slug": "structural-index", "status": "done", "priority": "high", "depends_on": ["TASK-087"], "files": ["hornero/memory/structural.py", "hornero/memory/codegraph.py", "hornero/memory/semantic.py"]},
+    {"id": "TASK-089", "slug": "explorer-diff-impact", "status": "done", "priority": "high", "depends_on": ["TASK-088"], "files": ["hornero/reports/explorer.py", "hornero/memory/diffimpact.py", "hornero/cli.py"]},
+    {"id": "TASK-090", "slug": "symbolic-canvas", "status": "done", "priority": "high", "depends_on": ["TASK-088"], "files": ["hornero/memory/canvas.py", "hornero/flight.py", "hornero/cli.py"]},
+    {"id": "TASK-091", "slug": "pyramid-persona-recall", "status": "done", "priority": "high", "depends_on": ["TASK-088"], "files": ["hornero/memory/pyramid.py", "hornero/memory/intelligence.py", "hornero/memory/reindex.py", "hornero/cli.py"]},
+    {"id": "TASK-092", "slug": "skill-distillation-gates", "status": "done", "priority": "high", "depends_on": ["TASK-090", "TASK-091"], "files": ["tests/test_cross_pollination.py", "README.md", "CHANGELOG.md"]}
+  ]
+}

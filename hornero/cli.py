@@ -419,6 +419,12 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--range", dest="span", default=None, metavar="e#N:e#M")
     pr = runs_sub.add_parser("adopt", help="adopt a Claude Code transcript")
     pr.add_argument("transcript")
+    pr = runs_sub.add_parser("canvas", help="rebuild a run's symbolic canvas")
+    pr.add_argument("run_ref")
+    pr = runs_sub.add_parser("drilldown", help="read exact evidence for a canvas node")
+    pr.add_argument("run_ref")
+    pr.add_argument("node_id")
+    pr.add_argument("--json", action="store_true", dest="as_json")
     pr = runs_sub.add_parser("prune", help="delete old trace directories")
     pr.add_argument("--keep-days", type=float, required=True)
     p_scribe = sub.add_parser("scribe", help="distill a trace into a DR (SPEC-004)")
@@ -549,6 +555,14 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("--depth", type=int, default=4)
     pk.add_argument("--max-nodes", type=int, default=100)
     pk.add_argument("--json", action="store_true", dest="as_json")
+    pk = knowledge_sub.add_parser(
+        "diff-impact", help="map working-tree changes to specs and decisions"
+    )
+    pk.add_argument("--base", default="HEAD")
+    pk.add_argument("--depth", type=int, default=4)
+    pk.add_argument("--max-nodes", type=int, default=120)
+    pk.add_argument("--write-overlay", action="store_true")
+    pk.add_argument("--json", action="store_true", dest="as_json")
     pk = knowledge_sub.add_parser("coverage", help="score requirement traceability")
     pk.add_argument("--json", action="store_true", dest="as_json")
     pk = knowledge_sub.add_parser("semantic-query", help="filter semantic entities")
@@ -562,6 +576,26 @@ def build_parser() -> argparse.ArgumentParser:
     pk = knowledge_sub.add_parser("context", help="build a bounded agent context pack")
     pk.add_argument("entity_id")
     pk.add_argument("--budget", type=int, default=1200)
+    pk.add_argument("--json", action="store_true", dest="as_json")
+    pk = knowledge_sub.add_parser("pyramid", help="inspect layered project memory")
+    pk.add_argument("--json", action="store_true", dest="as_json")
+    pk = knowledge_sub.add_parser("recall", help="bounded RRF graph+pyramid recall")
+    pk.add_argument("question")
+    pk.add_argument("--limit", type=int, default=8)
+    pk.add_argument("--max-item-chars", type=int, default=800)
+    pk.add_argument("--max-total-chars", type=int, default=4000)
+    pk.add_argument("--json", action="store_true", dest="as_json")
+    pk = knowledge_sub.add_parser(
+        "persona", help="propose stable project conventions from DRs"
+    )
+    pk.add_argument("--trigger-every", type=int, default=5)
+    pk.add_argument("--minimum-repetitions", type=int, default=2)
+    pk.add_argument("--json", action="store_true", dest="as_json")
+    pk = knowledge_sub.add_parser(
+        "distill-skills", help="propose recurring SOPs from trace evidence"
+    )
+    pk.add_argument("--minimum-runs", type=int, default=3)
+    pk.add_argument("--window", type=int, default=3)
     pk.add_argument("--json", action="store_true", dest="as_json")
     pk = knowledge_sub.add_parser("page", help="read one graph page")
     pk.add_argument("page_id")
@@ -701,6 +735,32 @@ def _cmd_knowledge(args: argparse.Namespace, root: Path) -> int:
                     f"{item['entity_id']} via {item['via']}"
                 )
         return 0
+    if args.knowledge_command == "diff-impact":
+        from hornero.memory.diffimpact import DiffImpactError, analyze
+
+        try:
+            result = analyze(
+                root, base=args.base, max_depth=args.depth,
+                max_nodes=args.max_nodes, write_overlay=args.write_overlay,
+            )
+        except (DiffImpactError, KeyError, ValueError) as exc:
+            print(f"diff impact failed: {exc}", file=sys.stderr)
+            return 2
+        if args.as_json:
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+        else:
+            print(
+                f"diff impact: {len(result['changed'])} changed path(s), "
+                f"{len(result['affected'])} governed artifact(s)"
+            )
+            for item in result["affected"]:
+                print(
+                    f"[{item['kind']}] {item['entity_id']} via {item['via']} "
+                    f"from {item['changed_from']}"
+                )
+            for rel in result["unindexed"]:
+                print(f"[unindexed] {rel}")
+        return 0
     if args.knowledge_command == "coverage":
         rows = intelligence.coverage(root)
         if args.as_json:
@@ -733,6 +793,65 @@ def _cmd_knowledge(args: argparse.Namespace, root: Path) -> int:
             print(f"knowledge {args.knowledge_command} failed: {exc}", file=sys.stderr)
             return 2
         print(json.dumps(result, indent=2, ensure_ascii=False))
+        return 0
+    if args.knowledge_command in {"pyramid", "recall", "persona", "distill-skills"}:
+        from hornero.memory import pyramid
+
+        memory_result: object
+        try:
+            if args.knowledge_command == "pyramid":
+                loaded = pyramid.load(root)
+                if loaded is None:
+                    print("memory pyramid absent; run 'hornero reindex'", file=sys.stderr)
+                    return 2
+                memory_result = loaded
+            elif args.knowledge_command == "recall":
+                memory_result = pyramid.recall(
+                    root, args.question, limit=args.limit,
+                    max_chars_per_item=args.max_item_chars,
+                    max_total_chars=args.max_total_chars,
+                )
+            elif args.knowledge_command == "persona":
+                memory_result = pyramid.propose_persona(
+                    root, trigger_every_n=args.trigger_every,
+                    minimum_repetitions=args.minimum_repetitions,
+                )
+            else:
+                memory_result = pyramid.propose_skills(
+                    root, minimum_runs=args.minimum_runs, window=args.window
+                )
+        except (OSError, ValueError) as exc:
+            print(f"knowledge {args.knowledge_command} failed: {exc}", file=sys.stderr)
+            return 2
+        if args.as_json:
+            print(json.dumps(memory_result, indent=2, ensure_ascii=False))
+        elif args.knowledge_command == "pyramid":
+            assert isinstance(memory_result, dict)
+            print(
+                f"pyramid: L0={len(memory_result['l0_sources'])} "
+                f"L1={len(memory_result['l1_atoms'])} "
+                f"L2={len(memory_result['l2_scenarios'])} "
+                f"L3={len(memory_result['l3_persona'])}"
+            )
+        elif args.knowledge_command == "recall":
+            assert isinstance(memory_result, dict)
+            for item in memory_result["results"]:
+                print(f"L{item['level']} [{item['id']}] {item.get('title', '')}")
+            print(
+                f"{memory_result['used_chars']}/"
+                f"{memory_result['max_total_chars']} chars"
+            )
+        elif args.knowledge_command == "persona":
+            assert isinstance(memory_result, dict)
+            print(
+                memory_result.get("path")
+                if memory_result.get("created") else memory_result.get("reason")
+            )
+        else:
+            assert isinstance(memory_result, list)
+            for item in memory_result:
+                print(item["path"])
+            print(f"{len(memory_result)} skill proposal(s)")
         return 0
     if args.knowledge_command == "page":
         page = codegraph.get_page(root, args.page_id)
@@ -1126,6 +1245,33 @@ def _cmd_runs(args: argparse.Namespace, root: Path) -> int:
                 started_at=events[0]["ts"], finished_at=events[-1]["ts"],
             )
         print(f"adopted as {run_ref} ({len(events)} event(s))")
+        return 0
+    if args.runs_command == "canvas":
+        from hornero.memory.canvas import build as build_canvas
+
+        try:
+            result = build_canvas(root, args.run_ref)
+        except FileNotFoundError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        print(
+            f"canvas: {result['action_nodes']} action node(s), "
+            f"{result['events']} evidence ref(s) at {result['canvas']}"
+        )
+        return 0
+    if args.runs_command == "drilldown":
+        from hornero.memory.canvas import drilldown
+
+        try:
+            event = drilldown(root, args.run_ref, args.node_id)
+        except (FileNotFoundError, KeyError, ValueError) as exc:
+            print(f"drilldown failed: {exc}", file=sys.stderr)
+            return 2
+        if args.as_json:
+            print(json.dumps(event, indent=2, ensure_ascii=False))
+        else:
+            print(f"e#{event['seq']} [{event['kind']}] {event['summary']}")
+            print(json.dumps(event["payload"], indent=2, ensure_ascii=False))
         return 0
     if args.runs_command == "prune":
         cutoff = time.time() - args.keep_days * 86400

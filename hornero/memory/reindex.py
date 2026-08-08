@@ -21,6 +21,8 @@ from hornero.memory.knowledge import (
     knowledge_roots,
 )
 from hornero.memory import codegraph
+from hornero.memory import structural
+from hornero.memory import pyramid
 
 MANIFEST_NAME = "manifest.json"
 FALLBACK_INDEX = "fallback/index.json"
@@ -55,6 +57,8 @@ def quarantine_corrupt(root: Path) -> list[Path]:
     candidates = [
         (knowledge / MANIFEST_NAME, _valid_json, "manifest.corrupt.json"),
         (knowledge / FALLBACK_INDEX, _valid_json, "fallback.corrupt.json"),
+        (knowledge / "structural" / "index.json", _valid_json,
+         "structural.corrupt.json"),
         (codegraph.db_path(root), _valid_graph, "wiki.corrupt.db"),
     ]
     quarantine = root / ".hornero" / "cache" / "quarantine"
@@ -131,10 +135,20 @@ def reindex(root: Path) -> dict[str, Any]:
     ]
     _dump(knowledge_dir / FALLBACK_INDEX, {"schema": 1, "documents": docs})
 
+    structural_index, _structural_metrics = structural.build_index(
+        root, codegraph.discover_files(root)
+    )
+    memory_pyramid = pyramid.build(root)
     graph = codegraph.build_graph(root)
 
     layers = available()
     layers["codegraph"] = True
+    layers["structural"] = True
+    layers["pyramid"] = True
+    layers["tree_sitter"] = any(
+        str(item.get("analyzer", "")).startswith("tree-sitter:")
+        for item in structural_index["files"]
+    )
     manifest: dict[str, Any] = {
         "schema": 1,
         "head_ref": _head_ref(root),
@@ -152,6 +166,25 @@ def reindex(root: Path) -> dict[str, Any]:
             "semantic_entities": graph.semantic_entities,
             "semantic_relations": graph.semantic_relations,
             "provenance": graph.provenance_records,
+        },
+        "structural": {
+            "index": str(structural.index_path(root).relative_to(root)),
+            "files": len(structural_index["files"]),
+            "symbols": sum(
+                len(item.get("symbols", [])) for item in structural_index["files"]
+            ),
+            "facts": sum(
+                len(item.get("facts", [])) for item in structural_index["files"]
+            ),
+            "edges": len(structural_index["edges"]),
+            "languages": structural_index["languages"],
+        },
+        "pyramid": {
+            "index": str(pyramid.pyramid_path(root).relative_to(root)),
+            "l0_sources": len(memory_pyramid["l0_sources"]),
+            "l1_atoms": len(memory_pyramid["l1_atoms"]),
+            "l2_scenarios": len(memory_pyramid["l2_scenarios"]),
+            "l3_persona": len(memory_pyramid["l3_persona"]),
         },
         "sources": [
             {
@@ -201,6 +234,10 @@ def index_staleness(root: Path) -> str:
     except (json.JSONDecodeError, OSError, UnicodeDecodeError):
         return "corrupt"
     if not _valid_graph(codegraph.db_path(root)):
+        return "corrupt"
+    if not _valid_json(structural.index_path(root)):
+        return "corrupt"
+    if not _valid_json(pyramid.pyramid_path(root)):
         return "corrupt"
     recorded = {s["path"]: s["sha256"] for s in manifest.get("sources", [])}
     current: dict[str, str] = {}
