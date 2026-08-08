@@ -12,6 +12,8 @@ house, layer by layer.
   spec lifecycle, repo layout, phases F1–F5.
 - `sdd/specs/SPEC-002-sdd-toolkit-sync.md` — `hornero sdd` install/sync/push,
   drift model, phases F2.5/F3.5/F4.5. Amends SPEC-001 §4 (SDD layout is native).
+- `sdd/specs/SPEC-014-cross-pollinated-structural-memory.md` — incremental
+  source structure, offline explorer, diff impact and governed memory economy.
 - `sdd/WORKFLOW.md` — the SDD methodology this repo follows for its own
   development. This project is self-hosting: hornero is built with the same
   spec/task lifecycle it implements.

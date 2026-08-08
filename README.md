@@ -79,6 +79,13 @@ version.
 - **Temporal intelligence**: immutable entity versions, supersession,
   contradiction/duplicate candidates, impact paths, coverage scores,
   explainable queries and token-budgeted context packs.
+- **Structural intelligence**: incremental Python/TS/JS/Svelte/SQL facts,
+  optional Tree-sitter validation, symbol-level call/import/inheritance edges,
+  an offline interactive explorer and diff-to-spec impact overlays.
+- **Context economy**: every active trace has exact refs, compact steps and a
+  Mermaid canvas; layered recall serves persona/scenario structure first and
+  drills down to evidence only within explicit budgets. Repeated conventions
+  and SOPs are proposed for HITL review, never auto-installed.
 - **Production factory**: signed blueprint registries, three-way upgrades,
   capability resolution, production components, generated contracts and
   federated multi-repository plans.
@@ -113,6 +120,13 @@ hornero wiki codex install
 hornero wiki claude install        # Claude Code
 hornero wiki gemini install        # Gemini CLI
 hornero wiki parrot build
+```
+
+For Tree-sitter parsing across the optional structural grammar set (native
+deterministic analyzers remain available without it):
+
+```bash
+pip install 'hornero[structural]'
 ```
 
 ## Quickstart
@@ -160,7 +174,8 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 | `hornero ingest FILE... [--kind KIND]` | Normalize supported documents into the inbox with provenance |
 | `hornero validate [--repair] [--json]` | Validate graph schema, provenance, traceability and secret safety |
 | `hornero improve scan\|plan\|run\|status` | Detect, prioritize, policy-gate, isolate, verify and ledger improvements |
-| `hornero knowledge history\|analyze\|impact\|coverage\|semantic-query\|explain\|context` | Navigate temporal reasoning, impact and bounded agent context |
+| `hornero knowledge history\|analyze\|impact\|diff-impact\|coverage\|semantic-query\|explain\|context` | Navigate temporal/structural reasoning, governed diff impact and bounded context |
+| `hornero knowledge pyramid\|recall\|persona\|distill-skills` | Inspect layered memory, recall under hard budgets, and create HITL-only proposals |
 | `hornero extract FILE` | Propose graph entities from AI output with verbatim evidence gates |
 | `hornero blueprint resolve\|upgrade` | Resolve capabilities or apply a signed three-way blueprint upgrade |
 | `hornero contracts generate\|check` | Generate OpenAPI, event/data schemas and client contracts |
@@ -190,7 +205,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 | `hornero wiki codex install\|status\|uninstall` | Manage query-first Codex instructions, skill and lifecycle hook |
 | `hornero wiki claude install\|status\|uninstall` | Manage query-first Claude Code instructions, skill and lifecycle hook |
 | `hornero wiki gemini install\|status\|uninstall` | Manage query-first Gemini CLI instructions, skill and lifecycle hook |
-| `hornero runs list\|show\|adopt\|prune` | Flight-recorder traces of every dispatch |
+| `hornero runs list\|show\|adopt\|canvas\|drilldown\|prune` | Flight-recorder traces, symbolic canvases and exact evidence drill-down |
 | `hornero scribe RUN [--force]` | Distill a trace into a Decision Record (verified citations) |
 
 ## Hard invariants
@@ -218,6 +233,7 @@ hornero sdd sync               # fast-forward what's safe; diverged blocks
 - [PyPI release runbook](docs/RELEASING.md) — trusted automatic publishing from master
 - [Changelog guide](docs/CHANGELOGS.md) — fragments, PR policy and PyPI projection
 - [ai-parrot LLM-wiki guide](docs/PARROT_WIKI.md) — knowledge bridge for Codex, Claude Code and Gemini CLI
+- [Structural intelligence and context economy](docs/STRUCTURAL_MEMORY.md) — symbols, diff impact, canvases, layered recall and governed distillation
 - [Changelog](CHANGELOG.md)
 - [Visual artefacts](docs/artefacts/) — architecture diagram, infographic, cheatsheet, interactive onboarding (English + Spanish)
 
